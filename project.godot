@@ -1,0 +1,50 @@
+; Project Yolkless prototype scaffold
+config_version=5
+
+[application]
+config/name="Project Yolkless"
+run/main_scene="res://game/scenes/Main.tscn"
+
+[input]
+burst_hold={
+"deadzone": 0.5,
+"events": [ {
+"deadzone": 0.5,
+"device": -1,
+"type": "JOY_BUTTON"
+}, {
+"alt": false,
+"device": -1,
+"meta": false,
+"pressed": false,
+"shift": false,
+"type": "MOUSE_BUTTON",
+"button_index": 1,
+"control": false
+}, {
+"alt": false,
+"device": -1,
+"meta": false,
+"pressed": false,
+"shift": false,
+"type": "KEY",
+"keycode": 32,
+"control": false
+} ]
+}
+reload_balance={
+"deadzone": 0.5,
+"events": [ {
+"alt": false,
+"device": -1,
+"meta": false,
+"pressed": false,
+"shift": false,
+"type": "KEY",
+"keycode": 82,
+"control": false
+} ]
+}
+
+[rendering]
+renderer/rendering_method="forward_plus"

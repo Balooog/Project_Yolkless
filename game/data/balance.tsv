@@ -1,0 +1,41 @@
+# =========================================================
+# File: game/data/balance.tsv   (use TSV to avoid CSV comma headaches)
+# Sections are keyworded; parser reads until next [SECTION]
+# =========================================================
+# [CONSTANTS]
+# key	value
+P0	1.0
+BURST_MULT	6.0
+BURST_DURATION	5.0
+BURST_COOLDOWN	10.0
+OFFLINE_CAP_HOURS	8
+OFFLINE_EFFICIENCY	0.8
+AUTOSAVE_SECONDS	30
+
+# [UPGRADES]
+# id	kind	stat	mult_add	mult_mul	base_cost	growth	requires
+prod_1	prod	mul_prod	0.1	1.0	20	1.15	-
+cap_1	cap	mul_cap	0.1	1.0	25	1.18	-
+auto_1	auto	unlock_autoburst	0	1.0	2500	1.0	factory>=3
+
+# [FACTORY_TIERS]
+# tier	display_name	cap_mult	prod_mult	unlocks	cost
+1	Backyard Coop	1.0	1.0	-	0
+2	Community Farm	1.6	1.1	auto	15000
+3	Regional Farm	2.3	1.25	research_tab	75000
+
+# [AUTOMATION]
+# id	type	value	description
+auto_burst	tick_seconds	10	Burst tick cadence (usually BURST_COOLDOWN)
+auto_burst_efficiency	mult	0.85	Automation penalty vs manual
+
+# [RESEARCH]
+# id	branch	stat	mult_add	mult_mul	cost	prereq
+r_prod_1	production	mul_prod	0.0	1.1	5	-
+r_cap_1	capacity	mul_cap	0.0	1.1	5	-
+r_auto_1	automation	auto_cd	-1.0	1.0	8	r_prod_1
+
+# [PRESTIGE]
+# key	value
+ALPHA	0.6
+K	0.01
