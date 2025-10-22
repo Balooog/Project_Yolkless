@@ -5,6 +5,7 @@ signal text_scale_selected(scale: float)
 signal diagnostics_requested
 signal high_contrast_toggled(enabled: bool)
 signal visuals_toggled(enabled: bool)
+signal reset_requested
 
 @onready var title_label: Label = %TitleLabel
 @onready var text_scale_label: Label = %TextScaleLabel
@@ -14,7 +15,9 @@ signal visuals_toggled(enabled: bool)
 @onready var visuals_label: Label = %VisualsLabel
 @onready var visuals_toggle: CheckButton = %VisualsToggle
 @onready var copy_button: Button = %CopyDiagnosticsButton
+@onready var reset_button: Button = %ResetButton
 @onready var close_button: Button = %CloseButton
+@onready var reset_dialog: ConfirmationDialog = %ResetConfirm
 
 var _suppress_signal := false
 var _current_high_contrast := false
@@ -27,12 +30,15 @@ func _ready() -> void:
 	high_contrast_toggle.toggled.connect(_on_high_contrast_toggled)
 	visuals_toggle.toggled.connect(_on_visuals_toggled)
 	copy_button.pressed.connect(func(): diagnostics_requested.emit())
+	reset_button.pressed.connect(_on_reset_pressed)
 	close_button.pressed.connect(func(): hide())
 	close_requested.connect(func(): hide())
+	reset_dialog.confirmed.connect(func(): reset_requested.emit())
 	populate_strings()
 	populate_text_scale_options(1.0)
 	_set_high_contrast_internal(false)
 	_set_visuals_internal(true)
+	_apply_styles()
 
 func show_panel(current_scale: float, high_contrast: bool) -> void:
 	populate_text_scale_options(current_scale)
@@ -56,12 +62,17 @@ func populate_strings() -> void:
 			if labels.has(key):
 				text_scale_option.set_item_text(i, labels[key])
 	copy_button.text = _strings("copy_diagnostics", copy_button.text)
+	reset_button.text = _strings("reset_save_button", reset_button.text)
 	close_button.text = _strings("close_button", close_button.text)
 	high_contrast_label.text = _strings("high_contrast_label", high_contrast_label.text)
 	high_contrast_toggle.tooltip_text = _strings("high_contrast_tooltip", high_contrast_toggle.tooltip_text)
 	visuals_label.text = _strings("visuals_label", visuals_label.text)
 	visuals_toggle.text = _strings("settings_visuals", visuals_toggle.text)
 	visuals_toggle.tooltip_text = _strings("visuals_feed_particles", visuals_toggle.tooltip_text)
+	reset_dialog.title = _strings("reset_save_dialog_title", reset_dialog.title)
+	reset_dialog.dialog_text = _strings("reset_save_dialog_body", reset_dialog.dialog_text)
+	reset_dialog.ok_button_text = _strings("reset_save_dialog_confirm", reset_dialog.ok_button_text)
+	reset_dialog.cancel_button_text = _strings("reset_save_dialog_cancel", reset_dialog.cancel_button_text)
 
 func populate_text_scale_options(current_scale: float) -> void:
 	_suppress_signal = true
@@ -111,12 +122,16 @@ func _set_high_contrast_internal(enabled: bool) -> void:
 	_current_high_contrast = enabled
 	high_contrast_toggle.button_pressed = enabled
 	_suppress_signal = false
+	_apply_styles()
 
 func _on_visuals_toggled(pressed: bool) -> void:
 	if _suppress_signal:
 		return
 	_current_visuals_enabled = pressed
 	visuals_toggled.emit(pressed)
+
+func _on_reset_pressed() -> void:
+	reset_dialog.popup_centered()
 
 func set_visuals_enabled(enabled: bool) -> void:
 	_set_visuals_internal(enabled)
@@ -129,6 +144,31 @@ func _set_visuals_internal(enabled: bool) -> void:
 
 func on_strings_reloaded() -> void:
 	populate_strings()
+
+func _apply_styles() -> void:
+	var panel := get_node_or_null("Panel")
+	if panel is PanelContainer:
+		(panel as PanelContainer).add_theme_stylebox_override("panel", ArtRegistry.get_style("ui_panel", _current_high_contrast))
+	var text_color := ProceduralFactory.COLOR_TEXT
+	for label in [title_label, text_scale_label, high_contrast_label, visuals_label]:
+		if label:
+			label.add_theme_color_override("font_color", text_color)
+	var buttons := [copy_button, reset_button, close_button]
+	for button in buttons:
+		if button:
+			button.add_theme_stylebox_override("normal", ArtRegistry.get_style("ui_button", _current_high_contrast))
+			button.add_theme_stylebox_override("hover", ArtRegistry.get_style("ui_button_hover", _current_high_contrast))
+			button.add_theme_stylebox_override("pressed", ArtRegistry.get_style("ui_button_pressed", _current_high_contrast))
+			button.add_theme_color_override("font_color", text_color)
+	if reset_dialog:
+		var ok_button := reset_dialog.get_ok_button()
+		var cancel_button := reset_dialog.get_cancel_button()
+		for dialog_button in [ok_button, cancel_button]:
+			if dialog_button:
+				dialog_button.add_theme_stylebox_override("normal", ArtRegistry.get_style("ui_button", _current_high_contrast))
+				dialog_button.add_theme_stylebox_override("hover", ArtRegistry.get_style("ui_button_hover", _current_high_contrast))
+				dialog_button.add_theme_stylebox_override("pressed", ArtRegistry.get_style("ui_button_pressed", _current_high_contrast))
+				dialog_button.add_theme_color_override("font_color", text_color)
 
 func _strings(key: String, fallback: String) -> String:
 	var strings_node := get_node_or_null("/root/Strings")

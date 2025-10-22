@@ -1,12 +1,12 @@
 extends EnvironmentStageBase
 
-@onready var sky: ColorRect = %Sky
-@onready var ground: ColorRect = %Ground
-@onready var haze: ColorRect = %PollutionHaze
-@onready var coop_body: ColorRect = %CoopBody
-@onready var coop_roof: Polygon2D = %CoopRoof
-@onready var reputation_icon: Label = %ReputationIcon
-@onready var chickens: Array[Node2D] = [%ChickenA, %ChickenB, %ChickenC]
+var sky: ColorRect
+var ground: ColorRect
+var haze: ColorRect
+var coop_body: ColorRect
+var coop_roof: Polygon2D
+var reputation_icon: Label
+var chickens: Array[Node2D] = []
 
 var _base_sky: Color
 var _base_ground: Color
@@ -18,19 +18,12 @@ var _pollution: float = 0.0
 var _stress: float = 0.0
 var _reputation: float = 0.0
 var _time: float = 0.0
+var _env_root: Node2D
 
 func _ready() -> void:
+	_build_environment()
+	_cache_base_state()
 	set_process(true)
-	_base_sky = sky.color
-	_base_ground = ground.color
-	_base_haze = haze.color
-	_base_coop = coop_body.color
-	_base_roof = coop_roof.color
-	for chicken in chickens:
-		_base_positions.append(chicken.position)
-		var body := chicken.get_node_or_null("Body")
-		if body is ColorRect:
-			(body as ColorRect).color = Color(1.0, 0.95, 0.75, 1.0)
 
 func apply_state(pollution: float, stress: float, reputation: float) -> void:
 	_pollution = pollution
@@ -76,3 +69,41 @@ func _update_reputation_icon() -> void:
 func _chicken_speed() -> float:
 	var stress_ratio: float = clampf(_stress / 100.0, 0.0, 1.0)
 	return lerpf(1.3, 0.35, stress_ratio)
+
+func _build_environment() -> void:
+	if _env_root:
+		_env_root.queue_free()
+	var size := Vector2(640, 360)
+	_env_root = ProceduralFactory.make_env_bg(size)
+	add_child(_env_root)
+	sky = _env_root.get_node_or_null("Sky") as ColorRect
+	ground = _env_root.get_node_or_null("Ground") as ColorRect
+	haze = _env_root.get_node_or_null("PollutionHaze") as ColorRect
+	var coop := _env_root.get_node_or_null("Coop")
+	if coop:
+		coop_body = coop.get_node_or_null("CoopBody") as ColorRect
+		coop_roof = coop.get_node_or_null("CoopRoof") as Polygon2D
+	reputation_icon = _env_root.get_node_or_null("ReputationIcon") as Label
+	chickens.clear()
+	for name in ["ChickenA", "ChickenB", "ChickenC"]:
+		var chicken := _env_root.get_node_or_null(name)
+		if chicken is Node2D:
+			chickens.append(chicken as Node2D)
+
+func _cache_base_state() -> void:
+	_base_positions.clear()
+	if sky:
+		_base_sky = sky.color
+	if ground:
+		_base_ground = ground.color
+	if haze:
+		_base_haze = haze.color
+	if coop_body:
+		_base_coop = coop_body.color
+	if coop_roof:
+		_base_roof = coop_roof.color
+	for chicken in chickens:
+		_base_positions.append(chicken.position)
+		var body := chicken.get_node_or_null("Body")
+		if body is ColorRect:
+			(body as ColorRect).color = Color(1.0, 0.95, 0.75, 1.0)

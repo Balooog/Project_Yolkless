@@ -57,6 +57,8 @@ func _refresh(refresh_tail: bool) -> void:
 	var feed_fraction: float = _economy.get_feed_fraction()
 	var feed_seconds: float = _economy.get_feed_seconds_to_full()
 	var feeding := _economy.is_feeding()
+	var feed_state_key := "debug_overlay_feed_on" if feeding else "debug_overlay_feed_off"
+	var feed_state_text := _get_string(feed_state_key, feeding ? "ON" : "OFF")
 	var research_mult: Dictionary = _research.multipliers
 	var logging_status := "OFF"
 	var log_size := "0 B"
@@ -78,21 +80,57 @@ func _refresh(refresh_tail: bool) -> void:
 		_log_tail_cache = []
 	var content: Array[String] = []
 	content.append(title)
-	content.append("PPS: %.2f" % _economy.current_pps())
-	content.append("Capacity: %.1f / %.1f" % [soft_value, capacity])
-	var feed_state_text := "OFF"
-	if feeding:
-		feed_state_text = "ON"
-	content.append("Feed: %.0f%% | State %s | Refill %.1fs" % [feed_fraction * 100.0, feed_state_text, feed_seconds])
-	content.append("Tier: %d (%s)" % [_economy.factory_tier, _economy.factory_name()])
-	content.append("Research multipliers: prod=%.3f cap=%.3f auto_cd=%.3f" % [float(research_mult.get("mul_prod", 1.0)), float(research_mult.get("mul_cap", 1.0)), float(research_mult.get("auto_cd", 0.0))])
-	content.append("Total earned: %.1f" % _economy.get_total_earned())
-	content.append("Reputation: %d (+%d)" % [_research.prestige_points, _economy.prestige_points_earned()])
-	content.append("Logging: %s | size %s | rotations %d" % [logging_status, log_size, log_rotations])
-	content.append("Balance md5: %s" % balance_md5)
-	content.append("Save hash: %s" % save_hash)
+	var pps_text := _get_string("debug_overlay_pps", "PPS: {pps}").format({
+		"pps": String.num(_economy.current_pps(), 2)
+	})
+	content.append(pps_text)
+	var capacity_text := _get_string("debug_overlay_capacity", "Capacity: {soft} / {capacity}").format({
+		"soft": String.num(soft_value, 1),
+		"capacity": String.num(capacity, 1)
+	})
+	content.append(capacity_text)
+	var feed_text := _get_string("debug_overlay_feed", "Feed: {pct}% | State {state} | Refill {seconds}s").format({
+		"pct": String.num(feed_fraction * 100.0, 0),
+		"state": feed_state_text,
+		"seconds": String.num(feed_seconds, 1)
+	})
+	content.append(feed_text)
+	var tier_text := _get_string("debug_overlay_tier", "Tier: {tier} ({name})").format({
+		"tier": _economy.factory_tier,
+		"name": _economy.factory_name()
+	})
+	content.append(tier_text)
+	var research_text := _get_string("debug_overlay_research", "Research multipliers: prod={prod} cap={cap} auto_cd={auto}").format({
+		"prod": String.num(float(research_mult.get("mul_prod", 1.0)), 3),
+		"cap": String.num(float(research_mult.get("mul_cap", 1.0)), 3),
+		"auto": String.num(float(research_mult.get("auto_cd", 0.0)), 3)
+	})
+	content.append(research_text)
+	var total_text := _get_string("debug_overlay_total", "Total earned: {total}").format({
+		"total": String.num(_economy.get_total_earned(), 1)
+	})
+	content.append(total_text)
+	var reputation_text := _get_string("debug_overlay_reputation", "Reputation: {stars} (+{next})").format({
+		"stars": _research.prestige_points,
+		"next": _economy.prestige_points_earned()
+	})
+	content.append(reputation_text)
+	var logging_text := _get_string("debug_overlay_logging", "Logging: {status} | size {size} | rotations {rotations}").format({
+		"status": logging_status,
+		"size": log_size,
+		"rotations": log_rotations
+	})
+	content.append(logging_text)
+	var balance_text := _get_string("debug_overlay_balance_md5", "Balance md5: {hash}").format({
+		"hash": balance_md5
+	})
+	content.append(balance_text)
+	var save_text := _get_string("debug_overlay_save_hash", "Save hash: {hash}").format({
+		"hash": save_hash
+	})
+	content.append(save_text)
 	if _log_tail_cache.size() > 0:
-		content.append("--- Log Tail ---")
+		content.append(_get_string("debug_overlay_tail_title", "--- Log Tail ---"))
 		for line in _log_tail_cache:
 			content.append(line)
 	stats_label.text = "\n".join(content)

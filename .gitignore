@@ -1,3 +1,6 @@
 .godot/
 *.import/
 logs/
+/assets/**/export/
+*.psd
+*.ai

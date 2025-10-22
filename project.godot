@@ -21,6 +21,8 @@ Logger="*res://game/scripts/Logger.gd"
 Strings="*res://game/scripts/Strings.gd"
 VisualDirectorSingleton="*res://game/scripts/VisualDirector.gd"
 EnvironmentDirectorSingleton="*res://game/scripts/EnvironmentDirector.gd"
+ProceduralFactory="*res://game/scripts/ProceduralFactory.gd"
+ArtRegistry="*res://game/scripts/ArtRegistry.gd"
 
 [input]
 

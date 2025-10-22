@@ -8,6 +8,7 @@ P0	1.0
 BURST_MULT	6.0
 BURST_DURATION	5.0
 BURST_COOLDOWN	10.0
+CAPACITY_BASE	50
 OFFLINE_CAP_HOURS	8
 OFFLINE_EFFICIENCY	0.8
 OFFLINE_PASSIVE_MULT	0.25
@@ -16,18 +17,18 @@ AUTOSAVE_SECONDS	30
 
 # [UPGRADES]
 # id	kind	stat	mult_add	mult_mul	base_cost	growth	requires
-prod_1	prod	mul_prod	0.1	1.0	20	1.15	-
-cap_1	cap	mul_cap	0.1	1.0	25	1.18	-
+prod_1	prod	mul_prod	0.1	1.0	10	1.15	-
+cap_1	cap	mul_cap	0.1	1.0	12	1.18	-
 auto_1	auto	unlock_autoburst	0	1.0	2500	1.0	factory>=3
-feed_storage	feed	feed_capacity	10.0	1.0	50	1.20	-
-feed_refill	feed	feed_refill	1.0	1.10	75	1.25	-
-feed_efficiency	feed	feed_efficiency	0.10	1.0	100	1.30	-
+feed_storage	feed	feed_capacity	10.0	1.0	15	1.20	-
+feed_refill	feed	feed_refill	1.0	1.10	20	1.25	-
+feed_efficiency	feed	feed_efficiency	0.10	1.0	30	1.30	-
 
 # [FACTORY_TIERS]
 # tier	display_name	cap_mult	prod_mult	unlocks	cost
 1	Backyard Coop	1.0	1.0	-	0
-2	Community Farm	1.6	1.1	auto	15000
-3	Regional Farm	2.3	1.25	research_tab	75000
+2	Community Farm	1.6	1.1	auto	200
+3	Regional Farm	2.3	1.25	research_tab	800
 
 # [AUTOMATION]
 # id	type	value	description
@@ -36,7 +37,7 @@ auto_burst_efficiency	mult	0.85	Automation penalty vs manual
 
 # [RESEARCH]
 # id	branch	stat	mult_add	mult_mul	cost	prereq
-r_prod_1	production	mul_prod	0.0	1.1	5	-
+r_prod_1	production	mul_prod	0.0	1.1	2	-
 r_cap_1	capacity	mul_cap	0.0	1.1	5	-
 r_auto_1	automation	auto_cd	-1.0	1.0	8	r_prod_1
 

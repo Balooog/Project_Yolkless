@@ -47,6 +47,7 @@ func save(reason: String = "manual") -> void:
 func load_state() -> void:
 	if not FileAccess.file_exists(save_path):
 		_log("INFO", "SAVE", "No save file found", {"path": save_path})
+		_eco.soft = 0.0
 		return
 	var file := FileAccess.open(save_path, FileAccess.READ)
 	if file == null:
@@ -154,14 +155,13 @@ func grant_offline() -> float:
 				if data_variant and typeof(data_variant) == TYPE_DICTIONARY:
 					var data_dict: Dictionary = data_variant
 					last_timestamp = int(data_dict.get("ts", 0))
+	if last_timestamp <= 0:
+		return 0.0
 	var elapsed := Time.get_unix_time_from_system() - last_timestamp
 	if elapsed <= 5:
 		return 0.0
 	var grant := _eco.offline_grant(elapsed)
-	_log("INFO", "OFFLINE", "Offline resume", {
-		"elapsed": elapsed,
-		"grant": grant
-	})
+	_log("INFO", "OFFLINE", "Offline resume", {"dt": elapsed, "grant": grant})
 	return grant
 
 func _on_autosave(reason: String) -> void:

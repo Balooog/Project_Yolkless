@@ -4,10 +4,11 @@ class_name VisualDirector
 const MODULE_FEED_PARTICLES_ID := "feed_particles"
 const UPDATE_INTERVAL := 0.2
 const FEED_PARTICLES_SCENE := preload("res://game/scenes/modules/visuals/FeedParticles.tscn")
+const VISUAL_HOST_PATH := NodePath("/root/Main/VisualLayer/VisualViewport")
 
 var _eco: Economy
 var _strings: StringsCatalog
-var _visual_layer: CanvasLayer
+var _visual_host: Node
 var _timer: Timer
 var _modules: Dictionary[StringName, Node] = {}
 var _module_scenes: Dictionary[StringName, PackedScene] = {
@@ -24,7 +25,7 @@ func set_sources(eco: Economy, strings: StringsCatalog = null) -> void:
 	_disconnect_sources()
 	_eco = eco
 	_strings = strings
-	_ensure_visual_layer()
+	_ensure_visual_host()
 	if _eco:
 		_connect_sources()
 		_ensure_timer()
@@ -39,10 +40,10 @@ func activate(id: String, enabled: bool) -> void:
 		var scene_variant: Variant = _module_scenes.get(key)
 		if scene_variant is PackedScene:
 			var scene: PackedScene = scene_variant as PackedScene
-			_ensure_visual_layer()
-			if _visual_layer:
+			_ensure_visual_host()
+			if _visual_host:
 				var instance: Node = scene.instantiate()
-				_visual_layer.add_child(instance)
+				_visual_host.add_child(instance)
 				_modules[key] = instance
 				_apply_module_state(instance)
 				_log_activation(key, true)
@@ -88,16 +89,17 @@ func _disconnect_sources() -> void:
 	if _timer:
 		_timer.stop()
 
-func _ensure_visual_layer() -> void:
-	if _visual_layer and is_instance_valid(_visual_layer):
+func _ensure_visual_host() -> void:
+	if _visual_host and is_instance_valid(_visual_host):
 		return
-	if not _eco:
+	var tree := get_tree()
+	if not tree:
 		return
-	var parent: Node = _eco.get_parent()
-	if parent and parent.has_node("VisualLayer"):
-		var layer := parent.get_node("VisualLayer")
-		if layer is CanvasLayer:
-			_visual_layer = layer
+	var root := tree.get_root()
+	if not root:
+		return
+	if root.has_node(VISUAL_HOST_PATH):
+		_visual_host = root.get_node(VISUAL_HOST_PATH)
 
 func _ensure_timer() -> void:
 	if _timer:

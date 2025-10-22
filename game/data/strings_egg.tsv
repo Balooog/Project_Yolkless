@@ -1,19 +1,20 @@
 # key	value
 soft_label	Egg Credits: {value} / {capacity}
-pps_label	Egg Flow: {value}/s
-farm_stage	Farm Stage: {value}
-prestige_label	Reputation Stars: {value} (Next Rebrand: +{next})
+pps_label	Egg Flow: {pps}/s
+farm_stage	Farm Stage: {name}
+prestige_label	Reputation Stars: {prestige} (Next Rebrand: +{next})
 prestige_button_ready	Rebrand & Advance to Next Generation
 prestige_button_locked	Rebrand & Advance
 burst_button	HOLD TO FEED
 buy_prod	Feeding Efficiency ({cost} 🥚)
 buy_cap	Coop Capacity ({cost} 🥚)
-buy_auto	Auto-Feeder System ({cost} 🥚){note}
+buy_auto	Auto-Feeder System ({cost} 🥚){requirement}
 buy_auto_requirement	 — Requires {stage}
 promote_disabled	Stage Mastered
 promote_button	Upgrade to {name} ({cost} 🥚)
 promote	Next Stage
-research_header	Innovation Lab — Research Points: {value}
+research_header	Innovation Lab — Research Points: {points}
+research_header_title	Innovation Lab
 research_prod_label	Feed Conversion R&D
 research_cap_label	Modular Coops
 research_auto_label	Drone Feeders
@@ -27,6 +28,7 @@ feed_bar_label	Feed Supply
 feed_refilling	Refilling silo… {pct}%
 feed_empty	Feed empty
 feeding_now	Feeding… +{pps}/s
+feed_hint_boost	+{pps}/s boost
 settings_button	Settings
 export_button	Copy Save
 import_button	Paste Save
@@ -42,6 +44,31 @@ high_contrast_tooltip	Increases contrast for key interface elements
 settings_visuals	Visual Effects
 visuals_label	Visual Effects
 visuals_feed_particles	Feed Particles
+reset_save_button	Reset Save
+reset_save_dialog_title	Delete Save Data?
+reset_save_dialog_body	This will delete your local save and restart the session. This cannot be undone.
+reset_save_dialog_confirm	Delete Save
+reset_save_dialog_cancel	Cancel
+toast_upgrade_prod	Production +10%
+toast_upgrade_cap	Storage +10%
+toast_upgrade_feed_storage	Feed Tank +10
+toast_upgrade_feed_refill	Refill Rate +1/s
+toast_upgrade_feed_efficiency	Feed Boost +10%
+toast_upgrade_auto	Automation Unlocked
+debug_overlay_title	DEBUG OVERLAY
+debug_overlay_pps	PPS: {pps}
+debug_overlay_capacity	Capacity: {soft} / {capacity}
+debug_overlay_feed	Feed: {pct}% | State {state} | Refill {seconds}s
+debug_overlay_feed_on	ON
+debug_overlay_feed_off	OFF
+debug_overlay_tier	Tier: {tier} ({name})
+debug_overlay_research	Research multipliers: prod={prod} cap={cap} auto_cd={auto}
+debug_overlay_total	Total earned: {total}
+debug_overlay_reputation	Reputation: {stars} (+{next})
+debug_overlay_logging	Logging: {status} | size {size} | rotations {rotations}
+debug_overlay_balance_md5	Balance md5: {hash}
+debug_overlay_save_hash	Save hash: {hash}
+debug_overlay_tail_title	--- Log Tail ---
 pollution_label	Pollution
 stress_label	Stress
 reputation_label	Reputation

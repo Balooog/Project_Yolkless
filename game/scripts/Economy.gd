@@ -168,16 +168,17 @@ func promote_factory() -> bool:
 	autosave.emit("tier")
 	return true
 
-func _current_pps(include_feed: bool = true) -> float:
+func _current_pps(feed_boost: bool = true) -> float:
 	if _balance == null or _research == null:
 		return 0.0
 	var base_pps: float = _base_pps()
-	if not include_feed:
+	if not feed_boost:
 		return base_pps
 	if not burst_active:
 		return base_pps
 	var burst_mult: float = float(_balance.constants.get("BURST_MULT", 6.0))
-	var total_multiplier := burst_mult * _feed_efficiency_mult
+	var feed_efficiency: float = max(_feed_efficiency_mult - 1.0, 0.0)
+	var total_multiplier: float = burst_mult * (1.0 + feed_efficiency)
 	if _is_auto_burst:
 		total_multiplier *= float(_balance.automation.get("auto_burst_efficiency", {}).get("value", 1.0))
 	return base_pps * total_multiplier
@@ -194,7 +195,7 @@ func _base_pps() -> float:
 func _current_capacity() -> float:
 	if _balance == null or _research == null:
 		return 0.0
-	var base: float = 50.0
+	var base: float = float(_balance.constants.get("CAPACITY_BASE", 50.0))
 	var cap_mult: float = _stat_multiplier("mul_cap")
 	var tier_cap: float = float(_balance.factory_tiers.get(factory_tier, {}).get("cap_mult", 1.0))
 	var research_mul: float = float(_research.multipliers["mul_cap"])

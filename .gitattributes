@@ -1,0 +1,6 @@
+assets/placeholder/*.svg text eol=lf
+assets/placeholder/*.png binary
+assets/placeholder/*.ase binary
+assets/final/*.svg text eol=lf
+assets/final/*.png binary
+assets/final/*.ase binary

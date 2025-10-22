@@ -3,23 +3,12 @@ extends Node
 const SETTINGS_PANEL_SCENE := preload("res://game/scenes/widgets/SettingsPanel.tscn")
 const DEBUG_OVERLAY_SCENE := preload("res://game/scenes/widgets/DebugOverlay.tscn")
 
-const CAPACITY_BACKGROUND_DEFAULT := Color(0.1, 0.1, 0.1, 1)
-const CAPACITY_FILL_DEFAULT := Color(0.95, 0.82, 0.18, 1)
-const CAPACITY_FONT_DEFAULT := Color(1, 1, 1, 1)
-const CAPACITY_BACKGROUND_CONTRAST := Color(0.04, 0.04, 0.04, 1)
-const CAPACITY_FILL_CONTRAST := Color(1, 1, 1, 1)
-const CAPACITY_FONT_CONTRAST := Color(0.1, 0.1, 0.1, 1)
-
-const FEED_BACKGROUND_DEFAULT := Color(0.08, 0.08, 0.12, 1)
 const FEED_FILL_HIGH_DEFAULT := Color(0.2, 0.8, 0.35, 1)
 const FEED_FILL_MED_DEFAULT := Color(0.95, 0.68, 0.2, 1)
 const FEED_FILL_LOW_DEFAULT := Color(0.9, 0.2, 0.2, 1)
-const FEED_BACKGROUND_CONTRAST := Color(0.02, 0.02, 0.02, 1)
 const FEED_FILL_HIGH_CONTRAST := Color(0.0, 0.85, 0.2, 1)
 const FEED_FILL_MED_CONTRAST := Color(0.98, 0.78, 0.1, 1)
 const FEED_FILL_LOW_CONTRAST := Color(1.0, 0.22, 0.22, 1)
-const FEED_FONT_DEFAULT := Color(1, 1, 1, 1)
-const FEED_FONT_CONTRAST := Color(0.05, 0.05, 0.05, 1)
 const FEED_FLASH_COLOR := Color(1, 0.7, 0.7, 1)
 
 @onready var bal: Balance = $Balance
@@ -58,6 +47,8 @@ const FEED_FLASH_COLOR := Color(1, 0.7, 0.7, 1)
 @onready var offline_popup: PopupPanel = %OfflinePopup
 @onready var offline_label: Label = %OfflineLabel
 @onready var offline_close: Button = %OfflineClose
+@onready var feed_hint_label: Label = %FeedHint
+@onready var toast_label: Label = %ToastLabel
 
 var text_scale := 1.0
 var settings_panel: SettingsPanel
@@ -66,6 +57,7 @@ var high_contrast_enabled := false
 var visuals_enabled := true
 var environment_director: EnvironmentDirector
 var _feed_deny_sound_warned := false
+var _toast_tween: Tween
 
 func _ready() -> void:
 	res.setup(bal)
@@ -99,6 +91,7 @@ func _ready() -> void:
 	settings_panel.diagnostics_requested.connect(_on_diagnostics_requested)
 	settings_panel.high_contrast_toggled.connect(_on_high_contrast_toggled)
 	settings_panel.visuals_toggled.connect(_on_visuals_toggled)
+	settings_panel.reset_requested.connect(_on_reset_requested)
 	settings_panel.set_high_contrast(high_contrast_enabled)
 	settings_panel.set_visuals_enabled(visuals_enabled)
 
@@ -154,6 +147,11 @@ func _ready() -> void:
 	_apply_strings()
 	_update_all_views()
 	_update_feed_ui()
+	if feed_hint_label:
+		feed_hint_label.visible = false
+	if toast_label:
+		toast_label.visible = false
+		toast_label.modulate = Color(1, 1, 1, 0)
 
 	_log("INFO", "THEME", "Theme applied", {
 		"currency": "Egg Credits",
@@ -350,15 +348,25 @@ func _update_feed_ui() -> void:
 	feed_status_label.text = status
 	feed_status_label.tooltip_text = status
 	feed_bar.tooltip_text = status
-	var feed_background := FEED_BACKGROUND_DEFAULT
-	var feed_font := FEED_FONT_DEFAULT
-	if high_contrast_enabled:
-		feed_background = FEED_BACKGROUND_CONTRAST
-		feed_font = FEED_FONT_CONTRAST
-	feed_bar.add_theme_color_override("background", feed_background)
-	feed_bar.add_theme_color_override("font_color", feed_font)
-	feed_bar.add_theme_color_override("fill", _get_feed_fill_color(fraction))
-	feed_status_label.add_theme_color_override("font_color", feed_font)
+	if feed_hint_label:
+		if eco.is_feeding():
+			var boost := max(eco.current_pps() - eco.current_base_pps(), 0.0)
+			if boost > 0.0:
+				var hint_template := _strings_get("feed_hint_boost", "+{pps}/s boost")
+				var hint_text := hint_template.format({"pps": _format_num(boost, 1)})
+				feed_hint_label.text = hint_text
+				feed_hint_label.tooltip_text = hint_text
+				feed_hint_label.visible = true
+			else:
+				feed_hint_label.visible = false
+				feed_hint_label.tooltip_text = ""
+		else:
+			feed_hint_label.visible = false
+			feed_hint_label.tooltip_text = ""
+	var fill_style := ArtRegistry.get_style("ui_progress_fill", high_contrast_enabled)
+	if fill_style is StyleBoxFlat:
+		(fill_style as StyleBoxFlat).bg_color = _get_feed_fill_color(fraction)
+	feed_bar.add_theme_stylebox_override("fill", fill_style)
 	if feed_bar.modulate != Color.WHITE:
 		feed_bar.modulate = Color.WHITE
 
@@ -395,25 +403,53 @@ func _on_environment_state_changed(pollution: float, stress: float, reputation: 
 	environment_overlay.update_state(pollution, stress, reputation)
 
 func _apply_contrast_theme() -> void:
-	var background_color := CAPACITY_BACKGROUND_DEFAULT
-	var fill_color := CAPACITY_FILL_DEFAULT
-	var font_color := CAPACITY_FONT_DEFAULT
-	if high_contrast_enabled:
-		background_color = CAPACITY_BACKGROUND_CONTRAST
-		fill_color = CAPACITY_FILL_CONTRAST
-		font_color = CAPACITY_FONT_CONTRAST
-	capacity_bar.add_theme_color_override("background", background_color)
-	capacity_bar.add_theme_color_override("fill", fill_color)
-	capacity_bar.add_theme_color_override("font_color", font_color)
-	var feed_background := FEED_BACKGROUND_DEFAULT
-	var feed_font := FEED_FONT_DEFAULT
-	if high_contrast_enabled:
-		feed_background = FEED_BACKGROUND_CONTRAST
-		feed_font = FEED_FONT_CONTRAST
-	feed_bar.add_theme_color_override("background", feed_background)
-	feed_bar.add_theme_color_override("font_color", feed_font)
-	feed_status_label.add_theme_color_override("font_color", feed_font)
+	var panel_style := ArtRegistry.get_style("ui_panel", high_contrast_enabled)
+	if panel_style:
+		stats_box.add_theme_stylebox_override("panel", panel_style)
+	var capacity_background := ArtRegistry.get_style("ui_progress_bg", high_contrast_enabled)
+	var capacity_fill := ArtRegistry.get_style("ui_progress_fill", high_contrast_enabled)
+	if capacity_fill is StyleBoxFlat:
+		(capacity_fill as StyleBoxFlat).bg_color = ProceduralFactory.COLOR_ACCENT
+	if capacity_background:
+		capacity_bar.add_theme_stylebox_override("background", capacity_background)
+	if capacity_fill:
+		capacity_bar.add_theme_stylebox_override("fill", capacity_fill)
+	var feed_background := ArtRegistry.get_style("ui_progress_bg", high_contrast_enabled)
+	if feed_background:
+		feed_bar.add_theme_stylebox_override("background", feed_background)
+	var text_color := ProceduralFactory.COLOR_TEXT
+	for label in [lbl_soft, capacity_label, feed_status_label, lbl_pps, lbl_tier, lbl_prestige, lbl_research]:
+		label.add_theme_color_override("font_color", text_color)
+	if feed_hint_label:
+		feed_hint_label.add_theme_color_override("font_color", text_color)
+	_apply_button_styles()
+	if environment_overlay:
+		environment_overlay.set_high_contrast(high_contrast_enabled)
 	_update_feed_ui()
+
+func _apply_button_styles() -> void:
+	var buttons: Array[Button] = [
+		btn_burst,
+		btn_prod,
+		btn_cap,
+		btn_auto,
+		btn_promote,
+		btn_prestige,
+		btn_export,
+		btn_import,
+		btn_settings,
+		btn_r_prod,
+		btn_r_cap,
+		btn_r_auto,
+		offline_close
+	]
+	for button in buttons:
+		if button == null:
+			continue
+		button.add_theme_stylebox_override("normal", ArtRegistry.get_style("ui_button", high_contrast_enabled))
+		button.add_theme_stylebox_override("hover", ArtRegistry.get_style("ui_button_hover", high_contrast_enabled))
+		button.add_theme_stylebox_override("pressed", ArtRegistry.get_style("ui_button_pressed", high_contrast_enabled))
+		button.add_theme_color_override("font_color", ProceduralFactory.COLOR_TEXT)
 
 func _on_feed_button_down() -> void:
 	_attempt_feed_start("button")
@@ -459,6 +495,7 @@ func _play_feed_denied_sound() -> void:
 func _attempt_upgrade(id: String) -> void:
 	if eco.buy_upgrade(id):
 		_update_upgrade_buttons()
+		_show_upgrade_toast(id)
 
 func _attempt_research(id: String) -> void:
 	if res.buy(id):
@@ -475,6 +512,53 @@ func _attempt_prestige() -> void:
 	var gained := eco.do_prestige()
 	_log("INFO", "ECONOMY", "Prestige accepted", {"gained": gained})
 	_update_all_views()
+
+func _show_upgrade_toast(id: String) -> void:
+	var key := _upgrade_toast_key(id)
+	if key == "":
+		return
+	var message := _strings_get(key, "")
+	if message == "":
+		return
+	_show_toast(message)
+
+func _upgrade_toast_key(id: String) -> String:
+	match id:
+		"prod_1":
+			return "toast_upgrade_prod"
+		"cap_1":
+			return "toast_upgrade_cap"
+		"feed_storage":
+			return "toast_upgrade_feed_storage"
+		"feed_refill":
+			return "toast_upgrade_feed_refill"
+		"feed_efficiency":
+			return "toast_upgrade_feed_efficiency"
+		"auto_1":
+			return "toast_upgrade_auto"
+		_:
+			return ""
+
+func _show_toast(message: String) -> void:
+	if toast_label == null:
+		return
+	toast_label.text = message
+	toast_label.visible = true
+	if _toast_tween and _toast_tween.is_running():
+		_toast_tween.kill()
+	var tween := create_tween()
+	_toast_tween = tween
+	toast_label.modulate = Color(1, 1, 1, 0)
+	tween.tween_property(toast_label, "modulate:a", 1.0, 0.1)
+	tween.tween_interval(0.8)
+	tween.tween_property(toast_label, "modulate:a", 0.0, 0.1)
+	tween.finished.connect(Callable(self, "_hide_toast"))
+
+func _hide_toast() -> void:
+	if toast_label:
+		toast_label.visible = false
+		toast_label.modulate = Color(1, 1, 1, 0)
+	_toast_tween = null
 
 func _show_offline_popup(amount: float) -> void:
 	var title := _strings_get("offline_summary_title", "While you were away…")
@@ -517,6 +601,21 @@ func _on_text_scale_selected(scale: float) -> void:
 
 func _on_diagnostics_requested() -> void:
 	_copy_diagnostics()
+
+func _on_reset_requested() -> void:
+	settings_panel.hide()
+	var absolute_path := ProjectSettings.globalize_path(sav.save_path)
+	var removed := false
+	if FileAccess.file_exists(sav.save_path):
+		var result := DirAccess.remove_absolute(absolute_path)
+		if result == OK:
+			removed = true
+			_log("INFO", "SAVE", "Save file deleted", {"path": sav.save_path})
+		else:
+			_log("ERROR", "SAVE", "Save delete failed", {"path": sav.save_path, "code": result})
+	if not removed and not FileAccess.file_exists(sav.save_path):
+		_log("INFO", "SAVE", "Reset with no existing save", {"path": sav.save_path})
+	get_tree().reload_current_scene()
 
 func _copy_diagnostics() -> void:
 	var version := Engine.get_version_info()

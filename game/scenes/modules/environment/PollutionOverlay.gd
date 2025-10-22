@@ -9,10 +9,20 @@ class_name PollutionOverlay
 @onready var reputation_bar: ProgressBar = %ReputationBar
 
 var _strings: StringsCatalog
+var _high_contrast := false
+
+func _ready() -> void:
+	_apply_styles()
 
 func set_strings(strings: StringsCatalog) -> void:
 	_strings = strings
 	_apply_strings()
+
+func set_high_contrast(enabled: bool) -> void:
+	if _high_contrast == enabled:
+		return
+	_high_contrast = enabled
+	_apply_styles()
 
 func update_state(pollution: float, stress: float, reputation: float) -> void:
 	_set_bar(pollution_bar, pollution_label, pollution, _pollution_color(pollution))
@@ -29,11 +39,24 @@ func _apply_strings() -> void:
 	if env_label != "":
 		tooltip_text = env_label
 
+func _apply_styles() -> void:
+	var background := ArtRegistry.get_style("ui_progress_bg", _high_contrast)
+	var labels := [pollution_label, stress_label, reputation_label]
+	for label in labels:
+		label.add_theme_color_override("font_color", ProceduralFactory.COLOR_TEXT)
+	for bar in [pollution_bar, stress_bar, reputation_bar]:
+		if background:
+			bar.add_theme_stylebox_override("background", background.duplicate(true))
+		bar.add_theme_stylebox_override("fill", ArtRegistry.get_style("ui_progress_fill", _high_contrast))
+
 func _set_bar(bar: ProgressBar, label: Label, value: float, color: Color) -> void:
 	bar.max_value = 100.0
 	bar.value = clamp(value, 0.0, 100.0)
-	bar.add_theme_color_override("fill", color)
-	bar.add_theme_color_override("font_color", Color(0, 0, 0, 1))
+	var fill_style := ArtRegistry.get_style("ui_progress_fill", _high_contrast)
+	if fill_style is StyleBoxFlat:
+		(fill_style as StyleBoxFlat).bg_color = color
+	bar.add_theme_stylebox_override("fill", fill_style)
+	bar.add_theme_color_override("font_color", ProceduralFactory.COLOR_BG)
 	bar.tooltip_text = "%s: %.0f" % [label.text, value]
 
 func _pollution_color(value: float) -> Color:

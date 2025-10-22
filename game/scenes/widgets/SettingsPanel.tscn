@@ -76,6 +76,17 @@ size_flags_vertical = 3
 unique_name_in_owner = true
 text = "Copy Diagnostics"
 
+[node name="ResetButton" type="Button" parent="Panel/VBox"]
+unique_name_in_owner = true
+text = "Reset Save"
+
 [node name="CloseButton" type="Button" parent="Panel/VBox"]
 unique_name_in_owner = true
 text = "Close"
+
+[node name="ResetConfirm" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "Reset Save?"
+ok_button_text = "Delete Save"
+cancel_button_text = "Cancel"
+dialog_text = "This will delete your local save and restart the session. This cannot be undone."

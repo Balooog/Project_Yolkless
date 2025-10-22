@@ -17,6 +17,29 @@ Idle game prototype built with Godot 4.x. This scaffold provides:
 - Naming, icons, and copy follow `docs/theme_map.md` (Egg Credits, Reputation Stars, Innovation Lab, etc.).
 - Strings and balance data hot-reload together; editing `strings_egg.tsv` + tapping `R` updates live UI text.
 - Set `Config.seed` in the inspector to a non-zero value to enable deterministic RNG for repeatable PPS/burst timing runs.
+- Early game now starts at 0/50 credits; prod_1 (10 🥚) and cap_1 (12 🥚) unlock within seconds, and manual feeding clearly boosts PPS for the opening minute.
+- CI smoke tests: run `./tools/ci_smoke.sh` (uses `godot4 --headless -s res://game/scripts/ci_smoke.gd`) for a sub-second load check; if the import cache is cold it performs a one-time `--import` warmup first. When a deeper pass is required, use `./tools/check_only.sh`, which wraps `godot4 --headless --verbose --check-only project.godot` and streams output to `logs/godot-check.log`; give it up to 600 s on fresh workspaces.
+
+## Ship cycle (WSL quick flow)
+
+```bash
+# 1) work on a roadmap item
+git switch -c feature/RM-010-env-director
+
+# 2) stage & commit (include RM/PX footers)
+git add -A && git commit -m "feat(env): backyard stage\n\nRM: RM-010\nPX: PX-010.2"
+
+# 3) publish & open PR (use gh if installed; otherwise push and open the link)
+git push -u origin HEAD
+# gh pr create --fill --title "RM-010 EnvDirector (PX-010.2)" --body-file docs/prompts/RM-010.md
+
+# Save the driver text as a PX file
+code docs/prompts/PX-010.2.md   # paste canvas text
+```
+
+## Art Placeholders
+
+- All current visuals are procedural or simple SVG stand-ins documented in `docs/ART_POLICY.md`. Asset keys map through `assets/AssetMap.json`; drop a final file into `assets/final/`, update the JSON, and Godot will load it without code changes.
 
 ## Logging & Strings
 
@@ -31,6 +54,8 @@ Idle game prototype built with Godot 4.x. This scaffold provides:
 - Capacity bar tracks Egg Credits versus storage and hot-reloads with balance tweaks (`R`).
 - Feed button now shows a live Feed Supply meter that drains while held and refills when idle.
 - A lightweight VisualDirector autoload drives feed particle visuals that ramp with Feed Supply and PPS; disable them via the Settings → Visual Effects toggle.
+- Visual Layer is a background `CanvasLayer`; the HUD sits on a higher layer so buttons stay interactive while visuals play underneath.
+- The `VisualViewport` control stretches with the window, keeping particle modules centered and auto-resized across any viewport.
 - All player-facing strings are driven via `game/data/strings_egg.tsv`; pressing `R` refreshes both numbers and copy.
 - Press `F3` to toggle the debug overlay with live PPS, capacity, burst state, tier, research multipliers, hashes, and log context.
 
@@ -51,6 +76,7 @@ Idle game prototype built with Godot 4.x. This scaffold provides:
 
 - Open the in-game **Settings** panel to choose 100 % / 110 % / 125 % text scale, enable High Contrast UI, and copy Diagnostics to the clipboard.
 - The new Visual Effects checkbox toggles the Feed Particles module (default ON) for lower-spec or distraction-free play.
+- A Reset Save button (with confirmation) clears `user://save.json` and reloads the session instantly.
 - Diagnostics export includes build/seed metadata, tier state, upgrade/research snapshots, constants, and the last 200 log lines (sanitised).
 - The High Contrast toggle applies WCAG AA compliant themes to the storage bar and feed meter for both dark and light backgrounds.
 - Offline resumes surface a single popup per session summarising Egg Credits earned while away.
@@ -64,6 +90,8 @@ Idle game prototype built with Godot 4.x. This scaffold provides:
 ## Scripts
 
 - `tools/run_dev.sh` — launch the game (set `NO_WINDOW=1` to use headless mode)
+- `tools/ci_smoke.sh` — warm imports if needed, then run the fast CI smoke script
+- `tools/check_only.sh` — verbose `godot4 --check-only` wrapper that tees logs to `logs/godot-check.log`
 - `tools/headless_tick.sh <seconds>` — placeholder helper printed for future CLI sims
 - `tools/build_linux.sh` — export a Linux build (requires configured export preset)
 

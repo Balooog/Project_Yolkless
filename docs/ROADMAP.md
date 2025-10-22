@@ -2,18 +2,20 @@
 
 *(Version 2025.10 — consolidated from design sessions)*
 
+> Major prompts are archived in `docs/prompts/` (roadmap specs as `RM-###.md`, driver attempts as `PX-###.x.md`).
+
 ---
 
 ## 🥚 Core Gameplay Loops
 
-| System                                       | Status        | Description / Notes                                                                              |
-| -------------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------ |
-| **Feed System (PR-006)**                     | ✅ Complete    | Hold-to-feed mechanic with feed bar, drain/refill loop, and capacity/refill/efficiency upgrades. |
-| **Offline Passive Rate (PR-007)**            | ⏳ Planned     | Offline production at reduced efficiency (≈25% base PPS). Automation adds a multiplier.          |
-| **VisualDirector & Feed Particles (PR-008)** | ⏳ In Progress | Reactive particle effects while feeding; foundation for later modules.                           |
-| **Logging + Diagnostics (PR-005)**           | ✅ Active      | YolkLogger with queued writes, Diagnostics overlay, and clipboard export.                        |
-| **Environment Simulation (PR-010)**          | ⏳ Prototype   | Dynamic ecosystem reacting to pollution, stress, and reputation. Evolves with production tiers.  |
-| **Prestige / Rebrand Loop**                  | ✅ Implemented | Converts Reputation Stars to permanent production multipliers; “Rebrand & Advance” transition.   |
+| System                                       | Status        | Description / Notes                                                                              | Suggested PR                                              |
+| -------------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
+| **Feed System (PR-006)**                     | ✅ Complete    | Hold-to-feed mechanic with feed bar, drain/refill loop, and capacity/refill/efficiency upgrades. | —                                                         |
+| **Offline Passive Rate (PR-007)**            | ⏳ Planned     | Offline production at reduced efficiency (≈25% base PPS). Automation adds a multiplier.          | Offline passive calculation + strings + docs              |
+| **VisualDirector & Feed Particles (PR-008)** | ⏳ In Progress | Reactive particle effects while feeding; foundation for later modules.                           | VisualDirector + FeedParticles + settings toggle          |
+| **Logging + Diagnostics (PR-005)**           | ✅ Active      | YolkLogger with queued writes, Diagnostics overlay, and clipboard export.                        | —                                                         |
+| **Environment Simulation (PR-010)**          | ⏳ Prototype   | Dynamic ecosystem reacting to pollution, stress, and reputation. Evolves with production tiers.  | EnvDirector + Backyard stage + Overlay                    |
+| **Prestige / Rebrand Loop**                  | ✅ Implemented | Converts Reputation Stars to permanent production multipliers; “Rebrand & Advance” transition.   | —                                                         |
 
 ---
 
@@ -78,13 +80,14 @@
 
 ## 🎨 Art & Presentation
 
-| Layer                        | Description                | Timeline   |
-| ---------------------------- | -------------------------- | ---------- |
-| **Feed Bar & Particles**     | Player feedback core       | ✅ Complete |
-| **Environment Backdrops**    | Modular 2D scenes per tier | PR-010→014 |
-| **Dynamic Color Grading**    | Pollution → hue shift      | PR-011     |
-| **Camera Motion / Parallax** | Tier transitions           | PR-012     |
-| **UI Polish**                | WCAG AA, tooltips, icons   | Continuous |
+| Layer                        | Description                              | Timeline   | Suggested PR                                       |
+| ---------------------------- | ---------------------------------------- | ---------- | -------------------------------------------------- |
+| **Feed Bar & Particles**     | Player feedback core                     | ✅ Complete | —                                                  |
+| **Environment Backdrops**    | Modular 2D scenes per tier               | PR-010→014 | —                                                  |
+| **Dynamic Color Grading**    | Pollution → hue shift                    | PR-011     | —                                                  |
+| **Camera Motion / Parallax** | Tier transitions                         | PR-012     | —                                                  |
+| **Placeholder Art Policy**   | Procedural placeholders + asset handoff  | PR-012     | ArtRegistry + ProceduralFactory + policy doc       |
+| **UI Polish**                | WCAG AA, tooltips, icons                 | Continuous | —                                                  |
 
 ---
 
