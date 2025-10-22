@@ -28,21 +28,21 @@ static func make_panel_style(high_contrast: bool, accent_border: bool = false) -
 		bg_color = COLOR_BG.lightened(0.15)
 		border_color = COLOR_TEXT
 	style.bg_color = bg_color
-	style.corner_radius_all = 6
-	style.border_width_all = 1
+	style.set_corner_radius_all(6)
+	style.set_border_width_all(1)
 	style.border_color = COLOR_ACCENT if accent_border else border_color
 	style.shadow_color = Color.TRANSPARENT
-	style.content_margin_left = 10
-	style.content_margin_right = 10
-	style.content_margin_top = 6
-	style.content_margin_bottom = 6
+	style.content_margin_left = 10.0
+	style.content_margin_right = 10.0
+	style.content_margin_top = 6.0
+	style.content_margin_bottom = 6.0
 	return style
 
 static func make_progress_fill_style(color: Color) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = color
-	style.corner_radius_all = 6
-	style.border_width_all = 0
+	style.set_corner_radius_all(6)
+	style.set_border_width_all(0)
 	return style
 
 static func make_button_style(state: String, high_contrast: bool) -> StyleBoxFlat:
@@ -110,7 +110,7 @@ static func make_env_bg(size: Vector2) -> Node2D:
 	reputation_icon.text = ":)"
 	reputation_icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	reputation_icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	reputation_icon.theme_override_font_sizes["font_size"] = 26
+	reputation_icon.add_theme_font_size_override("font_size", 26)
 	root.add_child(reputation_icon)
 
 	return root

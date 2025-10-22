@@ -58,7 +58,7 @@ func _refresh(refresh_tail: bool) -> void:
 	var feed_seconds: float = _economy.get_feed_seconds_to_full()
 	var feeding := _economy.is_feeding()
 	var feed_state_key := "debug_overlay_feed_on" if feeding else "debug_overlay_feed_off"
-	var feed_state_text := _get_string(feed_state_key, feeding ? "ON" : "OFF")
+	var feed_state_text := _get_string(feed_state_key, "ON" if feeding else "OFF")
 	var research_mult: Dictionary = _research.multipliers
 	var logging_status := "OFF"
 	var log_size := "0 B"

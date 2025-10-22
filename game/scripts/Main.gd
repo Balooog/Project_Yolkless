@@ -334,7 +334,7 @@ func _update_feed_ui() -> void:
 	var fraction: float = eco.get_feed_fraction()
 	feed_bar.max_value = 1.0
 	feed_bar.value = fraction
-	var percent := int(round(fraction * 100.0))
+	var percent: int = int(round(fraction * 100.0))
 	var status: String = ""
 	if eco.is_feeding():
 		var bonus: float = max(0.0, eco.current_pps() - eco.current_base_pps())
@@ -350,10 +350,10 @@ func _update_feed_ui() -> void:
 	feed_bar.tooltip_text = status
 	if feed_hint_label:
 		if eco.is_feeding():
-			var boost := max(eco.current_pps() - eco.current_base_pps(), 0.0)
+			var boost: float = max(eco.current_pps() - eco.current_base_pps(), 0.0)
 			if boost > 0.0:
-				var hint_template := _strings_get("feed_hint_boost", "+{pps}/s boost")
-				var hint_text := hint_template.format({"pps": _format_num(boost, 1)})
+				var hint_template: String = _strings_get("feed_hint_boost", "+{pps}/s boost")
+				var hint_text: String = hint_template.format({"pps": _format_num(boost, 1)})
 				feed_hint_label.text = hint_text
 				feed_hint_label.tooltip_text = hint_text
 				feed_hint_label.visible = true
@@ -363,7 +363,7 @@ func _update_feed_ui() -> void:
 		else:
 			feed_hint_label.visible = false
 			feed_hint_label.tooltip_text = ""
-	var fill_style := ArtRegistry.get_style("ui_progress_fill", high_contrast_enabled)
+	var fill_style: StyleBox = ArtRegistry.get_style("ui_progress_fill", high_contrast_enabled)
 	if fill_style is StyleBoxFlat:
 		(fill_style as StyleBoxFlat).bg_color = _get_feed_fill_color(fraction)
 	feed_bar.add_theme_stylebox_override("fill", fill_style)

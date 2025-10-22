@@ -8,14 +8,14 @@
 
 ## 🥚 Core Gameplay Loops
 
-| System                                       | Status        | Description / Notes                                                                              | Suggested PR                                              |
-| -------------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
-| **Feed System (PR-006)**                     | ✅ Complete    | Hold-to-feed mechanic with feed bar, drain/refill loop, and capacity/refill/efficiency upgrades. | —                                                         |
-| **Offline Passive Rate (PR-007)**            | ⏳ Planned     | Offline production at reduced efficiency (≈25% base PPS). Automation adds a multiplier.          | Offline passive calculation + strings + docs              |
-| **VisualDirector & Feed Particles (PR-008)** | ⏳ In Progress | Reactive particle effects while feeding; foundation for later modules.                           | VisualDirector + FeedParticles + settings toggle          |
-| **Logging + Diagnostics (PR-005)**           | ✅ Active      | YolkLogger with queued writes, Diagnostics overlay, and clipboard export.                        | —                                                         |
-| **Environment Simulation (PR-010)**          | ⏳ Prototype   | Dynamic ecosystem reacting to pollution, stress, and reputation. Evolves with production tiers.  | EnvDirector + Backyard stage + Overlay                    |
-| **Prestige / Rebrand Loop**                  | ✅ Implemented | Converts Reputation Stars to permanent production multipliers; “Rebrand & Advance” transition.   | —                                                         |
+| Feature (Spec)                      | Status        | Description / Notes                                                                              | Next PX Target                                                        |
+| ----------------------------------- | ------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| **RM-005 – Logging & Diagnostics**  | ✅ Active      | YolkLogger with queued writes, Diagnostics overlay, and clipboard export.                        | —                                                                     |
+| **RM-006 – Feed System**            | ✅ Complete    | Hold-to-feed mechanic with feed bar, drain/refill loop, and capacity/refill/efficiency upgrades. | —                                                                     |
+| **RM-007 – Offline Passive Rate**   | ⏳ Planned     | Offline production at reduced efficiency (≈25% base PPS). Automation adds a multiplier.          | PX-007.1 – Offline baseline sim (Target Sprint 2025.11)               |
+| **RM-008 – VisualDirector & FX**    | ⏳ In Progress | Reactive particle effects while feeding; foundation for later modules.                           | PX-008.2 – Particle tuning & gating (Target Sprint 2025.12)           |
+| **RM-010 – Environment Simulation** | ⏳ Prototype   | Dynamic ecosystem reacting to pollution, stress, and reputation. Evolves with production tiers.  | PX-010.3 – Backyard polish & overlay stability (Target Sprint 2025.11) |
+| **Prestige / Rebrand Loop**         | ✅ Implemented | Converts Reputation Stars to permanent production multipliers; “Rebrand & Advance” transition.   | —                                                                     |
 
 ---
 
@@ -34,14 +34,14 @@
 
 ## 🧰 Visual & System Modules
 
-| Module                              | Description                                    | PR     | Notes                                     |
-| ----------------------------------- | ---------------------------------------------- | ------ | ----------------------------------------- |
-| **FeedParticles**                   | Grain-like particles reacting to feed_fraction | PR-008 | Active visual feedback.                   |
-| **Conveyor Belt System**            | Visual egg transport tied to PPS               | PR-009 | Expands motion midgame.                   |
-| **Pollution Overlay UI**            | Displays pollution, stress, reputation         | PR-010 | Integrates with EnvironmentDirector.      |
-| **Weather & Day/Night Cycle**       | Ambient variation, pollution clearing          | PR-012 | Aesthetic depth.                          |
-| **Wildlife Return / Green Revival** | Birds & vegetation restore at high rep         | PR-013 | Ethical prestige reward.                  |
-| **Mitigation Structures**           | Bio-filters, composters, solar panels          | PR-014 | Visually and numerically lower pollution. |
+| Module                              | Linked RM | Description                                    | Next PX Target                                               |
+| ----------------------------------- | --------- | ---------------------------------------------- | ------------------------------------------------------------ |
+| **FeedParticles**                   | RM-008    | Grain-like particles reacting to feed_fraction | PX-008.2 – Particle tuning & gating (Target Sprint 2025.12)  |
+| **Conveyor Belt System**            | RM-009    | Visual egg transport tied to PPS               | PX-009.1 – Conveyor prototype pass (Target Sprint 2026.01)   |
+| **Pollution Overlay UI**            | RM-010    | Displays pollution, stress, reputation         | PX-010.3 – Overlay stability polish (Target Sprint 2025.11)  |
+| **Weather & Day/Night Cycle**       | RM-012    | Ambient variation, pollution clearing          | PX-012.1 – Lighting baseline (Target Sprint 2026.02)         |
+| **Wildlife Return / Green Revival** | RM-013    | Birds & vegetation restore at high rep         | PX-013.1 – Wildlife loop prototype (Target Sprint 2026.03)   |
+| **Mitigation Structures**           | RM-014    | Bio-filters, composters, solar panels          | PX-014.1 – Mitigation build-out (Target Sprint 2026.03)      |
 
 ---
 
@@ -80,14 +80,14 @@
 
 ## 🎨 Art & Presentation
 
-| Layer                        | Description                              | Timeline   | Suggested PR                                       |
-| ---------------------------- | ---------------------------------------- | ---------- | -------------------------------------------------- |
-| **Feed Bar & Particles**     | Player feedback core                     | ✅ Complete | —                                                  |
-| **Environment Backdrops**    | Modular 2D scenes per tier               | PR-010→014 | —                                                  |
-| **Dynamic Color Grading**    | Pollution → hue shift                    | PR-011     | —                                                  |
-| **Camera Motion / Parallax** | Tier transitions                         | PR-012     | —                                                  |
-| **Placeholder Art Policy**   | Procedural placeholders + asset handoff  | PR-012     | ArtRegistry + ProceduralFactory + policy doc       |
-| **UI Polish**                | WCAG AA, tooltips, icons                 | Continuous | —                                                  |
+| Layer                        | Linked RM            | Timeline     | Notes / Next PX Target                                             |
+| ---------------------------- | -------------------- | ------------ | ------------------------------------------------------------------ |
+| **Feed Bar & Particles**     | RM-006, RM-008       | ✅ Complete   | —                                                                  |
+| **Environment Backdrops**    | RM-010→RM-014        | On deck      | PX-010.3 – Backyard polish kickoff (Target Sprint 2025.11)         |
+| **Dynamic Color Grading**    | RM-011               | Planned      | PX-011.1 – Color grading prototype (Target Sprint 2026.02)         |
+| **Camera Motion / Parallax** | RM-012               | Planned      | PX-012.2 – Camera sweep pass (Target Sprint 2026.02)               |
+| **Placeholder Art Policy**   | RM-012               | Ongoing      | PX-012.3 – Asset pipeline refresh checklist (Target Sprint 2025.12) |
+| **UI Polish**                | —                    | Continuous   | Micro PX as needed; no major driver scheduled                      |
 
 ---
 
@@ -100,7 +100,7 @@
 | **Accessibility Audit**    | WCAG AA compliance                          | Ongoing    |
 | **Save/Load Versioning**   | Persist environment variables               | 🔜         |
 | **Deterministic .uid IDs** | Stable resource references                  | ✅          |
-| **Roadmap Maintenance**    | Update after each PR merge                  | Continuous |
+| **Roadmap Maintenance**    | Update after each RM/PX delivery            | Continuous |
 
 ---
 
@@ -118,8 +118,8 @@
 
 ### Maintenance Notes
 
-* Update this file with each major PR merge.
-* Reference PR numbers in changelogs and README.
+* Update this file after each major RM or PX delivery.
+* Reference RM/PX identifiers in changelogs and README.
 * Keep all environment & visual modules modular under `/game/scenes/modules/`.
 * Future narrative and ethics expansions extend this roadmap instead of separate notes.
 
