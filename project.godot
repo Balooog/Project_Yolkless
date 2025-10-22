@@ -1,55 +1,63 @@
-; Project Yolkless prototype scaffold
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
 config_version=5
 
 [application]
+
 config/name="Project Yolkless"
 run/main_scene="res://game/scenes/Main.tscn"
+config/features=PackedStringArray("4.5")
 
 [autoload]
+
 Config="*res://game/scripts/Config.gd"
 Logger="*res://game/scripts/Logger.gd"
 Strings="*res://game/scripts/Strings.gd"
 
 [input]
+
 burst_hold={
 "deadzone": 0.5,
-"events": [ {
+"events": [{
 "deadzone": 0.5,
 "device": -1,
 "type": "JOY_BUTTON"
 }, {
 "alt": false,
+"button_index": 1,
+"control": false,
 "device": -1,
 "meta": false,
 "pressed": false,
 "shift": false,
-"type": "MOUSE_BUTTON",
-"button_index": 1,
-"control": false
+"type": "MOUSE_BUTTON"
 }, {
 "alt": false,
+"control": false,
 "device": -1,
+"keycode": 32,
 "meta": false,
 "pressed": false,
 "shift": false,
-"type": "KEY",
-"keycode": 32,
-"control": false
-} ]
+"type": "KEY"
+}]
 }
 reload_balance={
 "deadzone": 0.5,
-"events": [ {
+"events": [{
 "alt": false,
+"control": false,
 "device": -1,
+"keycode": 82,
 "meta": false,
 "pressed": false,
 "shift": false,
-"type": "KEY",
-"keycode": 82,
-"control": false
-} ]
+"type": "KEY"
+}]
 }
-
-[rendering]
-renderer/rendering_method="forward_plus"

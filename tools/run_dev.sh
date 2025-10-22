@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export PATH="/snap/bin:$PATH"
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)/.."
 if ! command -v godot4 >/dev/null 2>&1; then
   echo "godot4 binary not found in PATH. Install Godot 4.x CLI." >&2

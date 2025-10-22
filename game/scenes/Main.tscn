@@ -38,11 +38,6 @@ custom_minimum_size = Vector2(0, 28)
 unique_name_in_owner = true
 size_flags_horizontal = 3
 
-[node name="CooldownLabel" type="Label" parent="UI/VBox/StatsBox"]
-unique_name_in_owner = true
-size_flags_horizontal = 1
-horizontal_alignment = 2
-
 [node name="CapacityContainer" type="VBoxContainer" parent="UI/VBox"]
 custom_minimum_size = Vector2(0, 48)
 
@@ -68,9 +63,26 @@ unique_name_in_owner = true
 [node name="PrestigeLabel" type="Label" parent="UI/VBox"]
 unique_name_in_owner = true
 
-[node name="BurstButton" type="Button" parent="UI/VBox"]
+[node name="BurstRow" type="HBoxContainer" parent="UI/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+
+[node name="BurstButton" type="Button" parent="UI/VBox/BurstRow"]
 unique_name_in_owner = true
 size_flags_horizontal = 3
+
+[node name="CooldownPanel" type="PanelContainer" parent="UI/VBox/BurstRow"]
+unique_name_in_owner = true
+visible = false
+size_flags_horizontal = 1
+size_flags_vertical = 1
+custom_minimum_size = Vector2(96, 0)
+
+[node name="CooldownLabel" type="Label" parent="UI/VBox/BurstRow/CooldownPanel"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="BuyProd" type="Button" parent="UI/VBox"]
 unique_name_in_owner = true

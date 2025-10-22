@@ -23,8 +23,8 @@ func can_buy(id: String) -> bool:
 		return false
 	if owned.has(id):
 		return false
-	var node := _balance.research[id]
-	var prereq := node.get("prereq", "-")
+	var node: Dictionary = _balance.research[id]
+	var prereq: String = String(node.get("prereq", "-"))
 	if prereq != "-" and not owned.has(prereq):
 		return false
 	return prestige_points >= int(node.get("cost", 0))
@@ -32,8 +32,8 @@ func can_buy(id: String) -> bool:
 func buy(id: String) -> bool:
 	if not can_buy(id):
 		return false
-	var node := _balance.research[id]
-	var cost := int(node.get("cost", 0))
+	var node: Dictionary = _balance.research[id]
+	var cost: int = int(node.get("cost", 0))
 	prestige_points -= cost
 	owned[id] = true
 	_apply_node(node)
@@ -48,9 +48,9 @@ func buy(id: String) -> bool:
 	return true
 
 func _apply_node(node: Dictionary) -> void:
-	var stat := node.get("stat", "")
-	var mult_mul := float(node.get("mult_mul", 1.0))
-	var mult_add := float(node.get("mult_add", 0.0))
+	var stat: String = String(node.get("stat", ""))
+	var mult_mul: float = float(node.get("mult_mul", 1.0))
+	var mult_add: float = float(node.get("mult_add", 0.0))
 	match stat:
 		"mul_prod":
 			multipliers["mul_prod"] *= mult_mul
@@ -77,6 +77,6 @@ func reapply_all() -> void:
 	_recalc()
 
 func _log(level: String, category: String, message: String, context: Dictionary) -> void:
-	var logger := get_node_or_null("/root/Logger")
-	if logger:
-		logger.call("record", level, category, message, context)
+	var logger_node := get_node_or_null("/root/Logger")
+	if logger_node is YolkLogger:
+		(logger_node as YolkLogger).log(level, category, message, context)

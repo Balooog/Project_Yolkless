@@ -1,37 +1,36 @@
-# key	text
+# key	value
 soft_label	Egg Credits: {value} / {capacity}
-pps_label	Egg Flow: {pps}/s
-farm_stage	Farm Stage: {name}
-prestige_label	Reputation Stars: {prestige} (Next Rebrand: +{next})
+pps_label	Egg Flow: {value}/s
+farm_stage	Farm Stage: {value}
+prestige_label	Reputation Stars: {value} (Next Rebrand: +{next})
 prestige_button_ready	Rebrand & Advance to Next Generation
 prestige_button_locked	Rebrand & Advance
 burst_button	HOLD TO FEED
 buy_prod	Feeding Efficiency ({cost} 🥚)
 buy_cap	Coop Capacity ({cost} 🥚)
-buy_auto	Auto-Feeder System ({cost} 🥚){requirement}
+buy_auto	Auto-Feeder System ({cost} 🥚){note}
 buy_auto_requirement	 — Requires {stage}
-promote_button	Upgrade to {name} ({cost} 🥚)
 promote_disabled	Stage Mastered
+promote_button	Upgrade to {name} ({cost} 🥚)
 promote	Next Stage
-research_header_title	Innovation Lab
-research_header	Innovation Lab — Research Points: {points}
+research_header	Innovation Lab — Research Points: {value}
+research_prod_label	Feed Conversion R&D
+research_cap_label	Modular Coops
+research_auto_label	Drone Feeders
 research_owned	{label} ✅
 research_available	{label} ({cost} 🌟)
 offline_title	Offline Egg Credits
+capacity_bar_label	Storage: {value} / {capacity}
 cooldown_label	Burst Cooldown: {seconds}s
 settings_button	Settings
-settings_title	Accessibility & Diagnostics
+export_button	Copy Save
+import_button	Paste Save
+copy_diagnostics	Copy Diagnostics
+close_button	Close
 text_scale_label	Text Size
 text_scale_100	100%
 text_scale_110	110%
 text_scale_125	125%
-copy_diagnostics	Copy Diagnostics
-close_button	Close
-debug_overlay_title	DEBUG OVERLAY
-capacity_bar_label	Storage: {value} / {capacity}
-export_button	Copy Save
-import_button	Paste Save
-settings_overlay_close	Close Settings
-research_prod_label	Feed Conversion R&D
-research_cap_label	Modular Coops
-research_auto_label	Drone Feeders
+settings_title	Accessibility & Diagnostics
+high_contrast_label	High Contrast UI
+high_contrast_tooltip	Increases contrast for key interface elements

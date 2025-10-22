@@ -189,7 +189,8 @@ func _update_timers() -> void:
 	var base_cd: float = float(_balance.constants.get("BURST_COOLDOWN", 10.0))
 	_burst_cd_left = min(_burst_cd_left, base_cd)
 	var auto_tick: float = float(_balance.automation.get("auto_burst", {}).get("value", base_cd))
-	var adj := clamp(auto_tick + float(_research.multipliers["auto_cd"]), 1.0, 999.0)
+	var auto_cd_adjust: float = float(_research.multipliers.get("auto_cd", 0.0))
+	var adj: float = clamp(auto_tick + auto_cd_adjust, 1.0, 999.0)
 	_auto_timer.wait_time = adj
 	_autosave_interval = _balance.constants.get("AUTOSAVE_SECONDS", 30.0)
 	_autosave_timer.wait_time = _autosave_interval
@@ -304,7 +305,7 @@ func refresh_after_load() -> void:
 	_update_automation_state()
 
 func _meets_requirements(row: Dictionary) -> bool:
-	var requires := row.get("requires", "-")
+	var requires: String = String(row.get("requires", "-"))
 	if requires == "-" or requires == "":
 		return true
 	if requires.begins_with("factory>="):
@@ -315,6 +316,6 @@ func _meets_requirements(row: Dictionary) -> bool:
 	return true
 
 func _log(level: String, category: String, message: String, context: Dictionary = {}) -> void:
-	var logger := get_node_or_null("/root/Logger")
-	if logger:
-		logger.call("record", level, category, message, context)
+	var logger_node := get_node_or_null("/root/Logger")
+	if logger_node is YolkLogger:
+		(logger_node as YolkLogger).log(level, category, message, context)

@@ -53,38 +53,40 @@ func load_state() -> void:
 		return
 	var text := file.get_as_text()
 	file.close()
-	var wrapper_variant := JSON.parse_string(text)
+	var wrapper_variant: Variant = JSON.parse_string(text)
 	if wrapper_variant == null or typeof(wrapper_variant) != TYPE_DICTIONARY:
 		_log("WARN", "SAVE", "Malformed save wrapper", {"path": save_path})
 		return
 	var wrapper: Dictionary = wrapper_variant
-	var payload := String(wrapper.get("payload", ""))
+	var payload_variant: Variant = wrapper.get("payload", "")
+	var payload := String(payload_variant)
 	var expected := String(wrapper.get("hash", ""))
 	var actual := _hash_md5(payload)
 	if expected != "" and expected != actual:
 		_log("WARN", "SAVE", "Checksum mismatch", {"expected": expected, "actual": actual})
 		return
-	var save_data_variant := JSON.parse_string(payload)
+	var save_data_variant: Variant = JSON.parse_string(payload)
 	if save_data_variant == null or typeof(save_data_variant) != TYPE_DICTIONARY:
 		_log("WARN", "SAVE", "Malformed save data", {"path": save_path})
 		return
 	var save_data: Dictionary = save_data_variant
-	var eco_variant := save_data.get("eco", {})
+	var eco_variant: Variant = save_data.get("eco", {})
 	var eco_data: Dictionary = eco_variant if eco_variant is Dictionary else {}
 	_eco.soft = float(eco_data.get("soft", 0.0))
 	_eco.total_earned = float(eco_data.get("total_earned", 0.0))
 	_eco.factory_tier = int(eco_data.get("factory_tier", 1))
-	var upgrades_variant := save_data.get("upgrades", {})
+	var upgrades_variant: Variant = save_data.get("upgrades", {})
 	if upgrades_variant is Dictionary:
 		_eco._upgrade_levels = (upgrades_variant as Dictionary).duplicate(true)
 	else:
 		_eco._upgrade_levels.clear()
 	_res.owned.clear()
-	var research_variant := save_data.get("research", {})
+	var research_variant: Variant = save_data.get("research", {})
 	var research_data: Dictionary = research_variant if research_variant is Dictionary else {}
-	var owned_variant := research_data.get("owned", [])
+	var owned_variant: Variant = research_data.get("owned", [])
 	if owned_variant is Array:
-		for id in owned_variant:
+		for id_variant in owned_variant:
+			var id: String = String(id_variant)
 			_res.owned[id] = true
 	_res.prestige_points = int(research_data.get("pp", 0))
 	_res.reapply_all()
@@ -138,11 +140,12 @@ func grant_offline() -> float:
 		if file:
 			var text := file.get_as_text()
 			file.close()
-			var wrapper_variant := JSON.parse_string(text)
+			var wrapper_variant: Variant = JSON.parse_string(text)
 			if wrapper_variant and typeof(wrapper_variant) == TYPE_DICTIONARY:
 				var wrapper: Dictionary = wrapper_variant
-				var payload := wrapper.get("payload", "")
-				var data_variant := JSON.parse_string(payload)
+				var payload_variant: Variant = wrapper.get("payload", "")
+				var payload := String(payload_variant)
+				var data_variant: Variant = JSON.parse_string(payload)
 				if data_variant and typeof(data_variant) == TYPE_DICTIONARY:
 					var data_dict: Dictionary = data_variant
 					last_timestamp = int(data_dict.get("ts", 0))
@@ -176,6 +179,6 @@ func get_current_hash() -> String:
 	return _hash_md5(text)
 
 func _log(level: String, category: String, message: String, context: Dictionary = {}) -> void:
-	var logger := get_node_or_null("/root/Logger")
-	if logger:
-		logger.call("record", level, category, message, context)
+	var logger_node := get_node_or_null("/root/Logger")
+	if logger_node is YolkLogger:
+		(logger_node as YolkLogger).log(level, category, message, context)

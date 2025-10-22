@@ -106,21 +106,21 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_R:
 			load_balance()
-			var strings := get_node_or_null("/root/Strings")
-			if strings:
-				strings.call("reload")
+			var strings_node := get_node_or_null("/root/Strings")
+			if strings_node is StringsCatalog:
+				(strings_node as StringsCatalog).load("res://game/data/strings_egg.tsv")
 
 func _to_number(s: String) -> float:
 	var v := s.to_float()
 	return v
 
 func _log(level: String, category: String, message: String, context: Dictionary = {}) -> void:
-	var logger := get_node_or_null("/root/Logger")
-	if logger:
-		logger.call("record", level, category, message, context)
+	var logger_node := get_node_or_null("/root/Logger")
+	if logger_node is YolkLogger:
+		(logger_node as YolkLogger).log(level, category, message, context)
 
 func _hash_from_logger(path: String) -> String:
-	var logger := get_node_or_null("/root/Logger")
-	if logger:
-		return logger.call("hash_md5_from_file", path)
+	var logger_node := get_node_or_null("/root/Logger")
+	if logger_node is YolkLogger:
+		return (logger_node as YolkLogger).hash_md5_from_file(path)
 	return ""

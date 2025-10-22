@@ -18,23 +18,26 @@ Idle game prototype built with Godot 4.x. This scaffold provides:
 - Strings and balance data hot-reload together; editing `strings_egg.tsv` + tapping `R` updates live UI text.
 - Set `Config.seed` in the inspector to a non-zero value to enable deterministic RNG for repeatable PPS/burst timing runs.
 
-## Logging
+## Logging & Strings
 
-- Runtime logs stream to `user://logs/yolkless.log`; rotation keeps three 1 MB backups (`yolkless.log.1`…`.3`).
-- Every session writes a build header line, and emits structured entries such as `INFO [OFFLINE] elapsed=900 applied=28800 eff=0.8 credits=1420`.
-- Use `Logger.copy_diagnostics_to_clipboard()` (or the forthcoming Settings action) for a redacted clipboard bundle.
-- Crash dumps land in `user://logs/crash_dump.txt` with the latest 200 log lines and stack trace.
+- Logging is enabled by default and writes to `user://logs/yolkless.log`, rotating at ~1 MB with three historical segments (`yolkless.log.1`…).
+- The autoload `YolkLogger` buffers entries and flushes every 0.5 s; set `Config.logging_enabled=false` or `logging_force_disable=true` to stop emission safely.
+- Press `F3` to open the diagnostics overlay for live PPS, research multipliers, log status/size, and the latest tail lines.
+- Edit `game/data/strings_egg.tsv` to tweak player-facing copy. Press `R` in-game to hot-reload both balance numbers and these strings.
+- Each session begins with a single header containing the Godot build, timestamp, and active seed; tail exports redact URLs, emails, and tokens automatically.
 
 ## UI Enhancements
 
-- Capacity bar (Storage) and burst cooldown indicator occupy the top HUD, using high-contrast colors that meet WCAG AA targets.
+- Capacity bar tracks Egg Credits versus storage and hot-reloads with balance tweaks (`R`).
+- Burst button now carries a countdown badge that disappears the moment cooldown clears.
 - All player-facing strings are driven via `game/data/strings_egg.tsv`; pressing `R` refreshes both numbers and copy.
 - Press `F3` to toggle the debug overlay with live PPS, capacity, burst state, tier, research multipliers, hashes, and log context.
 
 ## Accessibility & Diagnostics
 
-- Open the in-game **Settings** panel to choose 100 % / 110 % / 125 % text scale and to copy Diagnostics to the clipboard.
+- Open the in-game **Settings** panel to choose 100 % / 110 % / 125 % text scale, enable High Contrast UI, and copy Diagnostics to the clipboard.
 - Diagnostics export includes build/seed metadata, tier state, upgrade/research snapshots, constants, and the last 200 log lines (sanitised).
+- The High Contrast toggle applies WCAG AA compliant themes to the storage bar and cooldown badge for both dark and light backgrounds.
 - Offline resumes surface a single popup per session summarising Egg Credits earned while away.
 
 ## Scripts
