@@ -1,0 +1,137 @@
+Godot Engine v4.5.stable.official.876b29033 - https://godotengine.org
+Vulkan 1.3.255 - Forward+ - Using Device #0: Unknown - llvmpipe (LLVM 15.0.7, 256 bits)
+
+SCRIPT ERROR: Parse Error: Static function "get_stack_trace()" not found in base "GDScriptNativeClass".
+          at: GDScript::reload (res://game/scripts/Logger.gd:36)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "stack" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Logger.gd:36)
+SCRIPT ERROR: Parse Error: Too many arguments for "log()" call. Expected at most 1 but received 4.
+          at: GDScript::reload (res://game/scripts/Logger.gd:46)
+SCRIPT ERROR: Parse Error: Cannot pass a value of type "String" as "float".
+          at: GDScript::reload (res://game/scripts/Logger.gd:46)
+SCRIPT ERROR: Parse Error: Invalid argument for "log()" function: argument 1 should be "float" but is "String".
+          at: GDScript::reload (res://game/scripts/Logger.gd:46)
+SCRIPT ERROR: Parse Error: Static function "get_file_len()" not found in base "GDScriptNativeClass".
+          at: GDScript::reload (res://game/scripts/Logger.gd:67)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "size" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Logger.gd:67)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "value" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Logger.gd:106)
+SCRIPT ERROR: Parse Error: Cannot find member "join" in base "Array[String]".
+          at: GDScript::reload (res://game/scripts/Logger.gd:109)
+SCRIPT ERROR: Parse Error: Function "join()" not found in base Array[String].
+          at: GDScript::reload (res://game/scripts/Logger.gd:109)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "detail" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Logger.gd:109)
+SCRIPT ERROR: Parse Error: Too many arguments for "log()" call. Expected at most 1 but received 4.
+          at: GDScript::reload (res://game/scripts/Logger.gd:118)
+SCRIPT ERROR: Parse Error: Cannot pass a value of type "String" as "float".
+          at: GDScript::reload (res://game/scripts/Logger.gd:118)
+SCRIPT ERROR: Parse Error: Invalid argument for "log()" function: argument 1 should be "float" but is "String".
+          at: GDScript::reload (res://game/scripts/Logger.gd:118)
+SCRIPT ERROR: Parse Error: Too many arguments for "log()" call. Expected at most 1 but received 4.
+          at: GDScript::reload (res://game/scripts/Logger.gd:121)
+SCRIPT ERROR: Parse Error: Cannot pass a value of type "String" as "float".
+          at: GDScript::reload (res://game/scripts/Logger.gd:121)
+SCRIPT ERROR: Parse Error: Invalid argument for "log()" function: argument 1 should be "float" but is "String".
+          at: GDScript::reload (res://game/scripts/Logger.gd:121)
+SCRIPT ERROR: Parse Error: Too many arguments for "log()" call. Expected at most 1 but received 4.
+          at: GDScript::reload (res://game/scripts/Logger.gd:124)
+SCRIPT ERROR: Parse Error: Cannot pass a value of type "String" as "float".
+          at: GDScript::reload (res://game/scripts/Logger.gd:124)
+SCRIPT ERROR: Parse Error: Invalid argument for "log()" function: argument 1 should be "float" but is "String".
+          at: GDScript::reload (res://game/scripts/Logger.gd:124)
+SCRIPT ERROR: Parse Error: Too many arguments for "log()" call. Expected at most 1 but received 4.
+          at: GDScript::reload (res://game/scripts/Logger.gd:127)
+SCRIPT ERROR: Parse Error: Cannot pass a value of type "String" as "float".
+          at: GDScript::reload (res://game/scripts/Logger.gd:127)
+SCRIPT ERROR: Parse Error: Invalid argument for "log()" function: argument 1 should be "float" but is "String".
+          at: GDScript::reload (res://game/scripts/Logger.gd:127)
+SCRIPT ERROR: Parse Error: Cannot find member "join" in base "Array".
+          at: GDScript::reload (res://game/scripts/Logger.gd:159)
+SCRIPT ERROR: Parse Error: Function "join()" not found in base Array.
+          at: GDScript::reload (res://game/scripts/Logger.gd:159)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "payload" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Logger.gd:159)
+SCRIPT ERROR: Parse Error: The variable type is being inferred from a Variant value, so it will be typed as Variant. (Warning treated as error.)
+          at: GDScript::reload (res://game/scripts/Logger.gd:88)
+SCRIPT ERROR: Parse Error: The variable type is being inferred from a Variant value, so it will be typed as Variant. (Warning treated as error.)
+          at: GDScript::reload (res://game/scripts/Logger.gd:132)
+ERROR: Failed to load script "res://game/scripts/Logger.gd" with error "Parse error".
+   at: load (modules/gdscript/gdscript.cpp:3041)
+ERROR: Failed to instantiate an autoload, script 'res://game/scripts/Logger.gd' does not inherit from 'Node'.
+   at: start (main/main.cpp:4335)
+SCRIPT ERROR: Parse Error: The function signature doesn't match the parent. Parent signature is "get(StringName) -> Variant".
+          at: GDScript::reload (res://game/scripts/Strings.gd:38)
+SCRIPT ERROR: Parse Error: Cannot find member "join" in base "PackedStringArray".
+          at: GDScript::reload (res://game/scripts/Strings.gd:28)
+SCRIPT ERROR: Parse Error: Function "join()" not found in base PackedStringArray.
+          at: GDScript::reload (res://game/scripts/Strings.gd:28)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "value" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Strings.gd:28)
+SCRIPT ERROR: Parse Error: The method "get()" overrides a method from native class "Object". This won't be called by the engine and may not work as expected. (Warning treated as error.)
+          at: GDScript::reload (res://game/scripts/Strings.gd:38)
+ERROR: Failed to load script "res://game/scripts/Strings.gd" with error "Parse error".
+   at: load (modules/gdscript/gdscript.cpp:3041)
+ERROR: Failed to instantiate an autoload, script 'res://game/scripts/Strings.gd' does not inherit from 'Node'.
+   at: start (main/main.cpp:4335)
+SCRIPT ERROR: Parse Error: Static function "get_stack_trace()" not found in base "GDScriptNativeClass".
+          at: GDScript::reload (res://game/scripts/Balance.gd:29)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "stack" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Balance.gd:29)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "stack_text" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Balance.gd:30)
+ERROR: Failed to load script "res://game/scripts/Balance.gd" with error "Parse error".
+   at: load (modules/gdscript/gdscript.cpp:3041)
+SCRIPT ERROR: Parse Error: Could not find type "Balance" in the current scope.
+          at: GDScript::reload (res://game/scripts/Research.gd:15)
+SCRIPT ERROR: Parse Error: Could not find type "Balance" in the current scope.
+          at: GDScript::reload (res://game/scripts/Research.gd:17)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "node" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Research.gd:26)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "prereq" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Research.gd:27)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "node" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Research.gd:35)
+SCRIPT ERROR: Parse Error: The variable type is being inferred from a Variant value, so it will be typed as Variant. (Warning treated as error.)
+          at: GDScript::reload (res://game/scripts/Research.gd:51)
+ERROR: Failed to load script "res://game/scripts/Research.gd" with error "Parse error".
+   at: load (modules/gdscript/gdscript.cpp:3041)
+SCRIPT ERROR: Parse Error: Used space character for indentation instead of tab as used before in the file.
+          at: GDScript::reload (res://game/scripts/Economy.gd:290)
+ERROR: Failed to load script "res://game/scripts/Economy.gd" with error "Parse error".
+   at: load (modules/gdscript/gdscript.cpp:3041)
+SCRIPT ERROR: Parse Error: Could not find type "Economy" in the current scope.
+          at: GDScript::reload (res://game/scripts/Save.gd:6)
+SCRIPT ERROR: Parse Error: Could not find type "Research" in the current scope.
+          at: GDScript::reload (res://game/scripts/Save.gd:7)
+SCRIPT ERROR: Parse Error: Could not find type "Economy" in the current scope.
+          at: GDScript::reload (res://game/scripts/Save.gd:9)
+SCRIPT ERROR: Parse Error: Could not find type "Research" in the current scope.
+          at: GDScript::reload (res://game/scripts/Save.gd:9)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "grant" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Save.gd:152)
+SCRIPT ERROR: Parse Error: The variable type is being inferred from a Variant value, so it will be typed as Variant. (Warning treated as error.)
+          at: GDScript::reload (res://game/scripts/Save.gd:56)
+SCRIPT ERROR: Parse Error: The variable type is being inferred from a Variant value, so it will be typed as Variant. (Warning treated as error.)
+          at: GDScript::reload (res://game/scripts/Save.gd:67)
+SCRIPT ERROR: Parse Error: The variable type is being inferred from a Variant value, so it will be typed as Variant. (Warning treated as error.)
+          at: GDScript::reload (res://game/scripts/Save.gd:72)
+SCRIPT ERROR: Parse Error: The variable type is being inferred from a Variant value, so it will be typed as Variant. (Warning treated as error.)
+          at: GDScript::reload (res://game/scripts/Save.gd:77)
+SCRIPT ERROR: Parse Error: The variable type is being inferred from a Variant value, so it will be typed as Variant. (Warning treated as error.)
+          at: GDScript::reload (res://game/scripts/Save.gd:83)
+SCRIPT ERROR: Parse Error: The variable type is being inferred from a Variant value, so it will be typed as Variant. (Warning treated as error.)
+          at: GDScript::reload (res://game/scripts/Save.gd:85)
+SCRIPT ERROR: Parse Error: The variable type is being inferred from a Variant value, so it will be typed as Variant. (Warning treated as error.)
+          at: GDScript::reload (res://game/scripts/Save.gd:141)
+SCRIPT ERROR: Parse Error: The variable type is being inferred from a Variant value, so it will be typed as Variant. (Warning treated as error.)
+          at: GDScript::reload (res://game/scripts/Save.gd:144)
+SCRIPT ERROR: Parse Error: The variable type is being inferred from a Variant value, so it will be typed as Variant. (Warning treated as error.)
+          at: GDScript::reload (res://game/scripts/Save.gd:145)
+ERROR: Failed to load script "res://game/scripts/Save.gd" with error "Parse error".
+   at: load (modules/gdscript/gdscript.cpp:3041)
+SCRIPT ERROR: Parse Error: Unexpected "**" in class body.
+          at: GDScript::reload (res://game/scripts/Main.gd:371)
+ERROR: Failed to load script "res://game/scripts/Main.gd" with error "Parse error".
+   at: load (modules/gdscript/gdscript.cpp:3041)

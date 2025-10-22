@@ -1,0 +1,124 @@
+Godot Engine v4.5.stable.official.876b29033 - https://godotengine.org
+Vulkan 1.3.255 - Forward+ - Using Device #0: Unknown - llvmpipe (LLVM 15.0.7, 256 bits)
+
+SCRIPT ERROR: Parse Error: Could not find type "Balance" in the current scope.
+          at: GDScript::reload (res://game/scripts/Research.gd:15)
+SCRIPT ERROR: Parse Error: Could not find type "Balance" in the current scope.
+          at: GDScript::reload (res://game/scripts/Research.gd:17)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "node" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Research.gd:26)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "prereq" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Research.gd:27)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "node" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Research.gd:35)
+SCRIPT ERROR: Parse Error: The variable type is being inferred from a Variant value, so it will be typed as Variant. (Warning treated as error.)
+          at: GDScript::reload (res://game/scripts/Research.gd:44)
+ERROR: Failed to load script "res://game/scripts/Research.gd" with error "Parse error".
+   at: load (modules/gdscript/gdscript.cpp:3041)
+SCRIPT ERROR: Parse Error: Could not find type "Balance" in the current scope.
+          at: GDScript::reload (res://game/scripts/Economy.gd:23)
+SCRIPT ERROR: Parse Error: Could not find type "Research" in the current scope.
+          at: GDScript::reload (res://game/scripts/Economy.gd:24)
+SCRIPT ERROR: Parse Error: Could not find type "Balance" in the current scope.
+          at: GDScript::reload (res://game/scripts/Economy.gd:29)
+SCRIPT ERROR: Parse Error: Could not find type "Research" in the current scope.
+          at: GDScript::reload (res://game/scripts/Economy.gd:29)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "row" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Economy.gd:90)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "cost" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Economy.gd:106)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "P0" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Economy.gd:117)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "burst_mult" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Economy.gd:118)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "tier_prod" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Economy.gd:119)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "research_mul" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Economy.gd:126)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "tier_cap" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Economy.gd:132)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "research_mul" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Economy.gd:133)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "cap_hours" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Economy.gd:137)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "eff" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Economy.gd:138)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "grant" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Economy.gd:141)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "K" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Economy.gd:146)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "ALPHA" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Economy.gd:147)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "base_cd" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Economy.gd:165)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "auto_tick" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Economy.gd:167)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "row" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Economy.gd:190)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "row" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Economy.gd:238)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "unlocks" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Economy.gd:246)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "parts" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Economy.gd:266)
+SCRIPT ERROR: Parse Error: The variable type is being inferred from a Variant value, so it will be typed as Variant. (Warning treated as error.)
+          at: GDScript::reload (res://game/scripts/Economy.gd:139)
+SCRIPT ERROR: Parse Error: The variable type is being inferred from a Variant value, so it will be typed as Variant. (Warning treated as error.)
+          at: GDScript::reload (res://game/scripts/Economy.gd:168)
+SCRIPT ERROR: Parse Error: The variable type is being inferred from a Variant value, so it will be typed as Variant. (Warning treated as error.)
+          at: GDScript::reload (res://game/scripts/Economy.gd:201)
+SCRIPT ERROR: Parse Error: The variable type is being inferred from a Variant value, so it will be typed as Variant. (Warning treated as error.)
+          at: GDScript::reload (res://game/scripts/Economy.gd:202)
+SCRIPT ERROR: Parse Error: The variable type is being inferred from a Variant value, so it will be typed as Variant. (Warning treated as error.)
+          at: GDScript::reload (res://game/scripts/Economy.gd:262)
+ERROR: Failed to load script "res://game/scripts/Economy.gd" with error "Parse error".
+   at: load (modules/gdscript/gdscript.cpp:3041)
+SCRIPT ERROR: Parse Error: Could not find type "Economy" in the current scope.
+          at: GDScript::reload (res://game/scripts/Save.gd:6)
+SCRIPT ERROR: Parse Error: Could not find type "Research" in the current scope.
+          at: GDScript::reload (res://game/scripts/Save.gd:7)
+SCRIPT ERROR: Parse Error: Could not find type "Economy" in the current scope.
+          at: GDScript::reload (res://game/scripts/Save.gd:9)
+SCRIPT ERROR: Parse Error: Could not find type "Research" in the current scope.
+          at: GDScript::reload (res://game/scripts/Save.gd:9)
+SCRIPT ERROR: Parse Error: Cannot find member "HASH_MD5" in base "Crypto".
+          at: GDScript::reload (res://game/scripts/Save.gd:32)
+SCRIPT ERROR: Parse Error: Static function "hash()" not found in base "GDScriptNativeClass".
+          at: GDScript::reload (res://game/scripts/Save.gd:32)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "hash" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Save.gd:32)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "expect" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Save.gd:51)
+SCRIPT ERROR: Parse Error: Cannot find member "HASH_MD5" in base "Crypto".
+          at: GDScript::reload (res://game/scripts/Save.gd:52)
+SCRIPT ERROR: Parse Error: Static function "hash()" not found in base "GDScriptNativeClass".
+          at: GDScript::reload (res://game/scripts/Save.gd:52)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "got" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Save.gd:52)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "eco_data" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Save.gd:59)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "upgrades" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Save.gd:63)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "research_data" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Save.gd:67)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "owned" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Save.gd:68)
+SCRIPT ERROR: Parse Error: Too few arguments for "load()" call. Expected at least 1 but received 0.
+          at: GDScript::reload (res://game/scripts/Save.gd:95)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "gain" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://game/scripts/Save.gd:111)
+SCRIPT ERROR: Parse Error: The variable type is being inferred from a Variant value, so it will be typed as Variant. (Warning treated as error.)
+          at: GDScript::reload (res://game/scripts/Save.gd:47)
+SCRIPT ERROR: Parse Error: The variable type is being inferred from a Variant value, so it will be typed as Variant. (Warning treated as error.)
+          at: GDScript::reload (res://game/scripts/Save.gd:56)
+SCRIPT ERROR: Parse Error: The variable type is being inferred from a Variant value, so it will be typed as Variant. (Warning treated as error.)
+          at: GDScript::reload (res://game/scripts/Save.gd:104)
+SCRIPT ERROR: Parse Error: The variable type is being inferred from a Variant value, so it will be typed as Variant. (Warning treated as error.)
+          at: GDScript::reload (res://game/scripts/Save.gd:106)
+ERROR: Failed to load script "res://game/scripts/Save.gd" with error "Parse error".
+   at: load (modules/gdscript/gdscript.cpp:3041)
+SCRIPT ERROR: Parse Error: Expected parameter name.
+          at: GDScript::reload (res://game/scripts/Main.gd:38)
+ERROR: Failed to load script "res://game/scripts/Main.gd" with error "Parse error".
+   at: load (modules/gdscript/gdscript.cpp:3041)
+Balance loaded: 0 upgrades, 0 tiers, 0 research

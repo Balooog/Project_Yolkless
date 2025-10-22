@@ -9,11 +9,11 @@ var _res: Research
 func setup(eco: Economy, res: Research) -> void:
 	_eco = eco
 	_res = res
-	_eco.autosave.connect(save)
-	_res.changed.connect(save)
+	_eco.autosave.connect(_on_autosave)
+	_res.changed.connect(func(): save("research"))
 
-func save() -> void:
-	var data := {
+func save(reason: String = "manual") -> void:
+	var payload_dict := {
 		"ts": Time.get_unix_time_from_system(),
 		"eco": {
 			"soft": _eco.soft,
@@ -28,87 +28,154 @@ func save() -> void:
 			"pp": _res.prestige_points,
 		},
 	}
-	var s := JSON.stringify(data)
-	var hash := Crypto.hash(Crypto.HASH_MD5, s.to_utf8_buffer()).hex_encode()
-	var wrapper := {"hash": hash, "payload": s}
-	var ok := FileAccess.open(save_path, FileAccess.WRITE)
-	if ok:
-		ok.store_string(JSON.stringify(wrapper))
-		ok.close()
+	var payload := JSON.stringify(payload_dict)
+	var hash := _hash_md5(payload)
+	var wrapper := {"hash": hash, "payload": payload}
+	var file := FileAccess.open(save_path, FileAccess.WRITE)
+	if file:
+		file.store_string(JSON.stringify(wrapper))
+		file.close()
+	_log("INFO", "SAVE", "Save written", {
+		"reason": reason,
+		"soft": _eco.soft,
+		"prestige": _res.prestige_points,
+		"tier": _eco.factory_tier,
+		"hash": hash
+	})
 
-func load() -> void:
+func load_state() -> void:
 	if not FileAccess.file_exists(save_path):
+		_log("INFO", "SAVE", "No save file found", {"path": save_path})
 		return
-	var f := FileAccess.open(save_path, FileAccess.READ)
-	if f == null:
+	var file := FileAccess.open(save_path, FileAccess.READ)
+	if file == null:
+		_log("ERROR", "SAVE", "Failed to open save file", {"path": save_path})
 		return
-	var text := f.get_as_text()
-	f.close()
-	var wrapper := JSON.parse_string(text)
-	if wrapper == null:
+	var text := file.get_as_text()
+	file.close()
+	var wrapper_variant := JSON.parse_string(text)
+	if wrapper_variant == null or typeof(wrapper_variant) != TYPE_DICTIONARY:
+		_log("WARN", "SAVE", "Malformed save wrapper", {"path": save_path})
 		return
-	var s: String = wrapper.get("payload", "")
-	var expect := wrapper.get("hash", "")
-	var got := Crypto.hash(Crypto.HASH_MD5, s.to_utf8_buffer()).hex_encode()
-	if got != expect:
-		push_warning("Save: hash mismatch; ignoring.")
+	var wrapper: Dictionary = wrapper_variant
+	var payload := String(wrapper.get("payload", ""))
+	var expected := String(wrapper.get("hash", ""))
+	var actual := _hash_md5(payload)
+	if expected != "" and expected != actual:
+		_log("WARN", "SAVE", "Checksum mismatch", {"expected": expected, "actual": actual})
 		return
-	var data := JSON.parse_string(s)
-	if data == null:
+	var save_data_variant := JSON.parse_string(payload)
+	if save_data_variant == null or typeof(save_data_variant) != TYPE_DICTIONARY:
+		_log("WARN", "SAVE", "Malformed save data", {"path": save_path})
 		return
-	var eco_data := data.get("eco", {})
+	var save_data: Dictionary = save_data_variant
+	var eco_variant := save_data.get("eco", {})
+	var eco_data: Dictionary = eco_variant if eco_variant is Dictionary else {}
 	_eco.soft = float(eco_data.get("soft", 0.0))
 	_eco.total_earned = float(eco_data.get("total_earned", 0.0))
 	_eco.factory_tier = int(eco_data.get("factory_tier", 1))
-	var upgrades := data.get("upgrades", {})
-	if typeof(upgrades) == TYPE_DICTIONARY:
-		_eco._upgrade_levels = upgrades.duplicate()
+	var upgrades_variant := save_data.get("upgrades", {})
+	if upgrades_variant is Dictionary:
+		_eco._upgrade_levels = (upgrades_variant as Dictionary).duplicate(true)
+	else:
+		_eco._upgrade_levels.clear()
 	_res.owned.clear()
-	var research_data := data.get("research", {})
-	var owned := research_data.get("owned", [])
-	if typeof(owned) == TYPE_ARRAY:
-		for id in owned:
+	var research_variant := save_data.get("research", {})
+	var research_data: Dictionary = research_variant if research_variant is Dictionary else {}
+	var owned_variant := research_data.get("owned", [])
+	if owned_variant is Array:
+		for id in owned_variant:
 			_res.owned[id] = true
 	_res.prestige_points = int(research_data.get("pp", 0))
 	_res.reapply_all()
 	_eco.refresh_after_load()
 	_eco.soft_changed.emit(_eco.soft)
 	_eco.tier_changed.emit(_eco.factory_tier)
+	_log("INFO", "SAVE", "Save loaded", {
+		"soft": _eco.soft,
+		"prestige": _res.prestige_points,
+		"tier": _eco.factory_tier,
+		"hash": actual
+	})
 
 func export_to_clipboard() -> void:
-	var f := FileAccess.open(save_path, FileAccess.READ)
-	if f == null:
+	if not FileAccess.file_exists(save_path):
+		_log("WARN", "SAVE", "Cannot export missing save", {"path": save_path})
 		return
-	var text := f.get_as_text()
+	var file := FileAccess.open(save_path, FileAccess.READ)
+	if file == null:
+		_log("ERROR", "SAVE", "Failed to open save for export", {"path": save_path})
+		return
+	var text := file.get_as_text()
+	file.close()
 	DisplayServer.clipboard_set(Marshalls.raw_to_base64(text.to_utf8_buffer()))
+	_log("INFO", "SAVE", "Save exported to clipboard", {
+		"bytes": text.length(),
+		"hash": _hash_md5(text)
+	})
 
 func import_from_clipboard() -> void:
 	var b64 := DisplayServer.clipboard_get()
 	if b64 == "":
+		_log("WARN", "SAVE", "Clipboard empty on import")
 		return
 	var bytes := Marshalls.base64_to_raw(b64)
 	var text := bytes.get_string_from_utf8()
-	var f := FileAccess.open(save_path, FileAccess.WRITE)
-	if f:
-		f.store_string(text)
-		f.close()
-	load()
+	var file := FileAccess.open(save_path, FileAccess.WRITE)
+	if file:
+		file.store_string(text)
+		file.close()
+	_log("INFO", "SAVE", "Save imported from clipboard", {
+		"bytes": text.length(),
+		"hash": _hash_md5(text)
+	})
+	load_state()
 
 func grant_offline() -> float:
-	var last := 0
+	var last_timestamp := 0
 	if FileAccess.file_exists(save_path):
-		var f := FileAccess.open(save_path, FileAccess.READ)
-		if f:
-			var text := f.get_as_text()
-			f.close()
-			var wrapper := JSON.parse_string(text)
-			if wrapper:
-				var data := JSON.parse_string(wrapper.get("payload", ""))
-				if data:
-					last = int(data.get("ts", 0))
-	var dt := Time.get_unix_time_from_system() - last
-	if dt > 5:
-		var gain := _eco.offline_grant(dt)
-		print("Offline Egg Credits granted:", gain)
-		return gain
-	return 0.0
+		var file := FileAccess.open(save_path, FileAccess.READ)
+		if file:
+			var text := file.get_as_text()
+			file.close()
+			var wrapper_variant := JSON.parse_string(text)
+			if wrapper_variant and typeof(wrapper_variant) == TYPE_DICTIONARY:
+				var wrapper: Dictionary = wrapper_variant
+				var payload := wrapper.get("payload", "")
+				var data_variant := JSON.parse_string(payload)
+				if data_variant and typeof(data_variant) == TYPE_DICTIONARY:
+					var data_dict: Dictionary = data_variant
+					last_timestamp = int(data_dict.get("ts", 0))
+	var elapsed := Time.get_unix_time_from_system() - last_timestamp
+	if elapsed <= 5:
+		return 0.0
+	var grant := _eco.offline_grant(elapsed)
+	_log("INFO", "OFFLINE", "Offline resume", {
+		"elapsed": elapsed,
+		"grant": grant
+	})
+	return grant
+
+func _on_autosave(reason: String) -> void:
+	save(reason)
+
+func _hash_md5(text: String) -> String:
+	var ctx := HashingContext.new()
+	ctx.start(HashingContext.HASH_MD5)
+	ctx.update(text.to_utf8_buffer())
+	return ctx.finish().hex_encode()
+
+func get_current_hash() -> String:
+	if not FileAccess.file_exists(save_path):
+		return ""
+	var file := FileAccess.open(save_path, FileAccess.READ)
+	if file == null:
+		return ""
+	var text := file.get_as_text()
+	file.close()
+	return _hash_md5(text)
+
+func _log(level: String, category: String, message: String, context: Dictionary = {}) -> void:
+	var logger := get_node_or_null("/root/Logger")
+	if logger:
+		logger.call("record", level, category, message, context)

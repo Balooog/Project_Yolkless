@@ -37,6 +37,13 @@ func buy(id: String) -> bool:
 	prestige_points -= cost
 	owned[id] = true
 	_apply_node(node)
+	_log("INFO", "RESEARCH", "Node purchased", {
+		"id": id,
+		"cost": cost,
+		"mul_prod": multipliers.get("mul_prod", 1.0),
+		"mul_cap": multipliers.get("mul_cap", 1.0),
+		"auto_cd": multipliers.get("auto_cd", 0.0)
+	})
 	changed.emit()
 	return true
 
@@ -54,7 +61,10 @@ func _apply_node(node: Dictionary) -> void:
 		"auto_cd":
 			multipliers["auto_cd"] += mult_add
 		_:
-			push_warning("Research: unhandled stat %s" % stat)
+			_log("WARN", "RESEARCH", "Unhandled research stat", {
+				"stat": stat,
+				"id": node.get("id", "unknown")
+			})
 
 func _recalc() -> void:
 	multipliers = {"mul_prod": 1.0, "mul_cap": 1.0, "auto_cd": 0.0}
@@ -65,3 +75,8 @@ func _recalc() -> void:
 
 func reapply_all() -> void:
 	_recalc()
+
+func _log(level: String, category: String, message: String, context: Dictionary) -> void:
+	var logger := get_node_or_null("/root/Logger")
+	if logger:
+		logger.call("record", level, category, message, context)

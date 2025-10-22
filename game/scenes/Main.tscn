@@ -27,75 +27,105 @@ layer = 1
 unique_name_in_owner = true
 offset_left = 20.0
 offset_top = 20.0
-offset_right = 540.0
-offset_bottom = 380.0
+offset_right = 580.0
+offset_bottom = 420.0
 
-[node name="SoftLabel" type="Label" parent="UI/VBox"]
+[node name="StatsBox" type="HBoxContainer" parent="UI/VBox"]
 unique_name_in_owner = true
-text = "🥚 Egg Credits: 0"
+custom_minimum_size = Vector2(0, 28)
+
+[node name="SoftLabel" type="Label" parent="UI/VBox/StatsBox"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+
+[node name="CooldownLabel" type="Label" parent="UI/VBox/StatsBox"]
+unique_name_in_owner = true
+size_flags_horizontal = 1
+horizontal_alignment = 2
+
+[node name="CapacityContainer" type="VBoxContainer" parent="UI/VBox"]
+custom_minimum_size = Vector2(0, 48)
+
+[node name="CapacityLabel" type="Label" parent="UI/VBox/CapacityContainer"]
+unique_name_in_owner = true
+
+[node name="CapacityBar" type="ProgressBar" parent="UI/VBox/CapacityContainer"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+show_percentage = false
+step = 0.01
+value = 0.0
+max_value = 1.0
+theme_override_colors/background = Color(0.1, 0.1, 0.1, 1)
+theme_override_colors/fill = Color(0.95, 0.82, 0.18, 1)
 
 [node name="PPSLabel" type="Label" parent="UI/VBox"]
 unique_name_in_owner = true
-text = "Egg Flow: 0/s"
 
 [node name="TierLabel" type="Label" parent="UI/VBox"]
 unique_name_in_owner = true
-text = "Farm Stage: Backyard Coop"
 
 [node name="PrestigeLabel" type="Label" parent="UI/VBox"]
 unique_name_in_owner = true
-text = "🌟 Reputation Stars: 0"
 
 [node name="BurstButton" type="Button" parent="UI/VBox"]
 unique_name_in_owner = true
-text = "HOLD TO FEED"
+size_flags_horizontal = 3
 
 [node name="BuyProd" type="Button" parent="UI/VBox"]
 unique_name_in_owner = true
-text = "Feeding Efficiency"
+size_flags_horizontal = 3
 
 [node name="BuyCap" type="Button" parent="UI/VBox"]
 unique_name_in_owner = true
-text = "Coop Capacity"
+size_flags_horizontal = 3
 
 [node name="BuyAuto" type="Button" parent="UI/VBox"]
 unique_name_in_owner = true
-text = "Auto-Feeder System"
+size_flags_horizontal = 3
 
 [node name="Promote" type="Button" parent="UI/VBox"]
 unique_name_in_owner = true
-text = "Upgrade Farm"
+size_flags_horizontal = 3
 
 [node name="ResearchHeader" type="Label" parent="UI/VBox"]
-text = "Innovation Lab"
+unique_name_in_owner = true
 
 [node name="ResearchStatus" type="Label" parent="UI/VBox"]
 unique_name_in_owner = true
-text = "Innovation Lab — Research Points: 0"
 
 [node name="ResearchBuyProd" type="Button" parent="UI/VBox"]
 unique_name_in_owner = true
-text = "Feed Conversion R&D"
+size_flags_horizontal = 3
 
 [node name="ResearchBuyCap" type="Button" parent="UI/VBox"]
 unique_name_in_owner = true
-text = "Modular Coops"
+size_flags_horizontal = 3
 
 [node name="ResearchBuyAuto" type="Button" parent="UI/VBox"]
 unique_name_in_owner = true
-text = "Drone Feeders"
+size_flags_horizontal = 3
 
 [node name="PrestigeButton" type="Button" parent="UI/VBox"]
 unique_name_in_owner = true
-text = "Rebrand & Advance"
+size_flags_horizontal = 3
 
-[node name="Export" type="Button" parent="UI/VBox"]
+[node name="ButtonRow" type="HBoxContainer" parent="UI/VBox"]
 unique_name_in_owner = true
-text = "Copy Save"
+custom_minimum_size = Vector2(0, 32)
 
-[node name="Import" type="Button" parent="UI/VBox"]
+[node name="Export" type="Button" parent="UI/VBox/ButtonRow"]
 unique_name_in_owner = true
-text = "Paste Save"
+size_flags_horizontal = 1
+
+[node name="Import" type="Button" parent="UI/VBox/ButtonRow"]
+unique_name_in_owner = true
+size_flags_horizontal = 1
+
+[node name="SettingsButton" type="Button" parent="UI/VBox/ButtonRow"]
+unique_name_in_owner = true
+size_flags_horizontal = 1
+text = "Settings"
 
 [node name="OfflinePopup" type="PopupPanel" parent="UI"]
 unique_name_in_owner = true
@@ -116,8 +146,6 @@ theme_override_constants/margin_bottom = 16
 
 [node name="OfflineLabel" type="Label" parent="UI/OfflinePopup/VBox"]
 unique_name_in_owner = true
-text = "Offline Egg Credits"
 
 [node name="OfflineClose" type="Button" parent="UI/OfflinePopup/VBox"]
 unique_name_in_owner = true
-text = "Close"

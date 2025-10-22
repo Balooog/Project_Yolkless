@@ -5,6 +5,11 @@ config_version=5
 config/name="Project Yolkless"
 run/main_scene="res://game/scenes/Main.tscn"
 
+[autoload]
+Config="*res://game/scripts/Config.gd"
+Logger="*res://game/scripts/Logger.gd"
+Strings="*res://game/scripts/Strings.gd"
+
 [input]
 burst_hold={
 "deadzone": 0.5,

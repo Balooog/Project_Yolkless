@@ -26,7 +26,7 @@ func load_balance() -> void:
 
 	var file := FileAccess.open(balance_path, FileAccess.READ)
 	if file == null:
-		push_error("Balance: cannot open %s" % balance_path)
+		_log("ERROR", "BALANCE", "Failed to open balance file", {"path": balance_path})
 		return
 
 	var section := ""
@@ -93,14 +93,34 @@ func load_balance() -> void:
 				if cols.size() >= 2:
 					prestige[cols[0]] = _to_number(cols[1])
 	file.close()
-	print("Balance loaded: %d upgrades, %d tiers, %d research" % [upgrades.size(), factory_tiers.size(), research.size()])
+	var md5 := _hash_from_logger(balance_path)
+	_log("INFO", "BALANCE", "Balance data reloaded", {
+		"upgrades": upgrades.size(),
+		"tiers": factory_tiers.size(),
+		"research": research.size(),
+		"md5": md5
+	})
 	reloaded.emit()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_R:
 			load_balance()
+			var strings := get_node_or_null("/root/Strings")
+			if strings:
+				strings.call("reload")
 
 func _to_number(s: String) -> float:
 	var v := s.to_float()
 	return v
+
+func _log(level: String, category: String, message: String, context: Dictionary = {}) -> void:
+	var logger := get_node_or_null("/root/Logger")
+	if logger:
+		logger.call("record", level, category, message, context)
+
+func _hash_from_logger(path: String) -> String:
+	var logger := get_node_or_null("/root/Logger")
+	if logger:
+		return logger.call("hash_md5_from_file", path)
+	return ""
