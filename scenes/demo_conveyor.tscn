@@ -1,0 +1,43 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://src/modules/conveyor/ConveyorManager.gd" id="1_igp4p"]
+[ext_resource type="Script" path="res://src/modules/conveyor/ConveyorBelt.gd" id="2_nf1as"]
+[ext_resource type="Script" path="res://src/modules/conveyor/DemoConveyorController.gd" id="3_qj8gj"]
+
+[sub_resource type="Curve2D" id="Curve2D_4w6ph"]
+point_count = 4
+points = PackedVector2Array(0, 0, 0, 0, 120, 0, 180, -30, -120, 0, 120, 0, 360, 30, -120, 0, 120, 0, 540, 0, -120, 0, 0, 0)
+tilts = PackedFloat32Array(0, 0, 0, 0)
+
+[node name="DemoConveyor" type="Node2D"]
+script = ExtResource("3_qj8gj")
+
+[node name="ConveyorManager" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("1_igp4p")
+throughput_smoothing = 0.25
+log_interval = 3.0
+
+[node name="ConveyorBelt" type="Node2D" parent="."]
+unique_name_in_owner = true
+position = Vector2(120, 220)
+script = ExtResource("2_nf1as")
+belt_width = 28.0
+stripe_spacing = 56.0
+easing_time = 0.2
+
+[node name="Path2D" type="Path2D" parent="ConveyorBelt"]
+curve = SubResource("Curve2D_4w6ph")
+
+[node name="Spawner" type="Timer" parent="."]
+unique_name_in_owner = true
+wait_time = 0.45
+autostart = true
+
+[node name="StatsLabel" type="Label" parent="."]
+unique_name_in_owner = true
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 460.0
+offset_bottom = 48.0
+text = "Rate: 0.0/s | Queue: 0 | Avg travel: 0.00s"

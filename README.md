@@ -87,6 +87,13 @@ code docs/prompts/PX-010.2.md   # paste canvas text
 - Feed boosts only apply when you are actively online; unlocking automation grants the `OFFLINE_AUTOMATION_BONUS` multiplier during those passive ticks.
 - Offline earnings still respect the cap window (`OFFLINE_CAP_HOURS`) and clamp to the current storage capacity.
 
+## Conveyor Module
+
+- `src/modules/conveyor/` houses the Conveyor Manager, Belt, and Item scripts. Belts chain configurable segments with per-run speed and capacity caps, pushing items forward with easing when queues clear.
+- `ConveyorManager` exposes `item_spawned`, `item_delivered`, and `throughput_updated` signals while logging smoothed items/sec plus queue depth via `YolkLogger`.
+- `scenes/demo_conveyor.tscn` includes a timer-driven spawner and HUD label so designers can watch flow, jams, and delivery cadence without wiring the full farm.
+- Full usage notes live in `docs/modules/conveyor.md`; clone the segment template there to embed belts in future factory stages.
+
 ## Scripts
 
 - `tools/run_dev.sh` — launch the game (set `NO_WINDOW=1` to use headless mode)
