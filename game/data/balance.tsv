@@ -17,6 +17,9 @@ AUTOSAVE_SECONDS	30
 prod_1	prod	mul_prod	0.1	1.0	20	1.15	-
 cap_1	cap	mul_cap	0.1	1.0	25	1.18	-
 auto_1	auto	unlock_autoburst	0	1.0	2500	1.0	factory>=3
+feed_storage	feed	feed_capacity	10.0	1.0	50	1.20	-
+feed_refill	feed	feed_refill	1.0	1.10	75	1.25	-
+feed_efficiency	feed	feed_efficiency	0.10	1.0	100	1.30	-
 
 # [FACTORY_TIERS]
 # tier	display_name	cap_mult	prod_mult	unlocks	cost

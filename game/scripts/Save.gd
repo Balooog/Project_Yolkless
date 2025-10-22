@@ -21,6 +21,7 @@ func save(reason: String = "manual") -> void:
 			"capacity_rank": _eco.capacity_rank,
 			"prod_rank": _eco.prod_rank,
 			"factory_tier": _eco.factory_tier,
+			"feed": _eco.feed_current,
 		},
 		"upgrades": _eco._upgrade_levels,
 		"research": {
@@ -80,6 +81,10 @@ func load_state() -> void:
 		_eco._upgrade_levels = (upgrades_variant as Dictionary).duplicate(true)
 	else:
 		_eco._upgrade_levels.clear()
+	if eco_data.has("feed"):
+		_eco.feed_current = float(eco_data.get("feed", _eco.feed_current))
+	else:
+		_eco.feed_current = _eco.feed_capacity
 	_res.owned.clear()
 	var research_variant: Variant = save_data.get("research", {})
 	var research_data: Dictionary = research_variant if research_variant is Dictionary else {}

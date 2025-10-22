@@ -1,9 +1,10 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 [ext_resource type="Script" path="res://game/scripts/Balance.gd" id="1"]
 [ext_resource type="Script" path="res://game/scripts/Research.gd" id="2"]
 [ext_resource type="Script" path="res://game/scripts/Economy.gd" id="3"]
 [ext_resource type="Script" path="res://game/scripts/Save.gd" id="4"]
 [ext_resource type="Script" path="res://game/scripts/Main.gd" id="5"]
+[ext_resource type="PackedScene" path="res://game/scenes/modules/environment/PollutionOverlay.tscn" id="6"]
 
 [node name="Main" type="Node"]
 script = ExtResource("5")
@@ -20,8 +21,24 @@ script = ExtResource("3")
 [node name="Save" type="Node" parent="."]
 script = ExtResource("4")
 
+[node name="EnvironmentRoot" type="Node2D" parent="."]
+unique_name_in_owner = true
+z_index = -5
+
+[node name="DenySound" type="AudioStreamPlayer" parent="."]
+unique_name_in_owner = true
+autoplay = false
+volume_db = -6.0
+
+[node name="VisualLayer" type="CanvasLayer" parent="."]
+unique_name_in_owner = true
+layer = 0
+
 [node name="UI" type="CanvasLayer" parent="."]
 layer = 1
+
+[node name="EnvironmentOverlay" parent="UI" instance=ExtResource("6")]
+unique_name_in_owner = true
 
 [node name="VBox" type="VBoxContainer" parent="UI"]
 unique_name_in_owner = true
@@ -63,26 +80,26 @@ unique_name_in_owner = true
 [node name="PrestigeLabel" type="Label" parent="UI/VBox"]
 unique_name_in_owner = true
 
-[node name="BurstRow" type="HBoxContainer" parent="UI/VBox"]
+[node name="BurstRow" type="VBoxContainer" parent="UI/VBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 44)
+custom_minimum_size = Vector2(0, 60)
 
 [node name="BurstButton" type="Button" parent="UI/VBox/BurstRow"]
 unique_name_in_owner = true
 size_flags_horizontal = 3
 
-[node name="CooldownPanel" type="PanelContainer" parent="UI/VBox/BurstRow"]
-unique_name_in_owner = true
-visible = false
-size_flags_horizontal = 1
-size_flags_vertical = 1
-custom_minimum_size = Vector2(96, 0)
+[node name="FeedContainer" type="VBoxContainer" parent="UI/VBox/BurstRow"]
+custom_minimum_size = Vector2(0, 36)
 
-[node name="CooldownLabel" type="Label" parent="UI/VBox/BurstRow/CooldownPanel"]
+[node name="FeedStatus" type="Label" parent="UI/VBox/BurstRow/FeedContainer"]
 unique_name_in_owner = true
-size_flags_horizontal = 3
-horizontal_alignment = 1
-vertical_alignment = 1
+
+[node name="FeedBar" type="ProgressBar" parent="UI/VBox/BurstRow/FeedContainer"]
+unique_name_in_owner = true
+show_percentage = false
+step = 0.01
+value = 1.0
+max_value = 1.0
 
 [node name="BuyProd" type="Button" parent="UI/VBox"]
 unique_name_in_owner = true

@@ -19,10 +19,38 @@ config/features=PackedStringArray("4.5")
 Config="*res://game/scripts/Config.gd"
 Logger="*res://game/scripts/Logger.gd"
 Strings="*res://game/scripts/Strings.gd"
+VisualDirectorSingleton="*res://game/scripts/VisualDirector.gd"
+EnvironmentDirectorSingleton="*res://game/scripts/EnvironmentDirector.gd"
 
 [input]
 
 burst_hold={
+"deadzone": 0.5,
+"events": [{
+"deadzone": 0.5,
+"device": -1,
+"type": "JOY_BUTTON"
+}, {
+"alt": false,
+"button_index": 1,
+"control": false,
+"device": -1,
+"meta": false,
+"pressed": false,
+"shift": false,
+"type": "MOUSE_BUTTON"
+}, {
+"alt": false,
+"control": false,
+"device": -1,
+"keycode": 32,
+"meta": false,
+"pressed": false,
+"shift": false,
+"type": "KEY"
+}]
+}
+feed_hold={
 "deadzone": 0.5,
 "events": [{
 "deadzone": 0.5,

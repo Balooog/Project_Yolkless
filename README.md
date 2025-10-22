@@ -29,15 +29,30 @@ Idle game prototype built with Godot 4.x. This scaffold provides:
 ## UI Enhancements
 
 - Capacity bar tracks Egg Credits versus storage and hot-reloads with balance tweaks (`R`).
-- Burst button now carries a countdown badge that disappears the moment cooldown clears.
+- Feed button now shows a live Feed Supply meter that drains while held and refills when idle.
+- A lightweight VisualDirector autoload drives feed particle visuals that ramp with Feed Supply and PPS; disable them via the Settings → Visual Effects toggle.
 - All player-facing strings are driven via `game/data/strings_egg.tsv`; pressing `R` refreshes both numbers and copy.
 - Press `F3` to toggle the debug overlay with live PPS, capacity, burst state, tier, research multipliers, hashes, and log context.
+
+## Hold-to-Feed Meter
+
+- Holding the Feed button (or `feed_hold` action) drains a dedicated Feed Supply bar; releasing stops feeding instantly.
+- The bar refills automatically when idle, and three feed upgrades—storage, refill, efficiency—expand capacity, speed, and output.
+- Meter colours shift from green → amber → red as reserves drop, with an optional High Contrast mode in Settings.
+
+## Environment Simulation
+
+- EnvironmentDirector orchestrates pollution, stress, and reputation curves, updating every few frames and feeding values into the prestige multiplier.
+- The Backyard stage reacts in real time: skies desaturate under heavy pollution, chickens relax or stall based on stress, and a reputation icon mirrors public sentiment.
+- A Pollution/Stress/Reputation overlay appears above the playfield with colour-coded bars and localised tooltips sourced from the StringsCatalog.
+- Future tiers will swap in new environment stages automatically as the factory promotes, building toward a Regional → Industrial → Synthetic Lab progression mapped in `docs/ROADMAP.md`.
 
 ## Accessibility & Diagnostics
 
 - Open the in-game **Settings** panel to choose 100 % / 110 % / 125 % text scale, enable High Contrast UI, and copy Diagnostics to the clipboard.
+- The new Visual Effects checkbox toggles the Feed Particles module (default ON) for lower-spec or distraction-free play.
 - Diagnostics export includes build/seed metadata, tier state, upgrade/research snapshots, constants, and the last 200 log lines (sanitised).
-- The High Contrast toggle applies WCAG AA compliant themes to the storage bar and cooldown badge for both dark and light backgrounds.
+- The High Contrast toggle applies WCAG AA compliant themes to the storage bar and feed meter for both dark and light backgrounds.
 - Offline resumes surface a single popup per session summarising Egg Credits earned while away.
 
 ## Scripts

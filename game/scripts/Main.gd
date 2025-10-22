@@ -9,12 +9,18 @@ const CAPACITY_FONT_DEFAULT := Color(1, 1, 1, 1)
 const CAPACITY_BACKGROUND_CONTRAST := Color(0.04, 0.04, 0.04, 1)
 const CAPACITY_FILL_CONTRAST := Color(1, 1, 1, 1)
 const CAPACITY_FONT_CONTRAST := Color(0.1, 0.1, 0.1, 1)
-const COOLDOWN_PANEL_BG_DEFAULT := Color(0.12, 0.12, 0.12, 0.85)
-const COOLDOWN_PANEL_BORDER_DEFAULT := Color(0.95, 0.82, 0.18, 0.8)
-const COOLDOWN_PANEL_BG_CONTRAST := Color(0.02, 0.02, 0.02, 0.9)
-const COOLDOWN_PANEL_BORDER_CONTRAST := Color(1, 1, 1, 0.85)
-const COOLDOWN_FONT_DEFAULT := Color(0.95, 0.82, 0.18, 1)
-const COOLDOWN_FONT_CONTRAST := Color(1, 1, 1, 1)
+
+const FEED_BACKGROUND_DEFAULT := Color(0.08, 0.08, 0.12, 1)
+const FEED_FILL_HIGH_DEFAULT := Color(0.2, 0.8, 0.35, 1)
+const FEED_FILL_MED_DEFAULT := Color(0.95, 0.68, 0.2, 1)
+const FEED_FILL_LOW_DEFAULT := Color(0.9, 0.2, 0.2, 1)
+const FEED_BACKGROUND_CONTRAST := Color(0.02, 0.02, 0.02, 1)
+const FEED_FILL_HIGH_CONTRAST := Color(0.0, 0.85, 0.2, 1)
+const FEED_FILL_MED_CONTRAST := Color(0.98, 0.78, 0.1, 1)
+const FEED_FILL_LOW_CONTRAST := Color(1.0, 0.22, 0.22, 1)
+const FEED_FONT_DEFAULT := Color(1, 1, 1, 1)
+const FEED_FONT_CONTRAST := Color(0.05, 0.05, 0.05, 1)
+const FEED_FLASH_COLOR := Color(1, 0.7, 0.7, 1)
 
 @onready var bal: Balance = $Balance
 @onready var res: Research = $Research
@@ -22,12 +28,14 @@ const COOLDOWN_FONT_CONTRAST := Color(1, 1, 1, 1)
 @onready var sav: Save = $Save
 
 @onready var root_vbox: VBoxContainer = %VBox
+@onready var environment_overlay: PollutionOverlay = %EnvironmentOverlay
+@onready var deny_sound: AudioStreamPlayer = %DenySound
 @onready var stats_box: HBoxContainer = %StatsBox
 @onready var lbl_soft: Label = %SoftLabel
-@onready var lbl_cooldown: Label = %CooldownLabel
-@onready var cooldown_panel: PanelContainer = %CooldownPanel
 @onready var capacity_label: Label = %CapacityLabel
 @onready var capacity_bar: ProgressBar = %CapacityBar
+@onready var feed_status_label: Label = %FeedStatus
+@onready var feed_bar: ProgressBar = %FeedBar
 @onready var lbl_pps: Label = %PPSLabel
 @onready var lbl_tier: Label = %TierLabel
 @onready var lbl_prestige: Label = %PrestigeLabel
@@ -55,6 +63,9 @@ var text_scale := 1.0
 var settings_panel: SettingsPanel
 var debug_overlay: CanvasLayer
 var high_contrast_enabled := false
+var visuals_enabled := true
+var environment_director: EnvironmentDirector
+var _feed_deny_sound_warned := false
 
 func _ready() -> void:
 	res.setup(bal)
@@ -65,8 +76,9 @@ func _ready() -> void:
 	res.changed.connect(_update_research_view)
 	eco.soft_changed.connect(_on_soft_changed)
 	eco.tier_changed.connect(func(_tier: int) -> void: _update_factory_view())
-	eco.burst_state.connect(_on_burst_state)
-	btn_burst.button_down.connect(func(): eco.try_burst())
+	eco.burst_state.connect(_on_feed_state_changed)
+	btn_burst.button_down.connect(_on_feed_button_down)
+	btn_burst.button_up.connect(_on_feed_button_up)
 	btn_prod.pressed.connect(func(): _attempt_upgrade("prod_1"))
 	btn_cap.pressed.connect(func(): _attempt_upgrade("cap_1"))
 	btn_auto.pressed.connect(func(): _attempt_upgrade("auto_1"))
@@ -86,7 +98,9 @@ func _ready() -> void:
 	settings_panel.text_scale_selected.connect(_on_text_scale_selected)
 	settings_panel.diagnostics_requested.connect(_on_diagnostics_requested)
 	settings_panel.high_contrast_toggled.connect(_on_high_contrast_toggled)
+	settings_panel.visuals_toggled.connect(_on_visuals_toggled)
 	settings_panel.set_high_contrast(high_contrast_enabled)
+	settings_panel.set_visuals_enabled(visuals_enabled)
 
 	debug_overlay = DEBUG_OVERLAY_SCENE.instantiate()
 	add_child(debug_overlay)
@@ -110,6 +124,25 @@ func _ready() -> void:
 	var strings := _get_strings()
 	if strings:
 		strings.load("res://game/data/strings_egg.tsv")
+		environment_overlay.set_strings(strings)
+
+	var director := _get_visual_director()
+	if director:
+		director.set_sources(eco, strings)
+		director.set_high_contrast(high_contrast_enabled)
+		director.activate("feed_particles", visuals_enabled)
+
+	environment_director = _get_environment_director()
+	if environment_director:
+		environment_director.set_sources(eco, res, strings)
+		if not environment_director.state_changed.is_connected(_on_environment_state_changed):
+			environment_director.state_changed.connect(_on_environment_state_changed)
+		var env_state := environment_director.get_state()
+		_on_environment_state_changed(
+			float(env_state.get("pollution", 0.0)),
+			float(env_state.get("stress", 0.0)),
+			float(env_state.get("reputation", 0.0))
+		)
 
 	sav.load_state()
 	var offline_gain: float = sav.grant_offline()
@@ -120,7 +153,7 @@ func _ready() -> void:
 	_apply_contrast_theme()
 	_apply_strings()
 	_update_all_views()
-	_update_cooldown_indicator()
+	_update_feed_ui()
 
 	_log("INFO", "THEME", "Theme applied", {
 		"currency": "Egg Credits",
@@ -131,11 +164,17 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	_update_capacity_bar()
-	_update_cooldown_indicator()
+	_update_feed_ui()
+	if environment_director:
+		environment_director.update_environment(_delta)
+
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("burst_hold"):
-		eco.try_burst()
+	if event.is_action_pressed("feed_hold") or event.is_action_pressed("burst_hold"):
+		_attempt_feed_start("input")
+	if event.is_action_released("feed_hold") or event.is_action_released("burst_hold"):
+		eco.stop_burst("input")
+		_update_feed_ui()
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == Key.KEY_F3:
 			debug_overlay.visible = not debug_overlay.visible
@@ -163,8 +202,11 @@ func _apply_strings() -> void:
 	offline_close.text = close_text
 	btn_burst.text = _strings_get("burst_button", btn_burst.text)
 	settings_panel.populate_strings()
+	var strings := _get_strings()
+	if strings:
+		environment_overlay.set_strings(strings)
 	_update_capacity_bar()
-	_update_cooldown_indicator()
+	_update_feed_ui()
 
 func _update_all_views() -> void:
 	_update_soft_view(eco.soft)
@@ -172,9 +214,10 @@ func _update_all_views() -> void:
 	_update_upgrade_buttons()
 	_update_factory_view()
 	_update_research_view()
+	_update_feed_ui()
 
 func _update_soft_view(value: float) -> void:
-	var capacity := eco.get_capacity_limit()
+	var capacity: float = eco.get_capacity_limit()
 	var soft_template := _strings_get("soft_label", "Egg Credits: {value} / {capacity}")
 	lbl_soft.text = soft_template.format({
 		"value": _format_num(value),
@@ -185,6 +228,7 @@ func _update_soft_view(value: float) -> void:
 		"pps": _format_num(eco.current_pps(), 1)
 	})
 	_update_capacity_bar()
+	_update_feed_ui()
 
 func _update_prestige_view() -> void:
 	var next := eco.prestige_points_earned()
@@ -276,8 +320,8 @@ func _update_research_view() -> void:
 			button.disabled = not res.can_buy(node_id)
 
 func _update_capacity_bar() -> void:
-	var capacity := eco.get_capacity_limit()
-	var soft_value := eco.soft
+	var capacity: float = eco.get_capacity_limit()
+	var soft_value: float = eco.soft
 	capacity_bar.max_value = max(capacity, 1.0)
 	capacity_bar.value = min(soft_value, capacity)
 	var capacity_template := _strings_get("capacity_bar_label", "Storage: {value} / {capacity}")
@@ -288,56 +332,129 @@ func _update_capacity_bar() -> void:
 	capacity_label.text = formatted
 	capacity_bar.tooltip_text = formatted
 
-func _update_cooldown_indicator() -> void:
-	var seconds_left: float = max(eco.get_burst_cooldown_left(), 0.0)
-	if seconds_left <= 0.05:
-		cooldown_panel.visible = false
-		lbl_cooldown.text = ""
-		lbl_cooldown.tooltip_text = ""
-		cooldown_panel.tooltip_text = ""
-		return
-	var display_seconds := int(ceil(seconds_left))
-	lbl_cooldown.text = "%ds" % display_seconds
-	var tooltip_template := _strings_get("cooldown_label", "Burst Cooldown: {seconds}s")
-	var tooltip := tooltip_template.format({"seconds": String.num(seconds_left, 1)})
-	lbl_cooldown.tooltip_text = tooltip
-	cooldown_panel.tooltip_text = tooltip
-	cooldown_panel.visible = true
+func _update_feed_ui() -> void:
+	var fraction: float = eco.get_feed_fraction()
+	feed_bar.max_value = 1.0
+	feed_bar.value = fraction
+	var percent := int(round(fraction * 100.0))
+	var status: String = ""
+	if eco.is_feeding():
+		var bonus: float = max(0.0, eco.current_pps() - eco.current_base_pps())
+		status = _strings_get("feeding_now", feed_status_label.text).format({"pps": _format_num(bonus, 1)})
+	elif fraction <= 0.001:
+		status = _strings_get("feed_empty", feed_status_label.text)
+	elif percent >= 100:
+		status = _strings_get("feed_bar_label", feed_status_label.text)
+	else:
+		status = _strings_get("feed_refilling", feed_status_label.text).format({"pct": percent})
+	feed_status_label.text = status
+	feed_status_label.tooltip_text = status
+	feed_bar.tooltip_text = status
+	var feed_background := FEED_BACKGROUND_DEFAULT
+	var feed_font := FEED_FONT_DEFAULT
+	if high_contrast_enabled:
+		feed_background = FEED_BACKGROUND_CONTRAST
+		feed_font = FEED_FONT_CONTRAST
+	feed_bar.add_theme_color_override("background", feed_background)
+	feed_bar.add_theme_color_override("font_color", feed_font)
+	feed_bar.add_theme_color_override("fill", _get_feed_fill_color(fraction))
+	feed_status_label.add_theme_color_override("font_color", feed_font)
+	if feed_bar.modulate != Color.WHITE:
+		feed_bar.modulate = Color.WHITE
+
+func _get_feed_fill_color(fraction: float) -> Color:
+	if high_contrast_enabled:
+		if fraction >= 0.66:
+			return FEED_FILL_HIGH_CONTRAST
+		if fraction >= 0.33:
+			return FEED_FILL_MED_CONTRAST
+		return FEED_FILL_LOW_CONTRAST
+	if fraction >= 0.66:
+		return FEED_FILL_HIGH_DEFAULT
+	if fraction >= 0.33:
+		return FEED_FILL_MED_DEFAULT
+	return FEED_FILL_LOW_DEFAULT
 
 func _on_high_contrast_toggled(enabled: bool) -> void:
 	high_contrast_enabled = enabled
 	_apply_contrast_theme()
+	var director := _get_visual_director()
+	if director:
+		director.set_high_contrast(enabled)
 
-func _on_burst_state(_active: bool) -> void:
-	_update_cooldown_indicator()
+func _on_feed_state_changed(_active: bool) -> void:
+	_update_feed_ui()
+
+func _on_visuals_toggled(enabled: bool) -> void:
+	visuals_enabled = enabled
+	var director := _get_visual_director()
+	if director:
+		director.activate("feed_particles", enabled)
+
+func _on_environment_state_changed(pollution: float, stress: float, reputation: float) -> void:
+	environment_overlay.update_state(pollution, stress, reputation)
 
 func _apply_contrast_theme() -> void:
 	var background_color := CAPACITY_BACKGROUND_DEFAULT
 	var fill_color := CAPACITY_FILL_DEFAULT
 	var font_color := CAPACITY_FONT_DEFAULT
-	var panel_bg := COOLDOWN_PANEL_BG_DEFAULT
-	var panel_border := COOLDOWN_PANEL_BORDER_DEFAULT
-	var cooldown_font := COOLDOWN_FONT_DEFAULT
 	if high_contrast_enabled:
 		background_color = CAPACITY_BACKGROUND_CONTRAST
 		fill_color = CAPACITY_FILL_CONTRAST
 		font_color = CAPACITY_FONT_CONTRAST
-		panel_bg = COOLDOWN_PANEL_BG_CONTRAST
-		panel_border = COOLDOWN_PANEL_BORDER_CONTRAST
-		cooldown_font = COOLDOWN_FONT_CONTRAST
 	capacity_bar.add_theme_color_override("background", background_color)
 	capacity_bar.add_theme_color_override("fill", fill_color)
 	capacity_bar.add_theme_color_override("font_color", font_color)
-	var panel_style := StyleBoxFlat.new()
-	panel_style.bg_color = panel_bg
-	panel_style.set_border_width_all(1)
-	panel_style.border_color = panel_border
-	panel_style.corner_radius_top_left = 6
-	panel_style.corner_radius_top_right = 6
-	panel_style.corner_radius_bottom_left = 6
-	panel_style.corner_radius_bottom_right = 6
-	cooldown_panel.add_theme_stylebox_override("panel", panel_style)
-	lbl_cooldown.add_theme_color_override("font_color", cooldown_font)
+	var feed_background := FEED_BACKGROUND_DEFAULT
+	var feed_font := FEED_FONT_DEFAULT
+	if high_contrast_enabled:
+		feed_background = FEED_BACKGROUND_CONTRAST
+		feed_font = FEED_FONT_CONTRAST
+	feed_bar.add_theme_color_override("background", feed_background)
+	feed_bar.add_theme_color_override("font_color", feed_font)
+	feed_status_label.add_theme_color_override("font_color", feed_font)
+	_update_feed_ui()
+
+func _on_feed_button_down() -> void:
+	_attempt_feed_start("button")
+
+func _on_feed_button_up() -> void:
+	eco.stop_burst("button")
+	_update_feed_ui()
+
+func _attempt_feed_start(source: String) -> void:
+	if eco.feed_current <= 0.0:
+		_handle_feed_denied()
+		return
+	var started := eco.try_burst(source == "auto")
+	if not started and not eco.is_feeding():
+		_handle_feed_denied()
+	_update_feed_ui()
+
+func _handle_feed_denied() -> void:
+	_flash_feed_bar()
+	_play_feed_denied_sound()
+	_log("WARN", "FEED", "start_denied", {
+		"feed": eco.feed_current,
+		"capacity": eco.feed_capacity
+	})
+
+func _flash_feed_bar() -> void:
+	var tween := create_tween()
+	tween.tween_property(feed_bar, "modulate", FEED_FLASH_COLOR, 0.1)
+	tween.tween_property(feed_bar, "modulate", Color(1, 1, 1, 1), 0.25)
+
+func _play_feed_denied_sound() -> void:
+	if deny_sound == null:
+		return
+	if deny_sound.stream == null:
+		if not _feed_deny_sound_warned:
+			_feed_deny_sound_warned = true
+			_log("INFO", "AUDIO", "feed_denied_sound_missing", {})
+		return
+	if deny_sound.playing:
+		deny_sound.stop()
+	deny_sound.play()
 
 func _attempt_upgrade(id: String) -> void:
 	if eco.buy_upgrade(id):
@@ -378,6 +495,8 @@ func _research_cost(id: String) -> int:
 
 func _on_settings_pressed() -> void:
 	settings_panel.populate_strings()
+	settings_panel.set_high_contrast(high_contrast_enabled)
+	settings_panel.set_visuals_enabled(visuals_enabled)
 	settings_panel.show_panel(text_scale, high_contrast_enabled)
 
 func apply_text_scale(scale: float) -> void:
@@ -403,6 +522,8 @@ func _copy_diagnostics() -> void:
 	lines.append("Tier: %d (%s)" % [eco.factory_tier, eco.factory_name()])
 	lines.append("PPS: %.2f" % eco.current_pps())
 	lines.append("Capacity: %.1f / %.1f" % [eco.soft, eco.get_capacity_limit()])
+	lines.append("Feed: %.1f / %.1f (%.0f%%)" % [eco.feed_current, eco.feed_capacity, eco.get_feed_fraction() * 100.0])
+	lines.append("Feed refill seconds: %.2f" % eco.get_feed_seconds_to_full())
 	lines.append("Research owned: %s" % ", ".join(res.owned.keys()))
 	var upgrades: Dictionary = eco.get_upgrade_levels()
 	lines.append("Upgrades: %s" % JSON.stringify(upgrades))
@@ -455,6 +576,18 @@ func _get_logger() -> YolkLogger:
 	var node := get_node_or_null("/root/Logger")
 	if node is YolkLogger:
 		return node as YolkLogger
+	return null
+
+func _get_visual_director() -> VisualDirector:
+	var node := get_node_or_null("/root/VisualDirectorSingleton")
+	if node is VisualDirector:
+		return node as VisualDirector
+	return null
+
+func _get_environment_director() -> EnvironmentDirector:
+	var node := get_node_or_null("/root/EnvironmentDirectorSingleton")
+	if node is EnvironmentDirector:
+		return node as EnvironmentDirector
 	return null
 
 func _get_strings() -> StringsCatalog:

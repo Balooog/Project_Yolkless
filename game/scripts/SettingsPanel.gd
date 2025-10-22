@@ -4,33 +4,40 @@ class_name SettingsPanel
 signal text_scale_selected(scale: float)
 signal diagnostics_requested
 signal high_contrast_toggled(enabled: bool)
+signal visuals_toggled(enabled: bool)
 
 @onready var title_label: Label = %TitleLabel
 @onready var text_scale_label: Label = %TextScaleLabel
 @onready var text_scale_option: OptionButton = %TextScaleOption
 @onready var high_contrast_label: Label = %HighContrastLabel
 @onready var high_contrast_toggle: CheckButton = %HighContrastToggle
+@onready var visuals_label: Label = %VisualsLabel
+@onready var visuals_toggle: CheckButton = %VisualsToggle
 @onready var copy_button: Button = %CopyDiagnosticsButton
 @onready var close_button: Button = %CloseButton
 
 var _suppress_signal := false
 var _current_high_contrast := false
+var _current_visuals_enabled := true
 
 func _ready() -> void:
 	hide()
 	text_scale_option.clear()
 	text_scale_option.item_selected.connect(_on_text_scale_option_selected)
 	high_contrast_toggle.toggled.connect(_on_high_contrast_toggled)
+	visuals_toggle.toggled.connect(_on_visuals_toggled)
 	copy_button.pressed.connect(func(): diagnostics_requested.emit())
 	close_button.pressed.connect(func(): hide())
 	close_requested.connect(func(): hide())
 	populate_strings()
 	populate_text_scale_options(1.0)
 	_set_high_contrast_internal(false)
+	_set_visuals_internal(true)
 
 func show_panel(current_scale: float, high_contrast: bool) -> void:
 	populate_text_scale_options(current_scale)
 	set_high_contrast(high_contrast)
+	set_visuals_enabled(_current_visuals_enabled)
 	popup_centered()
 	grab_focus()
 
@@ -52,6 +59,9 @@ func populate_strings() -> void:
 	close_button.text = _strings("close_button", close_button.text)
 	high_contrast_label.text = _strings("high_contrast_label", high_contrast_label.text)
 	high_contrast_toggle.tooltip_text = _strings("high_contrast_tooltip", high_contrast_toggle.tooltip_text)
+	visuals_label.text = _strings("visuals_label", visuals_label.text)
+	visuals_toggle.text = _strings("settings_visuals", visuals_toggle.text)
+	visuals_toggle.tooltip_text = _strings("visuals_feed_particles", visuals_toggle.tooltip_text)
 
 func populate_text_scale_options(current_scale: float) -> void:
 	_suppress_signal = true
@@ -100,6 +110,21 @@ func _set_high_contrast_internal(enabled: bool) -> void:
 	_suppress_signal = true
 	_current_high_contrast = enabled
 	high_contrast_toggle.button_pressed = enabled
+	_suppress_signal = false
+
+func _on_visuals_toggled(pressed: bool) -> void:
+	if _suppress_signal:
+		return
+	_current_visuals_enabled = pressed
+	visuals_toggled.emit(pressed)
+
+func set_visuals_enabled(enabled: bool) -> void:
+	_set_visuals_internal(enabled)
+
+func _set_visuals_internal(enabled: bool) -> void:
+	_suppress_signal = true
+	_current_visuals_enabled = enabled
+	visuals_toggle.button_pressed = enabled
 	_suppress_signal = false
 
 func on_strings_reloaded() -> void:

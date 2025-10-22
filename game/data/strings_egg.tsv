@@ -21,7 +21,10 @@ research_owned	{label} ✅
 research_available	{label} ({cost} 🌟)
 offline_title	Offline Egg Credits
 capacity_bar_label	Storage: {value} / {capacity}
-cooldown_label	Burst Cooldown: {seconds}s
+feed_bar_label	Feed Supply
+feed_refilling	Refilling silo… {pct}%
+feed_empty	Feed empty
+feeding_now	Feeding… +{pps}/s
 settings_button	Settings
 export_button	Copy Save
 import_button	Paste Save
@@ -34,3 +37,11 @@ text_scale_125	125%
 settings_title	Accessibility & Diagnostics
 high_contrast_label	High Contrast UI
 high_contrast_tooltip	Increases contrast for key interface elements
+settings_visuals	Visual Effects
+visuals_label	Visual Effects
+visuals_feed_particles	Feed Particles
+pollution_label	Pollution
+stress_label	Stress
+reputation_label	Reputation
+environment_label	Environment Status
+environment_stage_backyard	Backyard
