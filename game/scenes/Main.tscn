@@ -37,31 +37,57 @@ layer = 0
 [node name="UI" type="CanvasLayer" parent="."]
 layer = 1
 
-[node name="EnvironmentOverlay" parent="UI" instance=ExtResource("6")]
+[node name="RootMargin" type="MarginContainer" parent="UI"]
 unique_name_in_owner = true
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 0.0
+offset_bottom = 0.0
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
 
-[node name="VBox" type="VBoxContainer" parent="UI"]
+[node name="RootColumn" type="VBoxContainer" parent="UI/RootMargin"]
 unique_name_in_owner = true
-offset_left = 20.0
-offset_top = 20.0
-offset_right = 580.0
-offset_bottom = 420.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 16
 
-[node name="StatsBox" type="HBoxContainer" parent="UI/VBox"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 28)
-
-[node name="SoftLabel" type="Label" parent="UI/VBox/StatsBox"]
+[node name="OverlayRow" type="HBoxContainer" parent="UI/RootMargin/RootColumn"]
 unique_name_in_owner = true
 size_flags_horizontal = 3
 
-[node name="CapacityContainer" type="VBoxContainer" parent="UI/VBox"]
+[node name="OverlaySpacer" type="Control" parent="UI/RootMargin/RootColumn/OverlayRow"]
+size_flags_horizontal = 3
+
+[node name="EnvironmentOverlay" parent="UI/RootMargin/RootColumn/OverlayRow" instance=ExtResource("6")]
+unique_name_in_owner = true
+size_flags_horizontal = 0
+size_flags_vertical = 0
+
+[node name="VBox" type="VBoxContainer" parent="UI/RootMargin/RootColumn"]
+unique_name_in_owner = true
+size_flags_horizontal = 0
+size_flags_vertical = 1
+
+[node name="StatsBox" type="HBoxContainer" parent="UI/RootMargin/RootColumn/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+
+[node name="SoftLabel" type="Label" parent="UI/RootMargin/RootColumn/VBox/StatsBox"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+
+[node name="CapacityContainer" type="VBoxContainer" parent="UI/RootMargin/RootColumn/VBox"]
 custom_minimum_size = Vector2(0, 48)
 
-[node name="CapacityLabel" type="Label" parent="UI/VBox/CapacityContainer"]
+[node name="CapacityLabel" type="Label" parent="UI/RootMargin/RootColumn/VBox/CapacityContainer"]
 unique_name_in_owner = true
 
-[node name="CapacityBar" type="ProgressBar" parent="UI/VBox/CapacityContainer"]
+[node name="CapacityBar" type="ProgressBar" parent="UI/RootMargin/RootColumn/VBox/CapacityContainer"]
 unique_name_in_owner = true
 size_flags_horizontal = 3
 show_percentage = false
@@ -71,87 +97,87 @@ max_value = 1.0
 theme_override_colors/background = Color(0.1, 0.1, 0.1, 1)
 theme_override_colors/fill = Color(0.95, 0.82, 0.18, 1)
 
-[node name="PPSLabel" type="Label" parent="UI/VBox"]
+[node name="PPSLabel" type="Label" parent="UI/RootMargin/RootColumn/VBox"]
 unique_name_in_owner = true
 
-[node name="TierLabel" type="Label" parent="UI/VBox"]
+[node name="TierLabel" type="Label" parent="UI/RootMargin/RootColumn/VBox"]
 unique_name_in_owner = true
 
-[node name="PrestigeLabel" type="Label" parent="UI/VBox"]
+[node name="PrestigeLabel" type="Label" parent="UI/RootMargin/RootColumn/VBox"]
 unique_name_in_owner = true
 
-[node name="BurstRow" type="VBoxContainer" parent="UI/VBox"]
+[node name="BurstRow" type="VBoxContainer" parent="UI/RootMargin/RootColumn/VBox"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 60)
 
-[node name="BurstButton" type="Button" parent="UI/VBox/BurstRow"]
+[node name="BurstButton" type="Button" parent="UI/RootMargin/RootColumn/VBox/BurstRow"]
 unique_name_in_owner = true
 size_flags_horizontal = 3
 
-[node name="FeedContainer" type="VBoxContainer" parent="UI/VBox/BurstRow"]
+[node name="FeedContainer" type="VBoxContainer" parent="UI/RootMargin/RootColumn/VBox/BurstRow"]
 custom_minimum_size = Vector2(0, 36)
 
-[node name="FeedStatus" type="Label" parent="UI/VBox/BurstRow/FeedContainer"]
+[node name="FeedStatus" type="Label" parent="UI/RootMargin/RootColumn/VBox/BurstRow/FeedContainer"]
 unique_name_in_owner = true
 
-[node name="FeedBar" type="ProgressBar" parent="UI/VBox/BurstRow/FeedContainer"]
+[node name="FeedBar" type="ProgressBar" parent="UI/RootMargin/RootColumn/VBox/BurstRow/FeedContainer"]
 unique_name_in_owner = true
 show_percentage = false
 step = 0.01
 value = 1.0
 max_value = 1.0
 
-[node name="BuyProd" type="Button" parent="UI/VBox"]
+[node name="BuyProd" type="Button" parent="UI/RootMargin/RootColumn/VBox"]
 unique_name_in_owner = true
 size_flags_horizontal = 3
 
-[node name="BuyCap" type="Button" parent="UI/VBox"]
+[node name="BuyCap" type="Button" parent="UI/RootMargin/RootColumn/VBox"]
 unique_name_in_owner = true
 size_flags_horizontal = 3
 
-[node name="BuyAuto" type="Button" parent="UI/VBox"]
+[node name="BuyAuto" type="Button" parent="UI/RootMargin/RootColumn/VBox"]
 unique_name_in_owner = true
 size_flags_horizontal = 3
 
-[node name="Promote" type="Button" parent="UI/VBox"]
+[node name="Promote" type="Button" parent="UI/RootMargin/RootColumn/VBox"]
 unique_name_in_owner = true
 size_flags_horizontal = 3
 
-[node name="ResearchHeader" type="Label" parent="UI/VBox"]
+[node name="ResearchHeader" type="Label" parent="UI/RootMargin/RootColumn/VBox"]
 unique_name_in_owner = true
 
-[node name="ResearchStatus" type="Label" parent="UI/VBox"]
+[node name="ResearchStatus" type="Label" parent="UI/RootMargin/RootColumn/VBox"]
 unique_name_in_owner = true
 
-[node name="ResearchBuyProd" type="Button" parent="UI/VBox"]
-unique_name_in_owner = true
-size_flags_horizontal = 3
-
-[node name="ResearchBuyCap" type="Button" parent="UI/VBox"]
+[node name="ResearchBuyProd" type="Button" parent="UI/RootMargin/RootColumn/VBox"]
 unique_name_in_owner = true
 size_flags_horizontal = 3
 
-[node name="ResearchBuyAuto" type="Button" parent="UI/VBox"]
+[node name="ResearchBuyCap" type="Button" parent="UI/RootMargin/RootColumn/VBox"]
 unique_name_in_owner = true
 size_flags_horizontal = 3
 
-[node name="PrestigeButton" type="Button" parent="UI/VBox"]
+[node name="ResearchBuyAuto" type="Button" parent="UI/RootMargin/RootColumn/VBox"]
 unique_name_in_owner = true
 size_flags_horizontal = 3
 
-[node name="ButtonRow" type="HBoxContainer" parent="UI/VBox"]
+[node name="PrestigeButton" type="Button" parent="UI/RootMargin/RootColumn/VBox"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+
+[node name="ButtonRow" type="HBoxContainer" parent="UI/RootMargin/RootColumn/VBox"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 32)
 
-[node name="Export" type="Button" parent="UI/VBox/ButtonRow"]
+[node name="Export" type="Button" parent="UI/RootMargin/RootColumn/VBox/ButtonRow"]
 unique_name_in_owner = true
 size_flags_horizontal = 1
 
-[node name="Import" type="Button" parent="UI/VBox/ButtonRow"]
+[node name="Import" type="Button" parent="UI/RootMargin/RootColumn/VBox/ButtonRow"]
 unique_name_in_owner = true
 size_flags_horizontal = 1
 
-[node name="SettingsButton" type="Button" parent="UI/VBox/ButtonRow"]
+[node name="SettingsButton" type="Button" parent="UI/RootMargin/RootColumn/VBox/ButtonRow"]
 unique_name_in_owner = true
 size_flags_horizontal = 1
 text = "Settings"

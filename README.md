@@ -55,6 +55,12 @@ Idle game prototype built with Godot 4.x. This scaffold provides:
 - The High Contrast toggle applies WCAG AA compliant themes to the storage bar and feed meter for both dark and light backgrounds.
 - Offline resumes surface a single popup per session summarising Egg Credits earned while away.
 
+## Offline Behavior
+
+- Farms simulate at a passive rate while the game is closed, using base PPS scaled by `OFFLINE_EFFICIENCY` and `OFFLINE_PASSIVE_MULT`.
+- Feed boosts only apply when you are actively online; unlocking automation grants the `OFFLINE_AUTOMATION_BONUS` multiplier during those passive ticks.
+- Offline earnings still respect the cap window (`OFFLINE_CAP_HOURS`) and clamp to the current storage capacity.
+
 ## Scripts
 
 - `tools/run_dev.sh` — launch the game (set `NO_WINDOW=1` to use headless mode)

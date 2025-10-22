@@ -21,9 +21,9 @@ var _reputation: float = 72.0
 
 var _accumulator: float = 0.0
 var _current_stage_id: StringName = DEFAULT_STAGE
-var _stage_nodes: Dictionary[StringName, EnvironmentStageBase] = {}
-var _stage_cache: Dictionary[StringName, PackedScene] = {}
-var _active_stage: EnvironmentStageBase
+var _stage_nodes: Dictionary = {}
+var _stage_cache: Dictionary = {}
+var _active_stage: Node2D
 var _last_emitted: Vector3 = Vector3(-INF, -INF, -INF)
 
 func set_sources(eco: Economy, research: Research, strings: StringsCatalog) -> void:
@@ -103,8 +103,8 @@ func _emit_state(force_emit: bool = false) -> void:
 		state_changed.emit(_pollution, _stress, _reputation)
 
 func _apply_state_to_stage() -> void:
-	if _active_stage and is_instance_valid(_active_stage):
-		_active_stage.apply_state(_pollution, _stress, _reputation)
+	if _active_stage and is_instance_valid(_active_stage) and _active_stage.has_method("apply_state"):
+		_active_stage.call("apply_state", _pollution, _stress, _reputation)
 
 func _compute_pollution_rate() -> float:
 	var feed_fraction: float = _eco.get_feed_fraction()
@@ -161,18 +161,18 @@ func _switch_stage_internal(stage_id: StringName) -> void:
 		_apply_state_to_stage()
 		return
 	_current_stage_id = stage_id
-	var stage := _get_or_create_stage(stage_id)
+	var stage: Node2D = _get_or_create_stage(stage_id)
 	if stage == null:
 		return
 	_activate_stage(stage)
 	_log_stage_state()
 	_emit_state(true)
 
-func _get_or_create_stage(stage_id: StringName) -> EnvironmentStageBase:
+func _get_or_create_stage(stage_id: StringName) -> Node2D:
 	if _stage_nodes.has(stage_id):
-		var cached := _stage_nodes[stage_id]
+		var cached: Node = _stage_nodes[stage_id]
 		if cached and is_instance_valid(cached):
-			return cached
+			return cached as Node2D
 	_stage_nodes.erase(stage_id)
 	var scene := _get_stage_scene(stage_id)
 	if scene == null:
@@ -181,9 +181,9 @@ func _get_or_create_stage(stage_id: StringName) -> EnvironmentStageBase:
 		_resolve_environment_root()
 	if _environment_root == null:
 		return null
-	var instance := scene.instantiate()
-	if instance is EnvironmentStageBase:
-		var stage := instance as EnvironmentStageBase
+	var instance: Node = scene.instantiate()
+	if instance is Node2D and instance.has_method("apply_state"):
+		var stage := instance as Node2D
 		_environment_root.add_child(stage)
 		stage.position = Vector2.ZERO
 		_stage_nodes[stage_id] = stage
@@ -193,8 +193,8 @@ func _get_or_create_stage(stage_id: StringName) -> EnvironmentStageBase:
 
 func _get_stage_scene(stage_id: StringName) -> PackedScene:
 	if _stage_cache.has(stage_id):
-		return _stage_cache[stage_id]
-	var path_variant := STAGE_PATHS.get(stage_id, "")
+		return _stage_cache[stage_id] as PackedScene
+	var path_variant: Variant = STAGE_PATHS.get(stage_id, "")
 	if String(path_variant) == "":
 		return null
 	var scene := ResourceLoader.load(String(path_variant))
@@ -203,8 +203,9 @@ func _get_stage_scene(stage_id: StringName) -> PackedScene:
 		return scene
 	return null
 
-func _activate_stage(stage: EnvironmentStageBase) -> void:
-	for existing in _stage_nodes.values():
+func _activate_stage(stage: Node2D) -> void:
+	for value in _stage_nodes.values():
+		var existing := value as Node2D
 		if existing and is_instance_valid(existing):
 			existing.visible = existing == stage
 	_active_stage = stage

@@ -41,8 +41,8 @@ func apply_state(pollution: float, stress: float, reputation: float) -> void:
 
 func _process(delta: float) -> void:
 	_time += delta * _chicken_speed()
-	var stress_ratio := clamp(_stress / 100.0, 0.0, 1.0)
-	var amplitude := lerp(6.0, 1.5, stress_ratio)
+	var stress_ratio: float = clampf(_stress / 100.0, 0.0, 1.0)
+	var amplitude: float = lerpf(6.0, 1.5, stress_ratio)
 	for i in range(chickens.size()):
 		var chicken := chickens[i]
 		if chicken:
@@ -52,12 +52,12 @@ func _process(delta: float) -> void:
 			chicken.position = base_pos + offset
 
 func _update_colors() -> void:
-	var ratio := clamp(_pollution / 100.0, 0.0, 1.0)
+	var ratio: float = clampf(_pollution / 100.0, 0.0, 1.0)
 	sky.color = _base_sky.lerp(Color(0.45, 0.48, 0.52, 1.0), ratio)
 	ground.color = _base_ground.lerp(Color(0.36, 0.35, 0.33, 1.0), ratio)
 	coop_body.color = _base_coop.lerp(Color(0.52, 0.45, 0.38, 1.0), ratio)
 	coop_roof.color = _base_roof.lerp(Color(0.38, 0.28, 0.22, 1.0), ratio)
-	var haze_alpha := lerp(_base_haze.a, 0.45, clamp((ratio - 0.4) * 1.4, 0.0, 1.0))
+	var haze_alpha: float = lerpf(_base_haze.a, 0.45, clampf((ratio - 0.4) * 1.4, 0.0, 1.0))
 	haze.color = Color(_base_haze.r, _base_haze.g, _base_haze.b, haze_alpha)
 
 func _update_reputation_icon() -> void:
@@ -74,5 +74,5 @@ func _update_reputation_icon() -> void:
 	reputation_icon.tooltip_text = "Reputation %.0f" % _reputation
 
 func _chicken_speed() -> float:
-	var stress_ratio := clamp(_stress / 100.0, 0.0, 1.0)
-	return lerp(1.3, 0.35, stress_ratio)
+	var stress_ratio: float = clampf(_stress / 100.0, 0.0, 1.0)
+	return lerpf(1.3, 0.35, stress_ratio)

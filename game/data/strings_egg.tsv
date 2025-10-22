@@ -20,6 +20,8 @@ research_auto_label	Drone Feeders
 research_owned	{label} ✅
 research_available	{label} ({cost} 🌟)
 offline_title	Offline Egg Credits
+offline_summary_title	While you were away…
+offline_summary_body	Your farm produced {amount} at {pct}% passive efficiency. Feed to boost output!
 capacity_bar_label	Storage: {value} / {capacity}
 feed_bar_label	Feed Supply
 feed_refilling	Refilling silo… {pct}%

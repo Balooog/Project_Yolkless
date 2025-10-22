@@ -36,6 +36,7 @@ const FEED_CONSUMPTION_BASE := 20.0
 var _feed_efficiency_mult := 1.0
 var _feed_reported_empty := false
 var _feed_reported_full := false
+var _last_offline_passive_mult := 0.0
 
 func setup(balance: Balance, research: Research) -> void:
 	_balance = balance
@@ -167,10 +168,12 @@ func promote_factory() -> bool:
 	autosave.emit("tier")
 	return true
 
-func _current_pps() -> float:
+func _current_pps(include_feed: bool = true) -> float:
 	if _balance == null or _research == null:
 		return 0.0
-	var base_pps := _base_pps()
+	var base_pps: float = _base_pps()
+	if not include_feed:
+		return base_pps
 	if not burst_active:
 		return base_pps
 	var burst_mult: float = float(_balance.constants.get("BURST_MULT", 6.0))
@@ -200,16 +203,26 @@ func _current_capacity() -> float:
 func offline_grant(elapsed_seconds: float) -> float:
 	var cap_hours: float = float(_balance.constants.get("OFFLINE_CAP_HOURS", 8))
 	var eff: float = float(_balance.constants.get("OFFLINE_EFFICIENCY", 0.8))
+	var passive_mult: float = float(_balance.constants.get("OFFLINE_PASSIVE_MULT", 0.25))
+	var automation_bonus: float = float(_balance.constants.get("OFFLINE_AUTOMATION_BONUS", 1.5))
 	var sim_time: float = min(elapsed_seconds, cap_hours * 3600.0)
-	var pps: float = _base_pps()
-	var grant: float = pps * sim_time * eff
+	var base_pps: float = _current_pps(false)
+	var passive_pps: float = base_pps * eff * passive_mult
+	var has_automation: bool = _automation_enabled()
+	if has_automation:
+		passive_pps *= automation_bonus
+	var grant: float = passive_pps * sim_time
+	_last_offline_passive_mult = 0.0
+	if base_pps > 0.0:
+		_last_offline_passive_mult = passive_pps / base_pps
 	_add_soft(grant)
-	_log("INFO", "OFFLINE", "Grant applied", {
-		"elapsed": elapsed_seconds,
-		"applied": sim_time,
-		"eff": eff,
-		"credits": grant
-	})
+	var log_line: String = "dt=%d passive_mult=%.2f auto=%s grant=%.1f" % [
+		int(sim_time),
+		_last_offline_passive_mult,
+		("yes" if has_automation else "no"),
+		grant
+	]
+	_log("INFO", "OFFLINE", log_line, {})
 	return grant
 
 func prestige_points_earned() -> int:
@@ -295,6 +308,9 @@ func _upgrade_cost(row: Dictionary, level: int) -> float:
 
 func current_pps() -> float:
 	return _current_pps()
+
+func last_offline_passive_multiplier() -> float:
+	return _last_offline_passive_mult
 
 func current_base_pps() -> float:
 	return _base_pps()

@@ -2,13 +2,8 @@
 [ext_resource type="Script" path="res://game/scenes/modules/environment/PollutionOverlay.gd" id="1"]
 
 [node name="PollutionOverlay" type="HBoxContainer"]
-anchors_preset = 1
-anchor_right = 0.0
-anchor_bottom = 0.0
-offset_left = 24.0
-offset_top = 24.0
-offset_right = 324.0
-offset_bottom = 88.0
+size_flags_horizontal = 0
+size_flags_vertical = 0
 theme_override_constants/separation = 16
 mouse_filter = 2
 script = ExtResource("1")

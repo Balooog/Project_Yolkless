@@ -137,7 +137,7 @@ func _ready() -> void:
 		environment_director.set_sources(eco, res, strings)
 		if not environment_director.state_changed.is_connected(_on_environment_state_changed):
 			environment_director.state_changed.connect(_on_environment_state_changed)
-		var env_state := environment_director.get_state()
+		var env_state: Dictionary = environment_director.get_state()
 		_on_environment_state_changed(
 			float(env_state.get("pollution", 0.0)),
 			float(env_state.get("stress", 0.0)),
@@ -477,8 +477,16 @@ func _attempt_prestige() -> void:
 	_update_all_views()
 
 func _show_offline_popup(amount: float) -> void:
-	var title := _strings_get("offline_title", "Offline Egg Credits")
-	offline_label.text = "%s: +%s" % [title, _format_num(amount)]
+	var title := _strings_get("offline_summary_title", "While you were away…")
+	var body_template := _strings_get(
+		"offline_summary_body",
+		"Your farm produced {amount} at {pct}% passive efficiency. Feed to boost output!"
+	)
+	var passive_pct: float = eco.last_offline_passive_multiplier() * 100.0
+	var decimals: int = 1 if passive_pct < 10.0 else 0
+	var pct_text := String.num(passive_pct, decimals)
+	var body := body_template.format({"amount": "+%s" % _format_num(amount), "pct": pct_text})
+	offline_label.text = "%s\n%s" % [title, body]
 	offline_popup.popup_centered()
 
 func _format_num(value: float, decimals: int = 0) -> String:

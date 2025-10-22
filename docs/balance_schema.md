@@ -12,6 +12,8 @@
 | BURST_COOLDOWN     | 10.0          | Seconds                       |
 | OFFLINE_CAP_HOURS  | 8             | Max offline sim window        |
 | OFFLINE_EFFICIENCY | 0.8           | Fraction of simulated output  |
+| OFFLINE_PASSIVE_MULT | 0.25        | Fraction of base PPS used offline |
+| OFFLINE_AUTOMATION_BONUS | 1.5     | Passive multiplier with automation |
 | AUTOSAVE_SECONDS   | 30            | Interval for autosave         |
 
 ## [UPGRADES] (soft-currency, per-run)
