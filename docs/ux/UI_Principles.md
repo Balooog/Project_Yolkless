@@ -26,6 +26,12 @@
 - Support text scale presets (100/110/125%).
 - Maintain 4.5:1 contrast ratios for buttons and labels.
 - All controls require keyboard focus and tooltips.
+- Provide color-blind safe palettes (deuteranopia / protanopia); avoid red-green pairings.
+- Controller input:
+  - D-pad/left stick moves focus between tabs and sheet controls.
+  - `A`/Enter activates; `B`/Esc closes sheets; `Y` opens Store; `X` opens Research.
+  - Feed action bound to `RT`/Space; sheets must not block feed activation.
+- TODO: implement controller navigation and palette swaps (see [Architecture Alignment TODO](../architecture/Implementation_TODO.md)).
 
 ## Links
 - Architecture context: [Overview](../architecture/Overview.md)

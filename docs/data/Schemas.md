@@ -33,6 +33,8 @@
 | `cost` | int | RP cost. |
 | `prereq` | string/null | Unlock gating. |
 
+**Parser Notes (TODO PX-016.1):** Loader `ResearchService._load_table(path)` expects DAG—validate with `/tools/validate_tables.py`. Pending columns: `name`, `desc`, `cost_rp:int`, `requires:csv`, `unlocks:csv`, `effect_key`, `effect_val:float`.
+
 ## `data/environment_profiles.tsv`
 | Column | Type | Notes |
 | ------ | ---- | ----- |
@@ -40,6 +42,8 @@
 | `season_curve` | Curve resource path | Points to `.tres` for temperature cycle. |
 | `light_curve`, `humidity_curve`, `air_quality_curve` | Curve path | Must be normalized 0‑1. |
 | `comfort_cap` | float | Max comfort contribution; reference Environment Playbook. |
+
+**Parser Notes (TODO PX-021.2):** Loader `EnvironmentService._load_profiles(path)` will consume columns `profile_id, daylen, temp_min/max, humidity_mean, wind_mean, theme`. Validate values are between 0 and 1 where applicable.
 
 ## `data/materials.tsv`
 | Column | Type | Notes |
@@ -52,5 +56,6 @@
 - TSV files are parsed by `Balance.gd` and must use tab separators with comment lines starting `#`.
 - New columns require parser updates and tests; document in ADR when altering schema.
 - Curves referenced by environment profiles should be checked during load to prevent runtime asserts.
+- Validation helpers live in `/tools/validate_tables.py`. Run `./tools/validate_tables.py --all` before committing data changes.
 
 See also: [Save Schema v1](SaveSchema_v1.md) for persistence rules.

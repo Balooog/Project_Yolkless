@@ -18,6 +18,10 @@ Use pooled logic with sampled visuals:
 - Requires object pool maintenance when adding new belt skins.
 - Visual fidelity improvements must respect pool limits.
 - Telemetry should derive from manager stats, not per-item logs.
+- Mitigations for low-end hardware:
+  * Fallback to texture scrolling when frame p95 > 18 ms for 5 s (no item sprites).
+  * Reduce sandbox grid to 96×54 and throttle automation updates to 5 Hz when `perf_low=true`.
+  * Auto-restore full fidelity once frame time stabilises < 14 ms p95.
 
 ## References
 - [Conveyor Module Doc](../modules/conveyor.md)

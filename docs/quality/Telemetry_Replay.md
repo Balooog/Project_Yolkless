@@ -10,13 +10,11 @@
 ## Headless CLI
 ```bash
 # 5 minute hands-off baseline
-./tools/headless_tick.sh 300
-
-# Burst cadence simulation
-./tools/headless_tick.sh 300 --strategy=burst
+godot --headless --path . --script res://tools/replay_headless.gd --duration=300 --seed=12345
 ```
-- By default writes to `logs/yolkless.log` and `logs/telemetry/`.
-- Use `--seconds` flag to extend runs (e.g., 3600 for hour-long soak).
+- Outputs human-readable log to `logs/yolkless.log` and summary JSON at `logs/telemetry/replay_YYYYMMDD_HHMM.json`.
+- Command flags: `--duration` (seconds), `--seed`, `--headless` (default true).
+- TODO: implement `tools/replay_headless.gd` (see [Architecture Alignment TODO](../architecture/Implementation_TODO.md)).
 
 ## Key Metrics
 | Metric | Source | Purpose |

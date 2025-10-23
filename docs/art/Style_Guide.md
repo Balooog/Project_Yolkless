@@ -12,6 +12,10 @@
 | `success_soft` | `#4FB477` | Shipment confirmation pulses. |
 | `warning_soft` | `#F3A25B` | Gentle alerts (power dip). |
 
+- Palette export script: `./tools/export_palette.gd` reads `/data/materials.tsv` and writes `/art/palettes/cozy_palette.png` and JSON metadata.
+- Asset token naming: `mat_<id>_<tier>.png` sourced from `materials.tsv`; keep palettes in sync before committing art.
+- TODO: implement palette export tooling and source data (see [Architecture Alignment TODO](../architecture/Implementation_TODO.md)).
+
 ## Lighting Curves
 - Day/night transitions over 6–8 minutes, easing in/out with cubic curves.
 - Peak brightness limited to 0.85 gamma to avoid harsh glare.

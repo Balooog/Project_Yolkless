@@ -1,6 +1,7 @@
 extends Node
 class_name Economy
 
+const StatBus := preload("res://src/services/StatBus.gd")
 const EnvironmentService := preload("res://src/services/EnvironmentService.gd")
 
 signal soft_changed(value: float)
@@ -46,12 +47,14 @@ var _feed_reported_full := false
 var _last_offline_passive_mult := 0.0
 var _storage_reported_full := false
 var _automation_env_blocked := false
+var _statbus: StatBus
 
 func setup(balance: Balance, research: Research) -> void:
 	_balance = balance
 	_research = research
 	_balance.reloaded.connect(_on_balance_reload)
 	set_process(true)
+ 	_statbus = _statbus_ref()
 	_auto_timer = Timer.new()
 	_auto_timer.one_shot = false
 	add_child(_auto_timer)
@@ -65,6 +68,7 @@ func setup(balance: Balance, research: Research) -> void:
 	_refresh_dump_state()
 	_emit_storage_changed()
 	_update_timers()
+	_register_statbus_metrics()
 
 func _process(delta: float) -> void:
 	_tick(delta)
@@ -98,7 +102,10 @@ func _tick(delta: float) -> void:
 	if feed_current < feed_capacity:
 		_feed_reported_full = false
 
+	var base_pps := _base_pps()
 	var pps: float = _current_pps()
+	_update_statbus_pps(base_pps, pps)
+	_update_feed_fraction_stat()
 	var gained: float = pps * delta
 	_apply_income(gained)
 	_update_automation_state()
@@ -204,6 +211,7 @@ func _emit_storage_changed() -> void:
 	if storage < 0.0:
 		storage = 0.0
 	storage_changed.emit(storage, capacity)
+	_update_statbus_storage(storage, capacity)
 
 func spend_soft(cost: float) -> bool:
 	if soft + 1e-6 < cost:
@@ -281,8 +289,9 @@ func _base_pps() -> float:
 	var tier_prod: float = float(_balance.factory_tiers.get(factory_tier, {}).get("prod_mult", 1.0))
 	var prod_mult: float = _stat_multiplier("mul_prod")
 	var research_mul: float = float(_research.multipliers["mul_prod"])
-	var env_power: float = _environment_power_modifier()
-	return P0 * tier_prod * prod_mult * research_mul * env_power
+var env_power: float = _environment_power_modifier()
+var comfort_bonus: float = 1.0 + _statbus_value(&"ci_bonus", 0.0)
+return P0 * tier_prod * prod_mult * research_mul * env_power * comfort_bonus
 
 func _current_capacity() -> float:
 	if _balance == null or _research == null:
@@ -598,6 +607,7 @@ func _recompute_feed_stats() -> void:
 		_feed_reported_empty = true
 	if feed_current >= feed_capacity:
 		_feed_reported_full = true
+	_update_feed_fraction_stat()
 
 func _base_feed_capacity() -> float:
 	if _balance == null:
@@ -700,6 +710,54 @@ func _environment_prestige_multiplier(state: Dictionary = {}) -> float:
 	var reputation := float(env_state.get("reputation", 0.0))
 	var modifier := reputation * 0.002 - pollution * 0.001 - stress * 0.0012
 	return clamp(1.0 + modifier, 0.5, 1.5)
+
+func _register_statbus_metrics() -> void:
+	_statbus_ref()
+	if _statbus == null:
+		return
+	_statbus.register_stat(&"pps_base", {"stack": "replace", "default": 0.0})
+	_statbus.register_stat(&"pps", {"stack": "replace", "default": 0.0})
+	_statbus.register_stat(&"storage", {"stack": "replace", "default": storage})
+	_statbus.register_stat(&"storage_capacity", {"stack": "replace", "default": _current_capacity()})
+	_statbus.register_stat(&"feed_fraction", {"stack": "replace", "default": get_feed_fraction()})
+	_update_statbus_storage(storage, _current_capacity())
+	_update_statbus_pps(_base_pps(), _current_pps())
+	_update_feed_fraction_stat()
+
+func _update_statbus_pps(base_pps: float, pps: float) -> void:
+	_statbus_ref()
+	if _statbus == null:
+		return
+	_statbus.set_stat(&"pps_base", base_pps, "Economy")
+	_statbus.set_stat(&"pps", pps, "Economy")
+
+func _update_statbus_storage(current_storage: float, capacity: float) -> void:
+	_statbus_ref()
+	if _statbus == null:
+		return
+	_statbus.set_stat(&"storage", current_storage, "Economy")
+	_statbus.set_stat(&"storage_capacity", capacity, "Economy")
+
+func _update_feed_fraction_stat() -> void:
+	_statbus_ref()
+	if _statbus == null:
+		return
+	_statbus.set_stat(&"feed_fraction", get_feed_fraction(), "Economy")
+
+func _statbus_value(key: StringName, default_value: float = 0.0) -> float:
+	_statbus_ref()
+	if _statbus == null:
+		return default_value
+	return _statbus.get_stat(key, default_value)
+
+func _statbus_ref() -> StatBus:
+	if _statbus and is_instance_valid(_statbus):
+		return _statbus
+	var node := get_node_or_null("/root/StatBusSingleton")
+	if node is StatBus:
+		_statbus = node as StatBus
+		return _statbus
+	return null
 
 func _log(level: String, category: String, message: String, context: Dictionary = {}) -> void:
 	var logger_node := get_node_or_null("/root/Logger")

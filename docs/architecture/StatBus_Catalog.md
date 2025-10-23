@@ -24,7 +24,19 @@
 - **Update Cadence:** Keep cadence consistent to avoid jitter. If a system needs a different rate, document it here before implementation.
 - **Owner:** The owning service is responsible for validation and signal emission when the stat changes.
 
+## Governance & Caps
+| Key | Unit | Stack Rule | Cap | Owner RM/PX | Enforced In |
+| --- | ---- | ---------- | --- | ----------- | ----------- |
+| `pps_base` | credits/sec | replace | n/a | RM-011 | `Economy.gd` |
+| `ci_bonus` | multiplier (add) | additive | ≤ 0.05 | RM-021 / PX-021.1 | StatBus clamp |
+| `event_modifier` | multiplier (add) | additive | ≤ 0.10 | RM-016 | StatBus clamp |
+| `auto_burst_ready` | bool | replace | n/a | RM-013 | `AutomationService.gd` |
+
+- StatBus clamps capped values and logs once per minute: `STATBUS: clamp ci_bonus 0.067→0.050`.
+- New stats must declare owner and enforcement path before registration.
+
 ## Required References
 
 - PX specs must include a link to this catalog when introducing new stats.
 - Telemetry pipelines (see `/docs/quality/Telemetry_Replay.md`) should log stat keys verbatim.
+- Implementation status tracked in [Architecture Alignment TODO](Implementation_TODO.md).
