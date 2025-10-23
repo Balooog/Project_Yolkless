@@ -353,10 +353,10 @@ func _stage_for_preset(preset: StringName) -> StringName:
 
 func _get_stage_instance(stage_id: StringName) -> Node2D:
 	if _stage_instances.has(stage_id):
-		var cached_variant := _stage_instances[stage_id]
-		if cached_variant and is_instance_valid(cached_variant):
-			if cached_variant is Node2D:
-				var cached: Node2D = cached_variant as Node2D
+		var cached_variant: Variant = _stage_instances[stage_id]
+		if cached_variant is Node2D:
+			var cached: Node2D = cached_variant
+			if is_instance_valid(cached):
 				return cached
 	_stage_instances.erase(stage_id)
 	var scene := _get_stage_scene(stage_id)

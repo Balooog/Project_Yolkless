@@ -2,6 +2,7 @@
 soft_label	Egg Credits: {value} / {capacity}
 soft_label_wallet	Egg Credits: {value}
 pps_label	Egg Flow: {pps}/s
+conveyor_label	Conveyor: {rate}/s | Queue {queue}
 farm_stage	Farm Stage: {name}
 prestige_label	Reputation Stars: {prestige} (Next Rebrand: +{next})
 prestige_button_ready	Rebrand & Advance to Next Generation
