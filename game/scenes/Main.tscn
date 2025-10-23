@@ -1,13 +1,13 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=9 format=3]
 [ext_resource type="Script" path="res://game/scripts/Balance.gd" id="1"]
 [ext_resource type="Script" path="res://game/scripts/Research.gd" id="2"]
 [ext_resource type="Script" path="res://game/scripts/Economy.gd" id="3"]
 [ext_resource type="Script" path="res://game/scripts/Save.gd" id="4"]
 [ext_resource type="Script" path="res://game/scripts/Main.gd" id="5"]
-[ext_resource type="PackedScene" path="res://ui/widgets/EnvPanel.tscn" id="6"]
 [ext_resource type="Script" path="res://game/scripts/ui/HudStorageBar.gd" id="7"]
 [ext_resource type="Script" path="res://src/modules/conveyor/ConveyorManager.gd" id="8"]
 [ext_resource type="PackedScene" path="res://game/scenes/modules/conveyor/FactoryConveyor.tscn" id="9"]
+[ext_resource type="PackedScene" path="res://scenes/prototype/ui_architecture.tscn" id="10"]
 
 [node name="Main" type="Node"]
 script = ExtResource("5")
@@ -67,10 +67,15 @@ offset_left = 0.0
 offset_top = 0.0
 offset_right = 0.0
 offset_bottom = 0.0
+visible = false
 theme_override_constants/margin_left = 16
 theme_override_constants/margin_top = 16
 theme_override_constants/margin_right = 16
 theme_override_constants/margin_bottom = 16
+
+[node name="PrototypeUI" parent="UI" instance=ExtResource("10")]
+unique_name_in_owner = true
+visible = true
 
 [node name="RootColumn" type="VBoxContainer" parent="UI/RootMargin"]
 unique_name_in_owner = true
@@ -84,11 +89,6 @@ size_flags_horizontal = 3
 
 [node name="OverlaySpacer" type="Control" parent="UI/RootMargin/RootColumn/OverlayRow"]
 size_flags_horizontal = 3
-
-[node name="EnvironmentPanel" parent="UI/RootMargin/RootColumn/OverlayRow" instance=ExtResource("6")]
-unique_name_in_owner = true
-size_flags_horizontal = 0
-size_flags_vertical = 0
 
 [node name="VBox" type="VBoxContainer" parent="UI/RootMargin/RootColumn"]
 unique_name_in_owner = true

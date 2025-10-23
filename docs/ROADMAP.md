@@ -2,7 +2,7 @@
 
 *(Version 2025.10 — consolidated from design sessions)*
 
-> Major prompts are archived in `docs/prompts/` (roadmap specs as `RM-###.md`, driver attempts as `PX-###.x.md`).
+> Anchor design pacing and tone with [`docs/analysis/IdleGameComparative.md`](analysis/IdleGameComparative.md); it defines the comfort-idle benchmarks each module should honor. Major prompts are archived in `docs/prompts/` (roadmap specs as `RM-###.md`, driver attempts as `PX-###.x.md`).
 
 ---
 

@@ -2,6 +2,8 @@
 
 This directory houses Roadmap Modules (RM) and their prompt anchors (PX). Treat this index as the authoritative map from high-level goals to detailed design prompts.
 
+Every module should be framed against the comfort-idle benchmarks captured in [`../analysis/IdleGameComparative.md`](../analysis/IdleGameComparative.md); reference it when authoring or revising specs.
+
 ## Modules
 
 - [RM-009 — Conveyor Belt Visual Module](RM-009.md)

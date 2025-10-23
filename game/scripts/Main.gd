@@ -8,6 +8,7 @@ const ShopDebug := preload("res://game/scripts/ShopDebug.gd")
 const EnvPanel := preload("res://ui/widgets/EnvPanel.gd")
 const EnvironmentService := preload("res://src/services/EnvironmentService.gd")
 const FactoryConveyor := preload("res://game/scripts/conveyor/FactoryConveyor.gd")
+const UIArchitecturePrototype := preload("res://ui/prototype/UIArchitecturePrototype.gd")
 
 const FEED_FILL_HIGH_DEFAULT := Color(0.2, 0.8, 0.35, 1)
 const FEED_FILL_MED_DEFAULT := Color(0.95, 0.68, 0.2, 1)
@@ -23,9 +24,10 @@ const DEFAULT_ENV_STAGE_SIZE := Vector2(640, 360)
 @onready var eco: Economy = $Economy
 @onready var sav: Save = $Save
 @onready var environment_root_node: Node2D = %EnvironmentRoot
+@onready var legacy_ui_root: MarginContainer = %RootMargin
 
 @onready var root_vbox: VBoxContainer = %VBox
-@onready var environment_panel: EnvPanel = %EnvironmentPanel
+var environment_panel: EnvPanel
 @onready var deny_sound: AudioStreamPlayer = %DenySound
 @onready var stats_box: HBoxContainer = %StatsBox
 @onready var lbl_soft: Label = %SoftLabel
@@ -62,6 +64,7 @@ const DEFAULT_ENV_STAGE_SIZE := Vector2(640, 360)
 @onready var toast_label: Label = %ToastLabel
 @onready var conveyor_manager: ConveyorManager = %ConveyorManager
 @onready var conveyor_layer := %ConveyorLayer
+@onready var ui_prototype: UIArchitecturePrototype = %PrototypeUI
 
 var text_scale := 1.0
 var shop_service: ShopService
@@ -83,6 +86,16 @@ var _conveyor_colors: Array[Color] = [
 	Color(1.0, 0.753, 0.275, 1.0),
 	Color(0.757, 0.486, 0.455, 1.0)
 ]
+var _prototype_metrics := {
+	"credits": "₡ 0",
+	"storage": "Storage 0 / 0",
+	"pps": "0 PPS",
+	"research": "0 RP"
+}
+var _prototype_feed_status := "Feed silo ready"
+var _prototype_feed_fraction := 0.0
+var _prototype_feed_queue := 0
+var factory_viewport: SubViewport
 
 func _ready() -> void:
 	res.setup(bal)
@@ -119,6 +132,42 @@ func _ready() -> void:
 	btn_r_cap.pressed.connect(func(): _attempt_research("r_cap_1"))
 	btn_r_auto.pressed.connect(func(): _attempt_research("r_auto_1"))
 	offline_close.pressed.connect(func(): offline_popup.hide())
+
+	if ui_prototype:
+		if not ui_prototype.feed_requested.is_connected(_on_prototype_feed_requested):
+			ui_prototype.feed_requested.connect(_on_prototype_feed_requested)
+		if not ui_prototype.feed_hold_started.is_connected(_on_prototype_feed_hold_started):
+			ui_prototype.feed_hold_started.connect(_on_prototype_feed_hold_started)
+		if not ui_prototype.feed_hold_ended.is_connected(_on_prototype_feed_hold_ended):
+			ui_prototype.feed_hold_ended.connect(_on_prototype_feed_hold_ended)
+		if not ui_prototype.promote_requested.is_connected(_on_prototype_promote_requested):
+			ui_prototype.promote_requested.connect(_on_prototype_promote_requested)
+		if not ui_prototype.upgrade_requested.is_connected(_on_prototype_upgrade_requested):
+			ui_prototype.upgrade_requested.connect(_on_prototype_upgrade_requested)
+		if not ui_prototype.research_requested.is_connected(_on_prototype_research_requested):
+			ui_prototype.research_requested.connect(_on_prototype_research_requested)
+		if not ui_prototype.prestige_requested.is_connected(_on_prototype_prestige_requested):
+			ui_prototype.prestige_requested.connect(_on_prototype_prestige_requested)
+		if not ui_prototype.save_export_requested.is_connected(_on_prototype_export_requested):
+			ui_prototype.save_export_requested.connect(_on_prototype_export_requested)
+		if not ui_prototype.save_import_requested.is_connected(_on_prototype_import_requested):
+			ui_prototype.save_import_requested.connect(_on_prototype_import_requested)
+		if not ui_prototype.settings_requested.is_connected(_on_settings_pressed):
+			ui_prototype.settings_requested.connect(_on_settings_pressed)
+		if not ui_prototype.layout_changed.is_connected(_on_prototype_layout_changed):
+			ui_prototype.layout_changed.connect(_on_prototype_layout_changed)
+		var proto_env := ui_prototype.get_environment_panel()
+		if proto_env is EnvPanel:
+			environment_panel = proto_env
+		factory_viewport = ui_prototype.get_factory_viewport()
+		if factory_viewport:
+			_move_environment_into_viewport(factory_viewport)
+			_update_factory_viewport_bounds()
+		_set_prototype_visible(true)
+	else:
+		if legacy_ui_root:
+			legacy_ui_root.visible = true
+		environment_panel = get_node_or_null("%EnvironmentPanel") as EnvPanel
 
 	if conveyor_manager:
 		if not conveyor_manager.throughput_updated.is_connected(_on_conveyor_throughput_updated):
@@ -199,6 +248,9 @@ func _ready() -> void:
 		if not env_state.is_empty():
 			_on_environment_state_changed(env_state)
 
+	if ui_prototype:
+		_sync_prototype_all()
+
 	sav.load_state()
 	var offline_gain: float = sav.grant_offline()
 	if offline_gain > 0.0:
@@ -270,7 +322,7 @@ func _on_dump_triggered(amount: float, _new_balance: float) -> void:
 		return
 	if amount <= 0.0:
 		return
-	var template := _strings_get("storage_dump_message", "Cap reached! +{amount}")
+	var template := _strings_get("storage_dump_message", "Shipment sent! +{amount}")
 	var message := template.format({"amount": _format_num(amount)})
 	if capacity_bar and capacity_bar.has_method("play_dump_pulse"):
 		capacity_bar.call("play_dump_pulse", eco.dump_animation_ms(), message)
@@ -325,6 +377,10 @@ func _update_soft_view(value: float) -> void:
 	lbl_pps.text = pps_template.format({
 		"pps": _format_num(eco.current_pps(), 1)
 	})
+	_prototype_metrics["credits"] = "₡ " + _format_num(value)
+	_prototype_metrics["pps"] = _format_num(eco.current_pps(), 1) + " PPS"
+	_commit_prototype_metrics()
+	_refresh_prototype_home_sheet()
 
 func _update_prestige_view() -> void:
 	var next := eco.prestige_points_earned()
@@ -338,6 +394,8 @@ func _update_prestige_view() -> void:
 	if next > 0:
 		prestige_key = "prestige_button_ready"
 	btn_prestige.text = _strings_get(prestige_key, btn_prestige.text)
+	_refresh_prototype_home_sheet()
+	_refresh_prototype_prestige_sheet()
 
 func _update_factory_view() -> void:
 	var name := eco.factory_name()
@@ -358,6 +416,7 @@ func _update_factory_view() -> void:
 			"cost": _format_num(next_cost)
 		})
 		btn_promote.disabled = eco.soft + 1e-6 < next_cost
+	_refresh_prototype_home_sheet()
 
 func _update_conveyor_view(rate: float, queue_len: int) -> void:
 	_conveyor_rate = rate
@@ -404,6 +463,8 @@ func _update_upgrade_buttons() -> void:
 	_apply_shop_button(btn_prod, "prod_1", "buy_prod")
 	_apply_shop_button(btn_cap, "cap_1", "buy_cap")
 	_apply_auto_button()
+	_refresh_prototype_store_sheet()
+	_refresh_prototype_automation_sheet()
 
 func _update_upgrade_buttons_legacy() -> void:
 	var prod_data: Dictionary = {}
@@ -457,6 +518,8 @@ func _update_upgrade_buttons_legacy() -> void:
 	})
 	btn_auto.disabled = (not auto_allowed) or eco.soft + 1e-6 < auto_cost
 	btn_auto.tooltip_text = btn_auto.text
+	_refresh_prototype_store_sheet()
+	_refresh_prototype_automation_sheet()
 
 func _apply_shop_button(button: Button, id: String, template_key: String) -> void:
 	var state: Dictionary = shop_service.get_item_state(id)
@@ -537,6 +600,9 @@ func _update_research_view() -> void:
 				"cost": cost
 			})
 			button.disabled = not res.can_buy(node_id)
+	_prototype_metrics["research"] = _format_num(res.prestige_points, 0) + " RP"
+	_commit_prototype_metrics()
+	_refresh_prototype_research_sheet()
 
 func _update_storage_view(storage_value: float = -1.0, capacity: float = -1.0) -> void:
 	if eco == null:
@@ -560,6 +626,9 @@ func _update_storage_view(storage_value: float = -1.0, capacity: float = -1.0) -
 		capacity_label.tooltip_text = formatted
 	if capacity_bar:
 		capacity_bar.tooltip_text = formatted
+	_prototype_metrics["storage"] = formatted
+	_commit_prototype_metrics()
+	_refresh_prototype_home_sheet()
 
 func _update_feed_ui() -> void:
 	var fraction: float = eco.get_feed_fraction()
@@ -600,6 +669,19 @@ func _update_feed_ui() -> void:
 	feed_bar.add_theme_stylebox_override("fill", fill_style)
 	if feed_bar.modulate != Color.WHITE:
 		feed_bar.modulate = Color.WHITE
+	_prototype_feed_status = status
+	_prototype_feed_fraction = fraction
+	if eco.is_feeding():
+		_prototype_feed_queue = 1
+	elif eco.feed_current <= 0.0:
+		_prototype_feed_queue = 0
+	else:
+		_prototype_feed_queue = 0
+	if _prototype_available():
+		ui_prototype.set_feed_status(status, fraction, eco.is_feeding())
+		ui_prototype.set_feed_queue(_prototype_feed_queue)
+		ui_prototype.set_canvas_message(status)
+	_refresh_prototype_home_sheet()
 
 func _get_feed_fill_color(fraction: float) -> Color:
 	if high_contrast_enabled:
@@ -613,6 +695,146 @@ func _get_feed_fill_color(fraction: float) -> Color:
 	if fraction >= 0.33:
 		return FEED_FILL_MED_DEFAULT
 	return FEED_FILL_LOW_DEFAULT
+
+func _prototype_available() -> bool:
+	return ui_prototype != null
+
+func _commit_prototype_metrics() -> void:
+	if not _prototype_available():
+		return
+	ui_prototype.set_metrics(_prototype_metrics)
+
+func _sync_prototype_all() -> void:
+	_commit_prototype_metrics()
+	_refresh_prototype_home_sheet()
+	_refresh_prototype_store_sheet()
+	_refresh_prototype_research_sheet()
+	_refresh_prototype_prestige_sheet()
+	_refresh_prototype_automation_sheet()
+	if _prototype_available():
+		var feeding := eco != null and eco.is_feeding()
+		ui_prototype.set_feed_status(_prototype_feed_status, _prototype_feed_fraction, feeding)
+		ui_prototype.set_feed_queue(_prototype_feed_queue)
+		ui_prototype.set_canvas_message(_prototype_feed_status)
+
+func _set_prototype_visible(visible: bool) -> void:
+	if legacy_ui_root:
+		legacy_ui_root.visible = not visible
+	if _prototype_available():
+		ui_prototype.visible = visible
+		if visible:
+			_sync_prototype_all()
+			_center_environment_root()
+func _prototype_button_state(button: Button) -> Dictionary:
+	if button == null:
+		return {}
+	return {
+		"text": button.text,
+		"disabled": button.disabled,
+		"tooltip": button.tooltip_text,
+		"visible": button.visible
+	}
+
+func _refresh_prototype_home_sheet() -> void:
+	if not _prototype_available():
+		return
+	var utilities := {
+		"export": _prototype_button_state(btn_export),
+		"import": _prototype_button_state(btn_import),
+		"settings": _prototype_button_state(btn_settings)
+	}
+	var hint_text := ""
+	if feed_hint_label and feed_hint_label.visible:
+		hint_text = feed_hint_label.text
+	var home_payload := {
+		"soft": lbl_soft.text,
+		"storage": capacity_label.text,
+		"stage": lbl_tier.text,
+		"prestige": lbl_prestige.text,
+		"feed_status": feed_status_label.text,
+		"feed_hint": hint_text,
+		"feed_fraction": _prototype_feed_fraction,
+		"feed_style": feed_bar.get_theme_stylebox("fill"),
+		"queue": _prototype_feed_queue,
+		"feed_button": _prototype_button_state(btn_burst),
+		"promote_button": _prototype_button_state(btn_promote),
+		"utilities": utilities
+	}
+	ui_prototype.update_home(home_payload)
+
+func _refresh_prototype_store_sheet() -> void:
+	if not _prototype_available():
+		return
+	var buttons := {
+		"prod_1": _prototype_button_state(btn_prod),
+		"cap_1": _prototype_button_state(btn_cap),
+		"auto_1": _prototype_button_state(btn_auto)
+	}
+	ui_prototype.update_store(buttons)
+
+func _refresh_prototype_research_sheet() -> void:
+	if not _prototype_available():
+		return
+	var buttons := {
+		"r_prod_1": _prototype_button_state(btn_r_prod),
+		"r_cap_1": _prototype_button_state(btn_r_cap),
+		"r_auto_1": _prototype_button_state(btn_r_auto)
+	}
+	var payload := {
+		"summary": lbl_research.text,
+		"buttons": buttons
+	}
+	ui_prototype.update_research(payload)
+
+func _refresh_prototype_prestige_sheet() -> void:
+	if not _prototype_available():
+		return
+	var payload := {
+		"status": lbl_prestige.text,
+		"button": _prototype_button_state(btn_prestige)
+	}
+	ui_prototype.update_prestige(payload)
+
+func _refresh_prototype_automation_sheet() -> void:
+	if not _prototype_available():
+		return
+	var payload := {
+		"buttons": {
+			"auto_1": _prototype_button_state(btn_auto)
+		}
+	}
+	ui_prototype.update_automation(payload)
+
+func _on_prototype_feed_requested() -> void:
+	_attempt_feed_start("prototype")
+
+func _on_prototype_feed_hold_started() -> void:
+	_on_feed_button_down()
+
+func _on_prototype_feed_hold_ended() -> void:
+	_on_feed_button_up()
+
+func _on_prototype_promote_requested() -> void:
+	_attempt_promote()
+
+func _on_prototype_upgrade_requested(upgrade_id: String) -> void:
+	_attempt_upgrade(upgrade_id)
+
+func _on_prototype_research_requested(research_id: String) -> void:
+	_attempt_research(research_id)
+
+func _on_prototype_prestige_requested() -> void:
+	_attempt_prestige()
+
+func _on_prototype_export_requested() -> void:
+	sav.export_to_clipboard()
+
+func _on_prototype_import_requested() -> void:
+	sav.import_from_clipboard()
+
+func _on_prototype_layout_changed() -> void:
+	_update_factory_viewport_bounds()
+	_center_environment_root()
 
 func _on_high_contrast_toggled(enabled: bool) -> void:
 	high_contrast_enabled = enabled
@@ -690,6 +912,10 @@ func _apply_contrast_theme() -> void:
 	_update_feed_ui()
 
 func _apply_button_styles() -> void:
+	var normal_style := ArtRegistry.get_style("ui_button", high_contrast_enabled)
+	var hover_style := ArtRegistry.get_style("ui_button_hover", high_contrast_enabled)
+	var pressed_style := ArtRegistry.get_style("ui_button_pressed", high_contrast_enabled)
+	var font_color := ProceduralFactory.COLOR_TEXT
 	var buttons: Array[Button] = [
 		btn_burst,
 		btn_prod,
@@ -708,10 +934,24 @@ func _apply_button_styles() -> void:
 	for button in buttons:
 		if button == null:
 			continue
-		button.add_theme_stylebox_override("normal", ArtRegistry.get_style("ui_button", high_contrast_enabled))
-		button.add_theme_stylebox_override("hover", ArtRegistry.get_style("ui_button_hover", high_contrast_enabled))
-		button.add_theme_stylebox_override("pressed", ArtRegistry.get_style("ui_button_pressed", high_contrast_enabled))
-		button.add_theme_color_override("font_color", ProceduralFactory.COLOR_TEXT)
+		if normal_style:
+			button.add_theme_stylebox_override("normal", normal_style)
+		if hover_style:
+			button.add_theme_stylebox_override("hover", hover_style)
+		if pressed_style:
+			button.add_theme_stylebox_override("pressed", pressed_style)
+		button.add_theme_color_override("font_color", font_color)
+	if _prototype_available():
+		for proto_button in ui_prototype.get_action_buttons():
+			if proto_button == null:
+				continue
+			if normal_style:
+				proto_button.add_theme_stylebox_override("normal", normal_style)
+			if hover_style:
+				proto_button.add_theme_stylebox_override("hover", hover_style)
+			if pressed_style:
+				proto_button.add_theme_stylebox_override("pressed", pressed_style)
+			proto_button.add_theme_color_override("font_color", font_color)
 
 func _on_feed_button_down() -> void:
 	_attempt_feed_start("button")
@@ -966,17 +1206,30 @@ func _center_environment_root() -> void:
 	environment_root_node.position = _environment_root_target_position()
 
 func _environment_root_target_position() -> Vector2:
-	var stage_size := _get_environment_stage_size()
-	var column_rect := root_vbox.get_global_rect()
-	if stage_size == Vector2.ZERO:
-		stage_size = DEFAULT_ENV_STAGE_SIZE
-	var target := Vector2(
-		column_rect.position.x + stage_size.x * 0.5,
-		column_rect.position.y + stage_size.y * 0.5
+	if environment_root_node:
+		var parent := environment_root_node.get_parent()
+		if parent is SubViewport:
+			var viewport := parent as SubViewport
+			var vsize := Vector2(viewport.size.x, viewport.size.y)
+			if vsize != Vector2.ZERO:
+				return vsize * 0.5
+	var rect := Rect2()
+	if _prototype_available() and ui_prototype.visible:
+		rect = ui_prototype.get_canvas_rect()
+	if rect.size == Vector2.ZERO and root_vbox:
+		rect = root_vbox.get_global_rect()
+	if rect.size == Vector2.ZERO:
+		var fallback := _get_environment_stage_size()
+		if fallback == Vector2.ZERO:
+			fallback = DEFAULT_ENV_STAGE_SIZE
+		return fallback * 0.5
+	return Vector2(
+		rect.position.x + rect.size.x * 0.5,
+		rect.position.y + rect.size.y * 0.5
 	)
-	return target
 
 func _on_viewport_size_changed() -> void:
+	_update_factory_viewport_bounds()
 	_center_environment_root()
 
 func _get_environment_stage_size() -> Vector2:
@@ -985,6 +1238,32 @@ func _get_environment_stage_size() -> Vector2:
 		if size != Vector2.ZERO:
 			return size
 	return DEFAULT_ENV_STAGE_SIZE
+
+func _move_environment_into_viewport(viewport: SubViewport) -> void:
+	if environment_root_node == null or viewport == null:
+		return
+	if environment_root_node.get_parent() == viewport:
+		return
+	var previous_parent := environment_root_node.get_parent()
+	if previous_parent:
+		previous_parent.remove_child(environment_root_node)
+	viewport.add_child(environment_root_node)
+	if viewport.size != Vector2i.ZERO:
+		environment_root_node.position = Vector2(viewport.size.x, viewport.size.y) * 0.5
+
+func _update_factory_viewport_bounds() -> void:
+	if factory_viewport == null:
+		return
+	var target_size := Vector2.ZERO
+	if _prototype_available() and ui_prototype.visible:
+		target_size = ui_prototype.get_canvas_rect().size
+	if target_size == Vector2.ZERO and root_vbox:
+		target_size = root_vbox.get_global_rect().size
+	if target_size == Vector2.ZERO:
+		return
+	var viewport_size := Vector2i(max(1, int(round(target_size.x))), max(1, int(round(target_size.y))))
+	if factory_viewport.size != viewport_size:
+		factory_viewport.size = viewport_size
 
 func _get_strings() -> StringsCatalog:
 	var node := get_node_or_null("/root/Strings")
