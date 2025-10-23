@@ -188,8 +188,8 @@ func _perform_dump(reason: String = "auto") -> void:
 	_emit_storage_changed()
 	_deposit_soft(amount, reason)
 	dump_triggered.emit(amount, soft)
-	_log("INFO", "ECONOMY", "Storage dump processed", {
-		"dumped": amount,
+	_log("INFO", "ECONOMY", "Auto shipment processed", {
+		"shipped": amount,
 		"balance": soft,
 		"capacity": _current_capacity(),
 		"reason": reason

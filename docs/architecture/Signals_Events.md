@@ -1,0 +1,30 @@
+# Signals & Events Matrix
+
+> Single source of truth for cross-service communication. Emitters must document payloads before merging.
+
+| Emitter | Signal | Payload | Primary Listeners | Frequency |
+| ------- | ------ | ------- | ----------------- | -------- |
+| `Economy` | `soft_changed(value: float)` | `{ value: credits }` | UI prototype, telemetry, VisualDirector | on every balance change (~10 Hz) |
+| `Economy` | `storage_changed(value: float, capacity: float)` | `{ storage, capacity }` | HUD storage bar, StatBus | on storage delta |
+| `Economy` | `dump_triggered(amount: float, new_balance: float)` | `{ amount, balance }` | HUD pulse, telemetry, analytics | when auto shipment fires |
+| `Economy` | `burst_state(active: bool)` | `{ active }` | VisualDirector, AutomationService | on feed start/stop |
+| `EnvironmentService` | `environment_updated(state: Dictionary)` | `{ temperature, light, humidity, modifiers, ci }` | SandboxService, UI EnvPanel, StatBus | 5 Hz |
+| `EnvironmentService` | `day_phase_changed(phase: StringName)` | `{ phase }` | Lighting, Audio | phase transitions |
+| `EnvironmentService` | `preset_changed(preset: StringName)` | `{ preset }` | UI dropdown, telemetry | on preset swap |
+| `SandboxService` | `ci_changed(ci: float, bonus: float)` | `{ ci, bonus }` | Economy StatBus, Telemetry | 2 Hz |
+| `AutomationService` | `mode_changed(building_id: StringName, mode: int)` | `{ building_id, mode }` | UI overlays, save system | when automation toggles |
+| `AutomationService` | `auto_burst_enqueued()` | `{}` | HUD queue indicator, telemetry | when queue increments |
+| `PowerService` | `power_state_changed(state: float)` | `{ state }` | UI, AutomationService | 5 Hz |
+| `EventDirector` | `event_started(event_id: StringName, data: Dictionary)` | `{ id, modifiers, duration }` | UI popups, telemetry | event start |
+| `EventDirector` | `event_ended(event_id: StringName)` | `{ id }` | UI popups, telemetry | event completion |
+| `ShopService` | `state_changed(id: StringName)` | `{ id, state }` | UI buttons, ShopDebug | on price/lock change |
+| `Research` | `changed()` | `{}` | UI sheets, telemetry | on RP spend |
+| `ConveyorManager` | `throughput_updated(rate: float, queue_len: int)` | `{ rate, queue }` | HUD, StatBus | per frame |
+| `Save` | `autosave_started()` | `{}` | UI toast | on autosave |
+| `Save` | `autosave_completed(result: bool)` | `{ ok }` | UI toast | on autosave |
+
+## Event Metadata Guidelines
+
+- Payloads should be flat dictionaries for easy serialization.
+- If emitting high-frequency signals (>10 Hz), ensure listeners can throttle updates.
+- When adding a new signal, update this table and cross-link related PXs.

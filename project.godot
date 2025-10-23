@@ -91,3 +91,105 @@ reload_balance={
 "type": "KEY"
 }]
 }
+ui_tab_home={
+"deadzone": 0.5,
+"events": [{
+"deadzone": 0.5,
+"device": -1,
+"type": "JOY_BUTTON"
+}, {
+"alt": false,
+"control": false,
+"device": -1,
+"keycode": 49,
+"meta": false,
+"pressed": false,
+"shift": false,
+"type": "KEY"
+}]
+}
+ui_tab_store={
+"deadzone": 0.5,
+"events": [{
+"deadzone": 0.5,
+"device": -1,
+"type": "JOY_BUTTON"
+}, {
+"alt": false,
+"control": false,
+"device": -1,
+"keycode": 50,
+"meta": false,
+"pressed": false,
+"shift": false,
+"type": "KEY"
+}]
+}
+ui_tab_research={
+"deadzone": 0.5,
+"events": [{
+"deadzone": 0.5,
+"device": -1,
+"type": "JOY_BUTTON"
+}, {
+"alt": false,
+"control": false,
+"device": -1,
+"keycode": 51,
+"meta": false,
+"pressed": false,
+"shift": false,
+"type": "KEY"
+}]
+}
+ui_tab_automation={
+"deadzone": 0.5,
+"events": [{
+"deadzone": 0.5,
+"device": -1,
+"type": "JOY_BUTTON"
+}, {
+"alt": false,
+"control": false,
+"device": -1,
+"keycode": 52,
+"meta": false,
+"pressed": false,
+"shift": false,
+"type": "KEY"
+}]
+}
+ui_tab_prestige={
+"deadzone": 0.5,
+"events": [{
+"deadzone": 0.5,
+"device": -1,
+"type": "JOY_BUTTON"
+}, {
+"alt": false,
+"control": false,
+"device": -1,
+"keycode": 53,
+"meta": false,
+"pressed": false,
+"shift": false,
+"type": "KEY"
+}]
+}
+ui_tab_feed={
+"deadzone": 0.5,
+"events": [{
+"deadzone": 0.5,
+"device": -1,
+"type": "JOY_BUTTON"
+}, {
+"alt": false,
+"control": false,
+"device": -1,
+"keycode": 70,
+"meta": false,
+"pressed": false,
+"shift": false,
+"type": "KEY"
+}]
+}

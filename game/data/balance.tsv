@@ -1,9 +1,8 @@
-# =========================================================
-# File: game/data/balance.tsv   (use TSV to avoid CSV comma headaches)
-# Sections are keyworded; parser reads until next [SECTION]
-# =========================================================
-# [CONSTANTS]
-# key	value
+=========================================================
+File: game/data/balance.tsv   (use TSV to avoid CSV comma headaches)
+Sections are keyworded; parser reads until next [SECTION]
+=========================================================
+[CONSTANTS]
 P0	0.4
 BURST_MULT	6.0
 BURST_DURATION	5.0
@@ -21,46 +20,44 @@ OFFLINE_PASSIVE_MULT	0.25
 OFFLINE_AUTOMATION_BONUS	1.5
 AUTOSAVE_SECONDS	30
 
-# [UPGRADES]
-# id	kind	stat	mult_add	mult_mul	base_cost	growth	requires
-prod_1	prod	mul_prod	0.1	1.0	60	1.15	-
+[UPGRADES]
+id	kind	stat	mult_add	mult_mul	base_cost	growth	requires
+prod_1	prod	mul_prod	0.1	1.0	50	1.15	-
 cap_1	cap	mul_cap	0.1	1.0	140	1.18	-
 auto_1	auto	unlock_autoburst	0	1.0	2500	1.0	factory>=3
 feed_storage	feed	feed_capacity	10.0	1.0	320	1.20	-
 feed_refill	feed	feed_refill	1.0	1.10	280	1.25	-
 feed_efficiency	feed	feed_efficiency	0.10	1.0	360	1.30	-
 
-# [FACTORY_TIERS]
-# tier	display_name	cap_mult	prod_mult	unlocks	cost
+[FACTORY_TIERS]
+tier	display_name	cap_mult	prod_mult	unlocks	cost
 1	Backyard Coop	1.0	1.0	-	0
 2	Community Farm	1.6	1.1	auto	200
 3	Regional Farm	2.3	1.25	research_tab	800
 
-# [AUTOMATION]
-# id	type	value	description
+[AUTOMATION]
+id	type	value	description
 auto_burst	tick_seconds	10	Burst tick cadence (usually BURST_COOLDOWN)
 auto_burst_efficiency	mult	0.85	Automation penalty vs manual
 
-# [RESEARCH]
-# id	branch	stat	mult_add	mult_mul	cost	prereq
+[RESEARCH]
+id	branch	stat	mult_add	mult_mul	cost	prereq
 r_prod_1	production	mul_prod	0.0	1.1	2	-
 r_cap_1	capacity	mul_cap	0.0	1.1	5	-
 r_auto_1	automation	auto_cd	-1.0	1.0	8	r_prod_1
 
-# [PRESTIGE]
-# key	value
+[PRESTIGE]
 ALPHA	0.6
 K	0.01
 
-# [PRICES]
-# id	type	price	visible	notes
-prod_1	UPGRADE	250	1	keep visible; unreachable in 3–5 min
-cap_1	UPGRADE	320	1	ditto
+[PRICES]
+id	type	price	visible	notes
+prod_1	UPGRADE	50	1	First upgrade target (immediate post-shipment)
+cap_1	UPGRADE	140	1	Unlock near 5 min pacing
 prod_2	UPGRADE	1200	0	hidden until RM-012
 cap_2	UPGRADE	1500	0	hidden until RM-012
 
-# [HUD_FLAGS]
-# key	value
+[HUD_FLAGS]
 SHOW_PPS_LABEL	1
 SHOW_STORAGE_BAR	1
 SHOW_CAP_PULSE	1

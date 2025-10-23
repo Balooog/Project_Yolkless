@@ -3,6 +3,8 @@
 ## Vision
 A cozy, tactile idle game with **hold-to-burst** production, **two currencies** (Soft, Prestige), **no ads/IAP**, and **Linux-first iteration**. Future-ready for Steam/Google Play.
 
+Design tone, pacing, and system layering follow the comfort-idle benchmarks summarized in `docs/analysis/IdleGameComparative.md`.
+
 ## Core Decisions
 - **Research:** prestige-only (permanent), acts as meta tree.
 - **Factory Levels:** distinct building tiers (not just capacity ranks). Tiers unlock systems and apply multipliers.

@@ -1,6 +1,7 @@
 # Conveyor Belt Visual Module
 
 The conveyor module simulates item flow for automation set pieces. It pairs on-screen feedback (moving sprites with scroll effects) with throughput tracking that other systems can consume.
+Tune belt speeds, easing, and FX against the comfort-idle guardrails in `docs/analysis/IdleGameComparative.md` so the visual loop stays relaxing.
 
 ## Components
 

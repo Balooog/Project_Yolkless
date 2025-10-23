@@ -1,0 +1,39 @@
+# Roadmap Index
+
+> Master reference for RM/PX documents and supporting guides.
+
+## Modules
+| RM | Summary | Key Docs |
+| -- | ------- | -------- |
+| [RM-009](RM-009.md) | Conveyor visuals & throughput | [ADR-0001](../adr/ADR-0001_conveyor-fidelity.md), [Performance Budgets](../quality/Performance_Budgets.md) |
+| [RM-010](RM-010.md) | UI & control architecture | [UI Principles](../ux/UI_Principles.md), [Style Guide](../art/Style_Guide.md) |
+| [RM-011](RM-011.md) | Early economy loop | [Balance Playbook](../design/Balance_Playbook.md), [Telemetry Replay](../quality/Telemetry_Replay.md) |
+| [RM-012](RM-012.md) | Upgrades & research | [Schemas](../data/Schemas.md), [StatBus Catalog](../architecture/StatBus_Catalog.md) |
+| [RM-013](RM-013.md) | Automation core | [Signals & Events](../architecture/Signals_Events.md) |
+| [RM-014](RM-014.md) | Telemetry & QA | [Telemetry Replay](../quality/Telemetry_Replay.md) |
+| [RM-015](RM-015.md) | Wisdom prestige | [Balance Playbook](../design/Balance_Playbook.md) |
+| [RM-016](RM-016.md) | Event & risk system | [Performance Budgets](../quality/Performance_Budgets.md), [Signals & Events](../architecture/Signals_Events.md) |
+| [RM-017](RM-017.md) | Release milestones | [Build Cookbook](../dev/Build_Cookbook.md) |
+| [RM-018](RM-018.md) | Power & resource | [Signals & Events](../architecture/Signals_Events.md) |
+| [RM-019](RM-019.md) | Factory layout | [Architecture Overview](../architecture/Overview.md) |
+| [RM-020](RM-020.md) | Art/audio pipeline | [Style Guide](../art/Style_Guide.md) |
+| [RM-021](RM-021.md) | Environment simulation | [Environment Playbook](../design/Environment_Playbook.md), [StatBus Catalog](../architecture/StatBus_Catalog.md) |
+
+## Dependency Graph
+```
+RM-011 -> RM-012 -> RM-013 -> RM-018 -> RM-019
+RM-021 -> RM-018
+RM-014 listens to RM-011/013/021 outputs
+RM-010 consumes RM-011/012/013/021 stats
+```
+
+## Phase Gates
+- **Prototype Gate:** RM-009, RM-010, RM-011, RM-021.
+- **Alpha Gate:** RM-012, RM-013, RM-018, RM-019.
+- **Beta Gate:** RM-014, RM-016, RM-020.
+- **Launch Gate:** RM-015, RM-017 plus polish RMs.
+
+## Templates & References
+- PX Template: [docs/templates/PX_Template.md](../templates/PX_Template.md)
+- ADR Template: [docs/templates/ADR_Template.md](../templates/ADR_Template.md)
+- Comparative context: [Idle Game Analysis](../analysis/IdleGameComparative.md)

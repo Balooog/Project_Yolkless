@@ -27,7 +27,7 @@ offline_summary_title	While you were away…
 offline_summary_body	Your farm produced {amount} at {pct}% passive efficiency. Feed to boost output!
 capacity_bar_label	Storage: {value} / {capacity}
 storage_label	Storage: {storage} / {capacity} ({percent}%)
-storage_dump_message	Cap reached! +{amount}
+storage_dump_message	Shipment sent! +{amount}
 feed_bar_label	Feed Supply
 feed_refilling	Refilling silo… {pct}%
 feed_empty	Feed empty

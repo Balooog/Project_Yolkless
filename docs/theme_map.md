@@ -6,6 +6,8 @@ A grounded idle game about modernizing egg production: from backyard coops to fu
 
 Players manage efficiency, ethics, and innovation to reach the ultimate goal—creating the perfect \*yolkless egg.\*
 
+Comfort-idle tone, pacing, and visual cues should remain consistent with `docs/analysis/IdleGameComparative.md`.
+
 
 
 ---
