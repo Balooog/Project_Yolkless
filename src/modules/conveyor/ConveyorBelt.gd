@@ -58,17 +58,17 @@ func configure_segments(segment_defs: Array[Dictionary]) -> void:
 		var speed_value: float = float(def.get("speed", DEFAULT_SPEED))
 		var capacity_value: int = int(def.get("capacity", DEFAULT_CAPACITY))
 		var direction_value: int = int(def.get("direction", 1))
-		var segment := Segment.new(length_value, speed_value, capacity_value, direction_value, start)
+		var segment: Segment = Segment.new(length_value, speed_value, capacity_value, direction_value, start)
 		segments.append(segment)
 		start = segment.end
 	_total_length = start
 	queue_redraw()
 
 func add_segment(length_value: float, speed_value: float, capacity_value: int = DEFAULT_CAPACITY, direction_value: int = 1) -> void:
-	var start := 0.0
+	var start: float = 0.0
 	if not segments.is_empty():
 		start = segments[segments.size() - 1].end
-	var segment := Segment.new(length_value, speed_value, capacity_value, direction_value, start)
+	var segment: Segment = Segment.new(length_value, speed_value, capacity_value, direction_value, start)
 	segments.append(segment)
 	_total_length = segment.end
 	queue_redraw()
@@ -101,7 +101,7 @@ func clear_items() -> void:
 	_item_velocity.clear()
 
 func get_queue_length() -> int:
-	var queued := 0
+	var queued: int = 0
 	for item in _items:
 		if item.state == ConveyorItem.STATE_QUEUED:
 			queued += 1
@@ -123,36 +123,37 @@ func step(delta: float) -> Dictionary:
 			"delivered_count": 0
 		}
 	var delivered: Array[ConveyorItem] = []
-	var occupancy := _build_segment_occupancy()
-	var sorted_items := _items.duplicate()
-	sorted_items.sort_custom(self, "_sort_items_desc")
+	var occupancy: Dictionary = _build_segment_occupancy()
+	var sorted_items: Array[ConveyorItem] = []
+	sorted_items.append_array(_items)
+	_sort_items_desc(sorted_items)
 	for item in sorted_items:
-		var segment_index := _segment_for_distance(item.distance)
+		var segment_index: int = _segment_for_distance(item.distance)
 		if segment_index < 0:
 			continue
-		var segment := segments[segment_index]
-		var target_speed := _resolve_item_speed(item, segment)
-		var current_speed := float(_item_velocity.get(item.item_id, target_speed))
-		var ease_factor := clamp(delta / max(easing_time, 0.0001), 0.0, 1.0)
+		var segment: Segment = segments[segment_index]
+		var target_speed: float = _resolve_item_speed(item, segment)
+		var current_speed: float = float(_item_velocity.get(item.item_id, target_speed))
+		var ease_factor: float = clamp(delta / max(easing_time, 0.0001), 0.0, 1.0)
 		if item.state == ConveyorItem.STATE_QUEUED:
 			current_speed = lerp(current_speed, 0.0, ease_factor)
 		else:
 			current_speed = lerp(current_speed, target_speed, ease_factor)
 		_item_velocity[item.item_id] = current_speed
-		var remaining := current_speed * delta
-		var new_state := ConveyorItem.STATE_MOVING if remaining > 0.0 else item.state
-		var current_distance := item.distance
-		var index := segment_index
+		var remaining: float = current_speed * delta
+		var new_state: String = ConveyorItem.STATE_MOVING if remaining > 0.0 else item.state
+		var current_distance: float = item.distance
+		var index: int = segment_index
 		while remaining > 0.0:
 			segment = segments[index]
-			var segment_end := segment.end
-			var distance_to_end := segment_end - current_distance
+			var segment_end: float = segment.end
+			var distance_to_end: float = segment_end - current_distance
 			if remaining <= distance_to_end:
 				current_distance += remaining
 				remaining = 0.0
 				break
-			var next_index := index + segment.direction
-			var carry := remaining - distance_to_end
+			var next_index: int = index + segment.direction
+			var carry: float = remaining - distance_to_end
 			if next_index < 0 or next_index >= segments.size():
 				# Delivered
 				delivered.append(item)
@@ -160,18 +161,20 @@ func step(delta: float) -> Dictionary:
 				new_state = ConveyorItem.STATE_PROCESSED
 				remaining = 0.0
 				break
-			var next_segment := segments[next_index]
-			var capacity := next_segment.capacity
-			if capacity > 0 and occupancy.get(next_index, 0) >= capacity:
+			var next_segment: Segment = segments[next_index]
+			var capacity: int = next_segment.capacity
+			var next_occupancy: int = int(occupancy.get(next_index, 0))
+			if capacity > 0 and next_occupancy >= capacity:
 				# Queue at boundary
 				current_distance = segment_end - 0.001
 				new_state = ConveyorItem.STATE_QUEUED
 				remaining = 0.0
 				break
 			# Move into next segment
-			occupancy[index] = max(occupancy.get(index, 0) - 1, 0)
+			var current_occupancy: int = int(occupancy.get(index, 0))
+			occupancy[index] = max(current_occupancy - 1, 0)
 			index = next_index
-			occupancy[index] = occupancy.get(index, 0) + 1
+			occupancy[index] = next_occupancy + 1
 			current_distance = next_segment.start + 0.0005
 			remaining = carry
 		item.set_distance(clamp(current_distance, 0.0, _total_length))
@@ -194,7 +197,7 @@ func get_item_count() -> int:
 func _scroll_visual(delta: float) -> void:
 	if segments.is_empty():
 		return
-	var base_speed := _average_speed()
+	var base_speed: float = _average_speed()
 	if base_speed <= 0.0:
 		return
 	_stripe_offset = fposmod(_stripe_offset + base_speed * delta, max(stripe_spacing, 1.0))
@@ -203,7 +206,7 @@ func _scroll_visual(delta: float) -> void:
 func _average_speed() -> float:
 	if segments.is_empty():
 		return DEFAULT_SPEED
-	var total := 0.0
+	var total: float = 0.0
 	for seg in segments:
 		total += seg.speed
 	return total / float(segments.size())
@@ -211,9 +214,9 @@ func _average_speed() -> float:
 func _segment_for_distance(distance: float) -> int:
 	if segments.is_empty():
 		return -1
-	var clamped_distance := clamp(distance, 0.0, _total_length)
+	var clamped_distance: float = clamp(distance, 0.0, _total_length)
 	for i in range(segments.size()):
-		var seg := segments[i]
+		var seg: Segment = segments[i]
 		if clamped_distance >= seg.start and clamped_distance <= seg.end:
 			return i
 	# fallback
@@ -222,7 +225,7 @@ func _segment_for_distance(distance: float) -> int:
 func _build_segment_occupancy() -> Dictionary:
 	var occupancy: Dictionary = {}
 	for item in _items:
-		var index := _segment_for_distance(item.distance)
+		var index: int = _segment_for_distance(item.distance)
 		if index < 0:
 			continue
 		occupancy[index] = occupancy.get(index, 0) + 1
@@ -238,26 +241,29 @@ func _resolve_item_speed(item: ConveyorItem, segment: Segment) -> float:
 func _update_item_transform(item: ConveyorItem) -> void:
 	if _curve == null:
 		return
-	var distance := clamp(item.distance, 0.0, _total_length)
-	var position := _sample_at_distance(distance)
+	var distance: float = clamp(item.distance, 0.0, _total_length)
+	var position: Vector2 = _sample_at_distance(distance)
 	item.position = position
-	var ahead_distance := clamp(distance + 4.0, 0.0, _total_length)
-	var ahead := _sample_at_distance(ahead_distance)
+	var ahead_distance: float = clamp(distance + 4.0, 0.0, _total_length)
+	var ahead: Vector2 = _sample_at_distance(ahead_distance)
 	item.rotation = (ahead - position).angle()
 
 func _sample_at_distance(distance: float) -> Vector2:
 	if _curve == null:
 		return Vector2.ZERO
-	var clamped := clamp(distance, 0.0, _total_length)
+	var clamped: float = clamp(distance, 0.0, _total_length)
 	return _curve.sample_baked(clamped)
 
-func _sort_items_desc(a: ConveyorItem, b: ConveyorItem) -> bool:
+func _sort_items_desc(items: Array[ConveyorItem]) -> void:
+	items.sort_custom(Callable(self, "_compare_items"))
+
+func _compare_items(a: ConveyorItem, b: ConveyorItem) -> bool:
 	return a.distance > b.distance
 
 func _resolve_curve() -> void:
 	if _curve != null and not _pending_curve_rebuild:
 		return
-	var path := get_node_or_null(NodePath("Path2D")) as Path2D
+	var path: Path2D = get_node_or_null(NodePath("Path2D")) as Path2D
 	if path:
 		_curve = path.curve
 	elif _curve == null:
@@ -277,18 +283,18 @@ func _draw() -> void:
 	_resolve_curve()
 	if _curve == null:
 		return
-	var points := _curve.get_baked_points()
+	var points: PackedVector2Array = _curve.get_baked_points()
 	if points.size() < 2:
 		return
-	var width := max(belt_width, 1.0)
+	var width: float = max(belt_width, 1.0)
 	for i in range(points.size() - 1):
 		draw_line(points[i], points[i + 1], belt_color, width, true)
-	var length := max(_curve.get_baked_length(), 1.0)
-	var spacing := max(stripe_spacing, 8.0)
-	var offset := fposmod(_stripe_offset, spacing)
-	var t := offset
+	var length: float = max(_curve.get_baked_length(), 1.0)
+	var spacing: float = max(stripe_spacing, 8.0)
+	var offset: float = fposmod(_stripe_offset, spacing)
+	var t: float = offset
 	while t < length:
-		var start_point := _curve.sample_baked(t)
-		var end_point := _curve.sample_baked(min(t + spacing * 0.35, length))
+		var start_point: Vector2 = _curve.sample_baked(t)
+		var end_point: Vector2 = _curve.sample_baked(min(t + spacing * 0.35, length))
 		draw_line(start_point, end_point, stripe_color, width * 0.6, true)
 		t += spacing

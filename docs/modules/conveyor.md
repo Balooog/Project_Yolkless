@@ -52,3 +52,9 @@ The manager tracks live throughput and exposes `average_travel_time` for dashboa
 ## Demo Scene
 
 `res://scenes/demo_conveyor.tscn` wires a belt, timer-driven spawner, and HUD label so designers can inspect queueing and flow rates headlessly. Launch with the usual development run, or instance it inside the main scene for quick smoke validation.
+
+## Main Scene Integration
+
+- The primary game scene instantiates `game/scenes/modules/conveyor/FactoryConveyor.tscn`, which registers its belt with the shared `ConveyorManager`.
+- `Main.gd` spawns conveyor items in proportion to `eco.current_pps()`, so visual flow mirrors production rate while keeping metrics in sync with the HUD.
+- Toggling the Visual Effects setting hides the belt and clears spawned items; conveyors resume once visuals are re-enabled.

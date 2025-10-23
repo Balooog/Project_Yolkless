@@ -36,7 +36,7 @@
 
 | Module                              | Linked RM | Description                                    | Next PX Target                                               |
 | ----------------------------------- | --------- | ---------------------------------------------- | ------------------------------------------------------------ |
-| **FeedParticles**                   | RM-008    | Grain-like particles reacting to feed_fraction | PX-008.2 – Particle tuning & gating (Target Sprint 2025.12)  |
+| **FeedParticles**                   | RM-008    | Grain bursts that fire from the Hold-to-Feed button while feeding | PX-008.2 – Particle tuning & gating (Target Sprint 2025.12)  |
 | **Conveyor Belt System**            | RM-009    | Visual egg transport tied to PPS               | PX-009.1 – Conveyor prototype pass (Target Sprint 2026.01)   |
 | **Environment Overlay UI**          | RM-021    | Weather icon + environment panel reflecting live factors | PX-021.1 – Environment service scaffold (Target Sprint 2025.12)  |
 | **Weather & Day/Night Cycle**       | RM-012    | Ambient variation, pollution clearing          | PX-012.1 – Lighting baseline (Target Sprint 2026.02)         |

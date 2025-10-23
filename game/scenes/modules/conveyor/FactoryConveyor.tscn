@@ -1,0 +1,30 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://game/scripts/conveyor/FactoryConveyor.gd" id="1"]
+[ext_resource type="Script" path="res://src/modules/conveyor/ConveyorBelt.gd" id="2"]
+
+[node name="FactoryConveyor" type="Node2D"]
+script = ExtResource("1")
+z_index = 5
+segment_defs = [{
+"capacity": 8,
+"length": 220.0,
+"speed": 80.0
+}, {
+"capacity": 5,
+"length": 180.0,
+"speed": 70.0
+}, {
+"capacity": 4,
+"length": 160.0,
+"speed": 65.0
+}]
+manager_path = NodePath("../../ConveyorManager")
+
+[node name="ConveyorBelt" type="Node2D" parent="."]
+unique_name_in_owner = true
+position = Vector2(140, 240)
+script = ExtResource("2")
+belt_width = 28.0
+stripe_spacing = 56.0
+easing_time = 0.2

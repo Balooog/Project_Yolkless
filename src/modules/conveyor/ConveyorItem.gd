@@ -40,7 +40,7 @@ func set_tint(color: Color) -> void:
 	queue_redraw()
 
 func _draw() -> void:
-	var base_color := tint
+	var base_color: Color = tint
 	match state:
 		STATE_MOVING:
 			base_color = tint
@@ -49,4 +49,5 @@ func _draw() -> void:
 		STATE_PROCESSED:
 			base_color = tint.lightened(0.35)
 	draw_circle(Vector2.ZERO, radius, base_color)
-	draw_circle(Vector2.ZERO, radius * 0.45, Color.WHITE.with_alpha(0.4))
+	var inner_color := Color(Color.WHITE, 0.4)
+	draw_circle(Vector2.ZERO, radius * 0.45, inner_color)

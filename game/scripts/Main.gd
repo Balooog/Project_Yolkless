@@ -7,6 +7,7 @@ const ShopService := preload("res://game/scripts/ShopService.gd")
 const ShopDebug := preload("res://game/scripts/ShopDebug.gd")
 const EnvPanel := preload("res://ui/widgets/EnvPanel.gd")
 const EnvironmentService := preload("res://src/services/EnvironmentService.gd")
+const FactoryConveyor := preload("res://game/scripts/conveyor/FactoryConveyor.gd")
 
 const FEED_FILL_HIGH_DEFAULT := Color(0.2, 0.8, 0.35, 1)
 const FEED_FILL_MED_DEFAULT := Color(0.95, 0.68, 0.2, 1)
@@ -28,6 +29,7 @@ const DEFAULT_ENV_STAGE_SIZE := Vector2(640, 360)
 @onready var deny_sound: AudioStreamPlayer = %DenySound
 @onready var stats_box: HBoxContainer = %StatsBox
 @onready var lbl_soft: Label = %SoftLabel
+@onready var lbl_conveyor: Label = %ConveyorLabel
 @onready var capacity_label: Label = %CapacityLabel
 @onready var capacity_bar: ProgressBar = %CapacityBar
 @onready var capacity_container: VBoxContainer = capacity_label.get_parent() as VBoxContainer
@@ -58,6 +60,8 @@ const DEFAULT_ENV_STAGE_SIZE := Vector2(640, 360)
 @onready var offline_close: Button = %OfflineClose
 @onready var feed_hint_label: Label = %FeedHint
 @onready var toast_label: Label = %ToastLabel
+@onready var conveyor_manager: ConveyorManager = %ConveyorManager
+@onready var conveyor_layer := %ConveyorLayer
 
 var text_scale := 1.0
 var shop_service: ShopService
@@ -70,6 +74,15 @@ var environment_service: EnvironmentService
 var _feed_deny_sound_warned := false
 var _toast_tween: Tween
 var _show_cap_pulse := true
+var _conveyor_rate: float = 0.0
+var _conveyor_queue: int = 0
+var _conveyor_spawn_accumulator: float = 0.0
+var _conveyor_color_index: int = 0
+var _conveyor_colors: Array[Color] = [
+	Color(0.968, 0.913, 0.647, 1.0),
+	Color(1.0, 0.753, 0.275, 1.0),
+	Color(0.757, 0.486, 0.455, 1.0)
+]
 
 func _ready() -> void:
 	res.setup(bal)
@@ -106,6 +119,17 @@ func _ready() -> void:
 	btn_r_cap.pressed.connect(func(): _attempt_research("r_cap_1"))
 	btn_r_auto.pressed.connect(func(): _attempt_research("r_auto_1"))
 	offline_close.pressed.connect(func(): offline_popup.hide())
+
+	if conveyor_manager:
+		if not conveyor_manager.throughput_updated.is_connected(_on_conveyor_throughput_updated):
+			conveyor_manager.throughput_updated.connect(_on_conveyor_throughput_updated)
+		var initial_queue := 0
+		for belt in conveyor_manager.belts:
+			if belt:
+				initial_queue += belt.get_queue_length()
+		_update_conveyor_view(conveyor_manager.items_per_second, initial_queue)
+	else:
+		_update_conveyor_view(0.0, 0)
 
 	settings_panel = SETTINGS_PANEL_SCENE.instantiate()
 	add_child(settings_panel)
@@ -202,8 +226,9 @@ func _ready() -> void:
 	_log("INFO", "STRINGS", "UI copy refreshed", {"scene": "Main"})
 	sav.save("startup")
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	_update_feed_ui()
+	_update_conveyor_spawn(delta)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("feed_hold") or event.is_action_pressed("burst_hold"):
@@ -262,6 +287,7 @@ func _apply_strings() -> void:
 	var strings := _get_strings()
 	if strings and environment_panel:
 		environment_panel.set_strings(strings)
+	_update_conveyor_view(_conveyor_rate, _conveyor_queue)
 
 func _apply_hud_flags() -> void:
 	if bal == null:
@@ -288,6 +314,7 @@ func _update_all_views() -> void:
 	_update_factory_view()
 	_update_research_view()
 	_update_feed_ui()
+	_update_conveyor_view(_conveyor_rate, _conveyor_queue)
 
 func _update_soft_view(value: float) -> void:
 	var soft_template := _strings_get("soft_label_wallet", "Egg Credits: {value}")
@@ -331,6 +358,44 @@ func _update_factory_view() -> void:
 			"cost": _format_num(next_cost)
 		})
 		btn_promote.disabled = eco.soft + 1e-6 < next_cost
+
+func _update_conveyor_view(rate: float, queue_len: int) -> void:
+	_conveyor_rate = rate
+	_conveyor_queue = queue_len
+	if lbl_conveyor == null:
+		return
+	var template := _strings_get("conveyor_label", "Conveyor: {rate}/s | Queue {queue}")
+	lbl_conveyor.text = template.format({
+		"rate": _format_num(rate, 1),
+		"queue": queue_len
+	})
+
+func _update_conveyor_spawn(delta: float) -> void:
+	if not visuals_enabled:
+		return
+	if conveyor_manager == null or conveyor_manager.belts.is_empty():
+		return
+	var belt: ConveyorBelt = conveyor_manager.belts[0]
+	if belt == null:
+		return
+	var pps: float = max(eco.current_pps(), 0.0)
+	if pps <= 0.0:
+		return
+	_conveyor_spawn_accumulator += pps * delta
+	var spawn_count := int(_conveyor_spawn_accumulator)
+	if spawn_count <= 0:
+		return
+	_conveyor_spawn_accumulator -= spawn_count
+	var max_spawns := 40
+	if spawn_count > max_spawns:
+		spawn_count = max_spawns
+	for _i in range(spawn_count):
+		var item := conveyor_manager.spawn_item(&"egg", belt)
+		if item:
+			if _conveyor_colors.size() > 0:
+				var color: Color = _conveyor_colors[_conveyor_color_index % _conveyor_colors.size()]
+				item.set_tint(color)
+				_conveyor_color_index = (_conveyor_color_index + 1) % _conveyor_colors.size()
 
 func _update_upgrade_buttons() -> void:
 	if shop_service == null:
@@ -559,11 +624,22 @@ func _on_high_contrast_toggled(enabled: bool) -> void:
 func _on_feed_state_changed(_active: bool) -> void:
 	_update_feed_ui()
 
+func _on_conveyor_throughput_updated(rate: float, queue_len: int) -> void:
+	_update_conveyor_view(rate, queue_len)
+
 func _on_visuals_toggled(enabled: bool) -> void:
 	visuals_enabled = enabled
 	var director := _get_visual_director()
 	if director:
 		director.activate("feed_particles", enabled)
+	if conveyor_layer:
+		conveyor_layer.visible = enabled
+		if not enabled and conveyor_layer is FactoryConveyor:
+			var fc := conveyor_layer as FactoryConveyor
+			if fc.belt:
+				fc.belt.clear_items()
+	if not enabled:
+		_conveyor_spawn_accumulator = 0.0
 
 func _on_environment_state_changed(state: Dictionary) -> void:
 	if environment_panel:
@@ -604,7 +680,7 @@ func _apply_contrast_theme() -> void:
 	if feed_background:
 		feed_bar.add_theme_stylebox_override("background", feed_background)
 	var text_color := ProceduralFactory.COLOR_TEXT
-	for label in [lbl_soft, capacity_label, feed_status_label, lbl_pps, lbl_tier, lbl_prestige, lbl_research]:
+	for label in [lbl_soft, capacity_label, feed_status_label, lbl_pps, lbl_tier, lbl_prestige, lbl_research, lbl_conveyor]:
 		label.add_theme_color_override("font_color", text_color)
 	if feed_hint_label:
 		feed_hint_label.add_theme_color_override("font_color", text_color)

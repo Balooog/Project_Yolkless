@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 [ext_resource type="Script" path="res://game/scripts/Balance.gd" id="1"]
 [ext_resource type="Script" path="res://game/scripts/Research.gd" id="2"]
 [ext_resource type="Script" path="res://game/scripts/Economy.gd" id="3"]
@@ -6,6 +6,8 @@
 [ext_resource type="Script" path="res://game/scripts/Main.gd" id="5"]
 [ext_resource type="PackedScene" path="res://ui/widgets/EnvPanel.tscn" id="6"]
 [ext_resource type="Script" path="res://game/scripts/ui/HudStorageBar.gd" id="7"]
+[ext_resource type="Script" path="res://src/modules/conveyor/ConveyorManager.gd" id="8"]
+[ext_resource type="PackedScene" path="res://game/scenes/modules/conveyor/FactoryConveyor.tscn" id="9"]
 
 [node name="Main" type="Node"]
 script = ExtResource("5")
@@ -22,9 +24,16 @@ script = ExtResource("3")
 [node name="Save" type="Node" parent="."]
 script = ExtResource("4")
 
+[node name="ConveyorManager" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("8")
+
 [node name="EnvironmentRoot" type="Node2D" parent="."]
 unique_name_in_owner = true
 z_index = -5
+
+[node name="ConveyorLayer" parent="EnvironmentRoot" instance=ExtResource("9")]
+unique_name_in_owner = true
 
 [node name="DenySound" type="AudioStreamPlayer" parent="."]
 unique_name_in_owner = true
@@ -93,6 +102,11 @@ custom_minimum_size = Vector2(0, 28)
 [node name="SoftLabel" type="Label" parent="UI/RootMargin/RootColumn/VBox/StatsBox"]
 unique_name_in_owner = true
 size_flags_horizontal = 3
+
+[node name="ConveyorLabel" type="Label" parent="UI/RootMargin/RootColumn/VBox/StatsBox"]
+unique_name_in_owner = true
+size_flags_horizontal = 1
+horizontal_alignment = 2
 
 [node name="CapacityContainer" type="VBoxContainer" parent="UI/RootMargin/RootColumn/VBox"]
 custom_minimum_size = Vector2(0, 48)

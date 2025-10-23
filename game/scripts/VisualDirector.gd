@@ -5,6 +5,11 @@ const MODULE_FEED_PARTICLES_ID := "feed_particles"
 const UPDATE_INTERVAL := 0.2
 const FEED_PARTICLES_SCENE := preload("res://game/scenes/modules/visuals/FeedParticles.tscn")
 const VISUAL_HOST_PATH := NodePath("/root/Main/VisualLayer/VisualViewport")
+const FEED_ANCHOR_PATHS := [
+	NodePath("UI/RootMargin/RootColumn/VBox/BurstRow/BurstButton"),
+	NodePath("UI/RootMargin/RootColumn/VBox/BurstRow/FeedContainer/FeedBar"),
+	NodePath("UI/VBox/BurstRow/FeedContainer/FeedBar")
+]
 
 var _eco: Economy
 var _strings: StringsCatalog
@@ -122,24 +127,31 @@ func _apply_module_state(node: Node) -> void:
 		return
 	if node is FeedParticles:
 		var module: FeedParticles = node as FeedParticles
-		module.set_anchor(_resolve_feed_anchor())
+		var anchor := _resolve_feed_anchor()
+		module.set_anchor(anchor.get("position", Vector2.ZERO), anchor.get("size", Vector2.ZERO))
 		module.set_high_contrast(_high_contrast)
 		module.apply(_last_feed_fraction, _last_pps, _last_is_feeding)
 
-func _resolve_feed_anchor() -> Vector2:
+func _resolve_feed_anchor() -> Dictionary:
+	var result := {
+		"position": Vector2.ZERO,
+		"size": Vector2.ZERO
+	}
 	if not _eco:
-		return Vector2.ZERO
+		return result
 	var parent: Node = _eco.get_parent()
 	if not parent:
-		return Vector2.ZERO
-	var path := NodePath("UI/VBox/BurstRow/FeedContainer/FeedBar")
-	if parent.has_node(path):
-		var node := parent.get_node(path)
-		if node is Control:
-			var control: Control = node as Control
-			var center: Vector2 = control.global_position + control.size * 0.5
-			return center + Vector2(0, -24)
-	return Vector2.ZERO
+		return result
+	for path in FEED_ANCHOR_PATHS:
+		if parent.has_node(path):
+			var node := parent.get_node(path)
+			if node is Control:
+				var control: Control = node as Control
+				var center: Vector2 = control.global_position + control.size * 0.5
+				result.position = center + Vector2(0, -control.size.y * 0.15)
+				result.size = control.size
+				return result
+	return result
 
 func _refresh_state() -> void:
 	if not _eco:

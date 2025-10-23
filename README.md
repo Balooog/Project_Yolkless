@@ -64,10 +64,11 @@ code docs/prompts/PX-021.1.md   # paste canvas text
 
 - Capacity bar tracks Egg Credits versus storage and hot-reloads with balance tweaks (`R`).
 - Feed button now shows a live Feed Supply meter that drains while held and refills when idle.
-- A lightweight VisualDirector autoload drives feed particle visuals that ramp with Feed Supply and PPS; disable them via the Settings → Visual Effects toggle.
+- A lightweight VisualDirector autoload drives feed particles that burst from the Hold-to-Feed button only while you are feeding; disable them via the Settings → Visual Effects toggle.
 - Visual Layer is a background `CanvasLayer`; the HUD sits on a higher layer so buttons stay interactive while visuals play underneath.
 - The `VisualViewport` control stretches with the window, keeping particle modules centered and auto-resized across any viewport.
 - All player-facing strings are driven via `game/data/strings_egg.tsv`; pressing `R` refreshes both numbers and copy.
+- The top stats row now surfaces conveyor throughput (`items/sec` and queue) straight from the ConveyorManager.
 - Press `F3` to toggle the debug overlay with live PPS, capacity, burst state, tier, research multipliers, hashes, and log context.
 
 ## Hold-to-Feed Meter
@@ -81,8 +82,9 @@ code docs/prompts/PX-021.1.md   # paste canvas text
 - `src/services/EnvironmentService.gd` runs as an autoload, streaming seasonal curves from `data/environment_curves.tsv` and emitting feed/power/prestige modifiers.
 - Feed drain/refill and autoburst availability respect the live feed modifier; the power modifier flows straight into the economy's base PPS for downstream systems.
 - `ui/widgets/EnvPanel.tscn` replaces the legacy pollution overlay with a header summary, preset selector, and expandable detail grid fed by the service.
+- Upcoming SandboxService listens to environment factor signals, runs the comfort index simulation, and grants a capped +5 % PPS “Comfort Bonus”.
 - Use the preset dropdown in the panel header to cycle seasonal/debug presets without leaving the main scene.
-- Legacy `EnvironmentDirector` notes remain archived in `docs/prompts/RM-010.md` for reference, but the main scene now binds directly to `EnvironmentService`.
+- Legacy `EnvironmentDirector` notes remain archived in `docs/prompts/RM-010.md` for reference; the scripts were removed in favour of the unified `EnvironmentService`.
 
 ## Accessibility & Diagnostics
 
@@ -104,6 +106,7 @@ code docs/prompts/PX-021.1.md   # paste canvas text
 - `src/modules/conveyor/` houses the Conveyor Manager, Belt, and Item scripts. Belts chain configurable segments with per-run speed and capacity caps, pushing items forward with easing when queues clear.
 - `ConveyorManager` exposes `item_spawned`, `item_delivered`, and `throughput_updated` signals while logging smoothed items/sec plus queue depth via `YolkLogger`.
 - `scenes/demo_conveyor.tscn` includes a timer-driven spawner and HUD label so designers can watch flow, jams, and delivery cadence without wiring the full farm.
+- `game/scenes/modules/conveyor/FactoryConveyor.tscn` is instanced in the main scene so belts animate above the farm, spawning tokens at the live PPS rate for quick readability.
 - Full usage notes live in `docs/modules/conveyor.md`; clone the segment template there to embed belts in future factory stages.
 
 ## Scripts
