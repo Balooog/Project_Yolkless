@@ -80,3 +80,30 @@ stress_label	Stress
 reputation_label	Reputation
 environment_label	Environment Status
 environment_stage_backyard	Backyard
+environment_title	Environment
+environment_toggle_details	Details
+environment_preset_selector_tooltip	Switch environment preset
+environment_temperature	Temperature
+environment_light	Light
+environment_humidity	Humidity
+environment_air_quality	Air Quality
+environment_pollution	Pollution
+environment_stress	Stress
+environment_reputation	Reputation
+environment_feed_modifier	Feed Modifier
+environment_power_modifier	Power Modifier
+environment_prestige_modifier	Prestige Modifier
+environment_phase_dawn	Dawn
+environment_phase_day	Day
+environment_phase_dusk	Dusk
+environment_phase_night	Night
+environment_temperature_tooltip	Heat curve shaping flock comfort and feed efficiency.
+environment_light_tooltip	Ambient light feeds power bonuses and morale moods.
+environment_humidity_tooltip	High humidity raises feed demand and stress.
+environment_air_quality_tooltip	Clean air boosts reputation and prestige earnings.
+environment_pollution_tooltip	Waste and emissions scraping at air quality.
+environment_stress_tooltip	Stress slows production and shrinks automation windows.
+environment_reputation_tooltip	Public sentiment toward the farm this cycle.
+environment_feed_modifier_tooltip	Current multiplier applied to feed-driven PPS gains.
+environment_power_modifier_tooltip	Current multiplier on generators and solar sources.
+environment_prestige_modifier_tooltip	Multiplier affecting rebrand star value.

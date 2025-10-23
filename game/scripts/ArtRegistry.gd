@@ -90,6 +90,16 @@ func _procedural_texture(key: String) -> Texture2D:
 	match key:
 		"grain_particle":
 			return ProceduralFactory.make_grain_texture()
+		"weather_icon_dawn":
+			return ProceduralFactory.make_weather_icon_circle(Color(0.96, 0.63, 0.32, 1.0), Color(1.0, 0.86, 0.59, 1.0))
+		"weather_icon_day":
+			return ProceduralFactory.make_weather_icon_circle(Color(0.98, 0.85, 0.2, 1.0), Color(1.0, 0.95, 0.55, 1.0))
+		"weather_icon_dusk":
+			return ProceduralFactory.make_weather_icon_circle(Color(0.92, 0.48, 0.28, 1.0), Color(1.0, 0.72, 0.48, 1.0))
+		"weather_icon_night":
+			return ProceduralFactory.make_weather_icon_circle(Color(0.2, 0.31, 0.57, 1.0), Color(0.62, 0.76, 1.0, 1.0))
+		"weather_icon_hazard":
+			return ProceduralFactory.make_weather_icon_triangle(Color(0.78, 0.28, 0.24, 1.0), Color(1.0, 0.88, 0.54, 1.0))
 		_:
 			var image: Image = Image.create(2, 2, false, Image.FORMAT_RGBA8)
 			image.fill(ProceduralFactory.COLOR_PANEL)

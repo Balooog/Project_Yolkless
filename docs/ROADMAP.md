@@ -14,7 +14,7 @@
 | **RM-006 – Feed System**            | ✅ Complete    | Hold-to-feed mechanic with feed bar, drain/refill loop, and capacity/refill/efficiency upgrades. | —                                                                     |
 | **RM-007 – Offline Passive Rate**   | ⏳ Planned     | Offline production at reduced efficiency (≈25% base PPS). Automation adds a multiplier.          | PX-007.1 – Offline baseline sim (Target Sprint 2025.11)               |
 | **RM-008 – VisualDirector & FX**    | ⏳ In Progress | Reactive particle effects while feeding; foundation for later modules.                           | PX-008.2 – Particle tuning & gating (Target Sprint 2025.12)           |
-| **RM-021 – Environmental Simulation Layer** | ⏳ Planned   | Temperature/light/humidity/air-quality curves gently modulating power, feed, prestige.  | PX-021.1 – Environment service scaffold (Target Sprint 2025.12) |
+| **RM-021 – Environmental Simulation Layer** | ✅ Active    | `EnvironmentService` autoload with seasonal curves, feed/power modifiers, and HUD preset toggle. | PX-021.1 – Service telemetry & tuning (Target Sprint 2025.12)    |
 | **Prestige / Rebrand Loop**         | ✅ Implemented | Converts Reputation Stars to permanent production multipliers; “Rebrand & Advance” transition.   | —                                                                     |
 
 ---

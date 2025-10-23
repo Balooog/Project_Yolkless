@@ -14,6 +14,7 @@ The current project defines the following singletons (top to bottom):
 6. `YolkLogger` — structured logging queue/flush
 7. `StringsCatalog` — localized UI strings
 8. `VisualDirector` — lightweight visual effects (feed particles)
+9. `EnvironmentService` — seasonal environment curves, modifiers, and stage control
 
 ## Target Migration
 
@@ -24,7 +25,8 @@ As modules move into `src/`, migrate their scripts and adjust the autoload path 
 - `Save.gd` → `src/save/Save.gd`
 - `YolkLogger.gd` → `src/logging/YolkLogger.gd`
 - `VisualDirector.gd` → `src/visuals/VisualDirector.gd`
-- Future services: `EnvironmentService.gd`, `AutomationService.gd`, `PowerService.gd`
+- `EnvironmentService.gd` already lives under `src/services/EnvironmentService.gd`
+- Future services: `AutomationService.gd`, `PowerService.gd`
 
 Keep the autoload names identical so existing code does not break; only the path changes.
 
@@ -34,7 +36,7 @@ Keep the autoload names identical so existing code does not break; only the path
 - `Research` pulls data from `Balance` for unlock definitions.
 - `Save` reads/writes state for `Economy`, `Research`, `Balance`.
 - `YolkLogger` is used by all services; ensure it loads before downstream singletons emit logs.
-- `EnvironmentService` (RM-021) will observe `Economy` and `PowerService`, then emit updates consumed by UI and `VisualDirector`.
+- `EnvironmentService` (RM-021) observes `Economy` data, manages environmental stages, and emits modifiers consumed by UI, `Economy`, `AutomationService`, and `VisualDirector`.
 - `AutomationService` (RM-013) will coordinate `Economy`, `PowerService`, and factory modules.
 - `PowerService` (RM-018) should load after `Economy` so it can subscribe to building state changes.
 

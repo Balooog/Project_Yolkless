@@ -60,8 +60,15 @@ func update_state(feed_fraction: float, pps: float, is_feeding: bool) -> void:
 	_last_feed_fraction = clamp(feed_fraction, 0.0, 1.0)
 	_last_pps = max(0.0, pps)
 	_last_is_feeding = is_feeding
-	for node in _modules.values():
+	var invalid: Array[StringName] = []
+	for key in _modules.keys():
+		var node := _modules[key]
+		if not node or not is_instance_valid(node):
+			invalid.append(key)
+			continue
 		_apply_module_state(node)
+	for key in invalid:
+		_modules.erase(key)
 
 func set_high_contrast(enabled: bool) -> void:
 	if _high_contrast == enabled:

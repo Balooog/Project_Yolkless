@@ -1,5 +1,7 @@
 extends EnvironmentStageBase
 
+const CANVAS_SIZE := Vector2(640, 360)
+
 var sky: ColorRect
 var ground: ColorRect
 var haze: ColorRect
@@ -19,13 +21,14 @@ var _stress: float = 0.0
 var _reputation: float = 0.0
 var _time: float = 0.0
 var _env_root: Node2D
+var _canvas_size: Vector2 = CANVAS_SIZE
 
 func _ready() -> void:
 	_build_environment()
-	_cache_base_state()
 	set_process(true)
 
 func apply_state(pollution: float, stress: float, reputation: float) -> void:
+	_ensure_stage_nodes()
 	_pollution = pollution
 	_stress = stress
 	_reputation = reputation
@@ -33,6 +36,7 @@ func apply_state(pollution: float, stress: float, reputation: float) -> void:
 	_update_reputation_icon()
 
 func _process(delta: float) -> void:
+	_ensure_stage_nodes()
 	_time += delta * _chicken_speed()
 	var stress_ratio: float = clampf(_stress / 100.0, 0.0, 1.0)
 	var amplitude: float = lerpf(6.0, 1.5, stress_ratio)
@@ -45,6 +49,8 @@ func _process(delta: float) -> void:
 			chicken.position = base_pos + offset
 
 func _update_colors() -> void:
+	if sky == null or ground == null or coop_body == null or coop_roof == null or haze == null:
+		return
 	var ratio: float = clampf(_pollution / 100.0, 0.0, 1.0)
 	sky.color = _base_sky.lerp(Color(0.45, 0.48, 0.52, 1.0), ratio)
 	ground.color = _base_ground.lerp(Color(0.36, 0.35, 0.33, 1.0), ratio)
@@ -54,6 +60,8 @@ func _update_colors() -> void:
 	haze.color = Color(_base_haze.r, _base_haze.g, _base_haze.b, haze_alpha)
 
 func _update_reputation_icon() -> void:
+	if reputation_icon == null:
+		return
 	var icon := ":)"
 	var color := Color(0.1, 0.6, 0.2, 1.0)
 	if _reputation < 30.0:
@@ -73,7 +81,7 @@ func _chicken_speed() -> float:
 func _build_environment() -> void:
 	if _env_root:
 		_env_root.queue_free()
-	var size := Vector2(640, 360)
+	var size := _canvas_size
 	_env_root = ProceduralFactory.make_env_bg(size)
 	add_child(_env_root)
 	sky = _env_root.get_node_or_null("Sky") as ColorRect
@@ -89,6 +97,7 @@ func _build_environment() -> void:
 		var chicken := _env_root.get_node_or_null(name)
 		if chicken is Node2D:
 			chickens.append(chicken as Node2D)
+	_cache_base_state()
 
 func _cache_base_state() -> void:
 	_base_positions.clear()
@@ -107,3 +116,10 @@ func _cache_base_state() -> void:
 		var body := chicken.get_node_or_null("Body")
 		if body is ColorRect:
 			(body as ColorRect).color = Color(1.0, 0.95, 0.75, 1.0)
+
+func get_canvas_size() -> Vector2:
+	return _canvas_size
+
+func _ensure_stage_nodes() -> void:
+	if _env_root == null or not is_instance_valid(_env_root) or sky == null or not is_instance_valid(sky):
+		_build_environment()

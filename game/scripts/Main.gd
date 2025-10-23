@@ -5,6 +5,8 @@ const DEBUG_OVERLAY_SCENE := preload("res://game/scenes/widgets/DebugOverlay.tsc
 
 const ShopService := preload("res://game/scripts/ShopService.gd")
 const ShopDebug := preload("res://game/scripts/ShopDebug.gd")
+const EnvPanel := preload("res://ui/widgets/EnvPanel.gd")
+const EnvironmentService := preload("res://src/services/EnvironmentService.gd")
 
 const FEED_FILL_HIGH_DEFAULT := Color(0.2, 0.8, 0.35, 1)
 const FEED_FILL_MED_DEFAULT := Color(0.95, 0.68, 0.2, 1)
@@ -13,14 +15,16 @@ const FEED_FILL_HIGH_CONTRAST := Color(0.0, 0.85, 0.2, 1)
 const FEED_FILL_MED_CONTRAST := Color(0.98, 0.78, 0.1, 1)
 const FEED_FILL_LOW_CONTRAST := Color(1.0, 0.22, 0.22, 1)
 const FEED_FLASH_COLOR := Color(1, 0.7, 0.7, 1)
+const DEFAULT_ENV_STAGE_SIZE := Vector2(640, 360)
 
 @onready var bal: Balance = $Balance
 @onready var res: Research = $Research
 @onready var eco: Economy = $Economy
 @onready var sav: Save = $Save
+@onready var environment_root_node: Node2D = %EnvironmentRoot
 
 @onready var root_vbox: VBoxContainer = %VBox
-@onready var environment_overlay: PollutionOverlay = %EnvironmentOverlay
+@onready var environment_panel: EnvPanel = %EnvironmentPanel
 @onready var deny_sound: AudioStreamPlayer = %DenySound
 @onready var stats_box: HBoxContainer = %StatsBox
 @onready var lbl_soft: Label = %SoftLabel
@@ -62,7 +66,7 @@ var settings_panel: SettingsPanel
 var debug_overlay: CanvasLayer
 var high_contrast_enabled := false
 var visuals_enabled := true
-var environment_director: EnvironmentDirector
+var environment_service: EnvironmentService
 var _feed_deny_sound_warned := false
 var _toast_tween: Tween
 var _show_cap_pulse := true
@@ -114,6 +118,9 @@ func _ready() -> void:
 	settings_panel.set_high_contrast(high_contrast_enabled)
 	settings_panel.set_visuals_enabled(visuals_enabled)
 
+	if environment_panel and not environment_panel.preset_selected.is_connected(_on_environment_preset_selected):
+		environment_panel.preset_selected.connect(_on_environment_preset_selected)
+
 	debug_overlay = DEBUG_OVERLAY_SCENE.instantiate()
 	add_child(debug_overlay)
 	debug_overlay.visible = false
@@ -136,7 +143,8 @@ func _ready() -> void:
 	var strings := _get_strings()
 	if strings:
 		strings.load("res://game/data/strings_egg.tsv")
-		environment_overlay.set_strings(strings)
+	if environment_panel:
+		environment_panel.set_strings(strings)
 
 	var director := _get_visual_director()
 	if director:
@@ -144,17 +152,28 @@ func _ready() -> void:
 		director.set_high_contrast(high_contrast_enabled)
 		director.activate("feed_particles", visuals_enabled)
 
-	environment_director = _get_environment_director()
-	if environment_director:
-		environment_director.set_sources(eco, res, strings)
-		if not environment_director.state_changed.is_connected(_on_environment_state_changed):
-			environment_director.state_changed.connect(_on_environment_state_changed)
-		var env_state: Dictionary = environment_director.get_state()
-		_on_environment_state_changed(
-			float(env_state.get("pollution", 0.0)),
-			float(env_state.get("stress", 0.0)),
-			float(env_state.get("reputation", 0.0))
-		)
+	environment_service = _get_environment_service()
+	if environment_service:
+		environment_service.set_strings(strings)
+		var env_root := environment_root_node
+		if env_root:
+			environment_service.register_environment_root(env_root)
+			_center_environment_root()
+			var viewport := get_viewport()
+			if viewport and not viewport.size_changed.is_connected(_on_viewport_size_changed):
+				viewport.size_changed.connect(_on_viewport_size_changed)
+		if not environment_service.environment_updated.is_connected(_on_environment_state_changed):
+			environment_service.environment_updated.connect(_on_environment_state_changed)
+		if not environment_service.day_phase_changed.is_connected(_on_environment_phase_changed):
+			environment_service.day_phase_changed.connect(_on_environment_phase_changed)
+		if not environment_service.preset_changed.is_connected(_on_environment_preset_changed):
+			environment_service.preset_changed.connect(_on_environment_preset_changed)
+		if environment_panel:
+			environment_panel.set_presets(environment_service.get_preset_options())
+			environment_panel.select_preset(environment_service.get_preset())
+		var env_state: Dictionary = environment_service.get_state()
+		if not env_state.is_empty():
+			_on_environment_state_changed(env_state)
 
 	sav.load_state()
 	var offline_gain: float = sav.grant_offline()
@@ -176,18 +195,15 @@ func _ready() -> void:
 		capacity_pulse_label.visible = false
 		capacity_pulse_label.modulate = Color(1, 1, 1, 0)
 
-	_log("INFO", "THEME", "Theme applied", {
-		"currency": "Egg Credits",
-		"prestige": "Reputation Stars"
-	})
+		_log("INFO", "THEME", "Theme applied", {
+			"currency": "Egg Credits",
+			"prestige": "Reputation Stars"
+		})
 	_log("INFO", "STRINGS", "UI copy refreshed", {"scene": "Main"})
 	sav.save("startup")
 
 func _process(_delta: float) -> void:
 	_update_feed_ui()
-	if environment_director:
-		environment_director.update_environment(_delta)
-
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("feed_hold") or event.is_action_pressed("burst_hold"):
@@ -244,8 +260,8 @@ func _apply_strings() -> void:
 	btn_burst.text = _strings_get("burst_button", btn_burst.text)
 	settings_panel.populate_strings()
 	var strings := _get_strings()
-	if strings:
-		environment_overlay.set_strings(strings)
+	if strings and environment_panel:
+		environment_panel.set_strings(strings)
 
 func _apply_hud_flags() -> void:
 	if bal == null:
@@ -549,8 +565,28 @@ func _on_visuals_toggled(enabled: bool) -> void:
 	if director:
 		director.activate("feed_particles", enabled)
 
-func _on_environment_state_changed(pollution: float, stress: float, reputation: float) -> void:
-	environment_overlay.update_state(pollution, stress, reputation)
+func _on_environment_state_changed(state: Dictionary) -> void:
+	if environment_panel:
+		environment_panel.update_state(state)
+
+func _on_environment_phase_changed(_phase: StringName) -> void:
+	if environment_service:
+		var state: Dictionary = environment_service.get_state()
+		if not state.is_empty():
+			_on_environment_state_changed(state)
+
+func _on_environment_preset_selected(preset_value: Variant) -> void:
+	if environment_service == null:
+		return
+	var preset := StringName(preset_value)
+	if preset == StringName():
+		return
+	environment_service.select_preset(preset)
+
+func _on_environment_preset_changed(preset: StringName) -> void:
+	if environment_panel:
+		environment_panel.select_preset(preset)
+	_center_environment_root()
 
 func _apply_contrast_theme() -> void:
 	var panel_style := ArtRegistry.get_style("ui_panel", high_contrast_enabled)
@@ -573,8 +609,8 @@ func _apply_contrast_theme() -> void:
 	if feed_hint_label:
 		feed_hint_label.add_theme_color_override("font_color", text_color)
 	_apply_button_styles()
-	if environment_overlay:
-		environment_overlay.set_high_contrast(high_contrast_enabled)
+	if environment_panel:
+		environment_panel.set_high_contrast(high_contrast_enabled)
 	_update_feed_ui()
 
 func _apply_button_styles() -> void:
@@ -842,11 +878,37 @@ func _get_visual_director() -> VisualDirector:
 		return node as VisualDirector
 	return null
 
-func _get_environment_director() -> EnvironmentDirector:
-	var node := get_node_or_null("/root/EnvironmentDirectorSingleton")
-	if node is EnvironmentDirector:
-		return node as EnvironmentDirector
+func _get_environment_service() -> EnvironmentService:
+	var node := get_node_or_null("/root/EnvironmentServiceSingleton")
+	if node is EnvironmentService:
+		return node as EnvironmentService
 	return null
+
+func _center_environment_root() -> void:
+	if environment_root_node == null:
+		return
+	environment_root_node.position = _environment_root_target_position()
+
+func _environment_root_target_position() -> Vector2:
+	var stage_size := _get_environment_stage_size()
+	var column_rect := root_vbox.get_global_rect()
+	if stage_size == Vector2.ZERO:
+		stage_size = DEFAULT_ENV_STAGE_SIZE
+	var target := Vector2(
+		column_rect.position.x + stage_size.x * 0.5,
+		column_rect.position.y + stage_size.y * 0.5
+	)
+	return target
+
+func _on_viewport_size_changed() -> void:
+	_center_environment_root()
+
+func _get_environment_stage_size() -> Vector2:
+	if environment_service:
+		var size := environment_service.get_active_stage_size()
+		if size != Vector2.ZERO:
+			return size
+	return DEFAULT_ENV_STAGE_SIZE
 
 func _get_strings() -> StringsCatalog:
 	var node := get_node_or_null("/root/Strings")
