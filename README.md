@@ -10,6 +10,17 @@ Idle game prototype built with Godot 4.x. This scaffold provides:
 
 - Godot 4.2+ CLI available as `godot4`
 
+## Project Structure
+
+We are standardising on a split between Godot scene assets under `game/` and feature code/data in top-level folders:
+
+- `src/` — runtime scripts and services (e.g., `src/modules/conveyor`, `src/services/AutomationService.gd`)
+- `ui/` — reusable UI scenes/widgets (e.g., `ui/widgets/EnvPanel.tscn`)
+- `data/` — authored TSV/JSON curves and configuration outside the Godot import pipeline
+- `game/` — existing scenes, autoload singletons, and legacy scripts (migrated over time)
+
+When adding new systems, prefer the `src/`, `ui/`, and `data/` layout and migrate legacy `game/scripts` as part of module-focused work.
+
 ## Usage
 
 - `./tools/run_dev.sh` launches the playable prototype. Press `R` in-game to hot-reload `game/data/balance.tsv` after tweaking numbers.
@@ -24,17 +35,17 @@ Idle game prototype built with Godot 4.x. This scaffold provides:
 
 ```bash
 # 1) work on a roadmap item
-git switch -c feature/RM-010-env-director
+git switch -c feature/RM-021-environment
 
 # 2) stage & commit (include RM/PX footers)
-git add -A && git commit -m "feat(env): backyard stage\n\nRM: RM-010\nPX: PX-010.2"
+git add -A && git commit -m "feat(environment): scaffold service layer\n\nRM: RM-021\nPX: PX-021.1"
 
 # 3) publish & open PR (use gh if installed; otherwise push and open the link)
 git push -u origin HEAD
-# gh pr create --fill --title "RM-010 EnvDirector (PX-010.2)" --body-file docs/prompts/RM-010.md
+# gh pr create --fill --title "RM-021 Environment Layer (PX-021.1)" --body-file docs/roadmap/RM-021.md
 
 # Save the driver text as a PX file
-code docs/prompts/PX-010.2.md   # paste canvas text
+code docs/prompts/PX-021.1.md   # paste canvas text
 ```
 
 ## Art Placeholders
@@ -67,10 +78,9 @@ code docs/prompts/PX-010.2.md   # paste canvas text
 
 ## Environment Simulation
 
-- EnvironmentDirector orchestrates pollution, stress, and reputation curves, updating every few frames and feeding values into the prestige multiplier.
-- The Backyard stage reacts in real time: skies desaturate under heavy pollution, chickens relax or stall based on stress, and a reputation icon mirrors public sentiment.
-- A Pollution/Stress/Reputation overlay appears above the playfield with colour-coded bars and localised tooltips sourced from the StringsCatalog.
-- Future tiers will swap in new environment stages automatically as the factory promotes, building toward a Regional → Industrial → Synthetic Lab progression mapped in `docs/ROADMAP.md`.
+- RM-021 plans a new `EnvironmentService` driving temperature, light, humidity, and air quality curves that gently influence power, feed, and prestige systems.
+- UI and presentation updates (weather icon, environment panel, ambience shifts) will live under the new `ui/` and `src/` directories as work lands.
+- Legacy `EnvironmentDirector` notes remain archived in `docs/prompts/RM-010.md`; refer to `docs/roadmap/RM-021.md` for active requirements.
 
 ## Accessibility & Diagnostics
 
@@ -99,7 +109,7 @@ code docs/prompts/PX-010.2.md   # paste canvas text
 - `tools/run_dev.sh` — launch the game (set `NO_WINDOW=1` to use headless mode)
 - `tools/ci_smoke.sh` — warm imports if needed, then run the fast CI smoke script
 - `tools/check_only.sh` — verbose `godot4 --check-only` wrapper that tees logs to `logs/godot-check.log`
-- `tools/headless_tick.sh <seconds>` — placeholder helper printed for future CLI sims
+- `tools/headless_tick.sh <seconds>` — runs the headless economy probe (`godot4 --headless` + `res://game/scripts/ci/econ_probe.gd`) and streams dumps/summary data to `logs/yolkless.log`
 - `tools/build_linux.sh` — export a Linux build (requires configured export preset)
 
 Make scripts executable: `chmod +x tools/*.sh`.

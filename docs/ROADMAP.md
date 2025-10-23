@@ -14,7 +14,7 @@
 | **RM-006 – Feed System**            | ✅ Complete    | Hold-to-feed mechanic with feed bar, drain/refill loop, and capacity/refill/efficiency upgrades. | —                                                                     |
 | **RM-007 – Offline Passive Rate**   | ⏳ Planned     | Offline production at reduced efficiency (≈25% base PPS). Automation adds a multiplier.          | PX-007.1 – Offline baseline sim (Target Sprint 2025.11)               |
 | **RM-008 – VisualDirector & FX**    | ⏳ In Progress | Reactive particle effects while feeding; foundation for later modules.                           | PX-008.2 – Particle tuning & gating (Target Sprint 2025.12)           |
-| **RM-010 – Environment Simulation** | ⏳ Prototype   | Dynamic ecosystem reacting to pollution, stress, and reputation. Evolves with production tiers.  | PX-010.3 – Backyard polish & overlay stability (Target Sprint 2025.11) |
+| **RM-021 – Environmental Simulation Layer** | ⏳ Planned   | Temperature/light/humidity/air-quality curves gently modulating power, feed, prestige.  | PX-021.1 – Environment service scaffold (Target Sprint 2025.12) |
 | **Prestige / Rebrand Loop**         | ✅ Implemented | Converts Reputation Stars to permanent production multipliers; “Rebrand & Advance” transition.   | —                                                                     |
 
 ---
@@ -38,7 +38,7 @@
 | ----------------------------------- | --------- | ---------------------------------------------- | ------------------------------------------------------------ |
 | **FeedParticles**                   | RM-008    | Grain-like particles reacting to feed_fraction | PX-008.2 – Particle tuning & gating (Target Sprint 2025.12)  |
 | **Conveyor Belt System**            | RM-009    | Visual egg transport tied to PPS               | PX-009.1 – Conveyor prototype pass (Target Sprint 2026.01)   |
-| **Pollution Overlay UI**            | RM-010    | Displays pollution, stress, reputation         | PX-010.3 – Overlay stability polish (Target Sprint 2025.11)  |
+| **Environment Overlay UI**          | RM-021    | Weather icon + environment panel reflecting live factors | PX-021.1 – Environment service scaffold (Target Sprint 2025.12)  |
 | **Weather & Day/Night Cycle**       | RM-012    | Ambient variation, pollution clearing          | PX-012.1 – Lighting baseline (Target Sprint 2026.02)         |
 | **Wildlife Return / Green Revival** | RM-013    | Birds & vegetation restore at high rep         | PX-013.1 – Wildlife loop prototype (Target Sprint 2026.03)   |
 | **Mitigation Structures**           | RM-014    | Bio-filters, composters, solar panels          | PX-014.1 – Mitigation build-out (Target Sprint 2026.03)      |
@@ -83,7 +83,7 @@
 | Layer                        | Linked RM            | Timeline     | Notes / Next PX Target                                             |
 | ---------------------------- | -------------------- | ------------ | ------------------------------------------------------------------ |
 | **Feed Bar & Particles**     | RM-006, RM-008       | ✅ Complete   | —                                                                  |
-| **Environment Backdrops**    | RM-010→RM-014        | On deck      | PX-010.3 – Backyard polish kickoff (Target Sprint 2025.11)         |
+| **Environment Backdrops**    | RM-021→RM-014        | On deck      | PX-021.1 – Environment service scaffold (Target Sprint 2025.12)         |
 | **Dynamic Color Grading**    | RM-011               | Planned      | PX-011.1 – Color grading prototype (Target Sprint 2026.02)         |
 | **Camera Motion / Parallax** | RM-012               | Planned      | PX-012.2 – Camera sweep pass (Target Sprint 2026.02)               |
 | **Placeholder Art Policy**   | RM-012               | Ongoing      | PX-012.3 – Asset pipeline refresh checklist (Target Sprint 2025.12) |

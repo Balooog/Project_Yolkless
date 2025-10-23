@@ -2,12 +2,15 @@ extends Node
 class_name Economy
 
 signal soft_changed(value: float)
+signal storage_changed(value: float, capacity: float)
 signal burst_state(active: bool)
 signal tier_changed(tier: int)
 signal autosave(reason: String)
+signal dump_triggered(amount: float, new_balance: float)
 
 var soft: float = 0.0
 var total_earned: float = 0.0
+var storage: float = 0.0
 var capacity_rank: int = 0
 var prod_rank: int = 0
 var factory_tier: int = 1
@@ -28,15 +31,17 @@ var _research: Research
 
 var _upgrade_levels := {}
 var _autosave_interval := 30.0
+var _dump_enabled := false
 
 const FEED_CAPACITY_BASE := 100.0
-const FEED_REFILL_BASE := 10.0
-const FEED_CONSUMPTION_BASE := 20.0
+const FEED_REFILL_BASE := 16.0
+const FEED_CONSUMPTION_BASE := 25.0
 
 var _feed_efficiency_mult := 1.0
 var _feed_reported_empty := false
 var _feed_reported_full := false
 var _last_offline_passive_mult := 0.0
+var _storage_reported_full := false
 
 func setup(balance: Balance, research: Research) -> void:
 	_balance = balance
@@ -51,13 +56,22 @@ func setup(balance: Balance, research: Research) -> void:
 	_autosave_timer.one_shot = false
 	add_child(_autosave_timer)
 	_autosave_timer.timeout.connect(func(): autosave.emit("interval"))
+	storage = 0.0
 	_recompute_feed_stats()
+	_refresh_dump_state()
+	_emit_storage_changed()
 	_update_timers()
 
 func _process(delta: float) -> void:
+	_tick(delta)
+
+func simulate_tick(delta: float) -> void:
+	_tick(delta)
+
+func _tick(delta: float) -> void:
 	if _balance == null or _research == null:
 		return
-	var previous_feed := feed_current
+	var previous_feed: float = feed_current
 
 	if burst_active:
 		feed_current = max(feed_current - feed_consumption_rate * delta, 0.0)
@@ -79,7 +93,7 @@ func _process(delta: float) -> void:
 
 	var pps: float = _current_pps()
 	var gained: float = pps * delta
-	_add_soft(gained)
+	_apply_income(gained)
 
 func try_burst(source_auto: bool = false) -> bool:
 	if burst_active:
@@ -110,11 +124,78 @@ func _stop_feeding(reason: String) -> void:
 	_is_auto_burst = false
 	_log_feed_stop(reason)
 
-func _add_soft(x: float) -> void:
-	var cap := _current_capacity()
-	soft = min(soft + x, cap)
-	total_earned += x
+func _apply_income(amount: float) -> void:
+	if amount <= 0.0:
+		return
+	total_earned += amount
+	_route_income_to_storage(amount)
+
+func _route_income_to_storage(amount: float) -> void:
+	var remaining: float = amount
+	var safety := 0
+	while remaining > 0.0 and safety < 128:
+		safety += 1
+		var capacity: float = _current_capacity()
+		if capacity <= 0.0:
+			return
+		var space: float = capacity - storage
+		if space > 1e-6:
+			_storage_reported_full = false
+		if space <= 1e-6:
+			_log_storage_full("no_space_before_chunk", capacity)
+			if _dump_enabled:
+				_perform_dump("auto")
+				continue
+			storage = clamp(storage, 0.0, capacity)
+			_emit_storage_changed()
+			return
+		var chunk: float = min(space, remaining)
+		storage += chunk
+		remaining -= chunk
+		_emit_storage_changed()
+		if storage < capacity - 1e-6:
+			_storage_reported_full = false
+		elif _dump_enabled:
+			_log_storage_full("auto_dump_trigger", capacity)
+			_perform_dump("auto")
+	if safety >= 128 and remaining > 0.0:
+		_log("WARN", "ECONOMY", "Income routing safety limit reached", {
+			"remaining": remaining,
+			"storage": storage,
+			"capacity": _current_capacity()
+		})
+
+func _deposit_soft(amount: float, reason: String = "income") -> void:
+	if amount <= 0.0:
+		return
+	soft = max(0.0, soft + amount)
 	soft_changed.emit(soft)
+
+func _perform_dump(reason: String = "auto") -> void:
+	if storage <= 0.0:
+		return
+	var amount: float = storage
+	storage = 0.0
+	_storage_reported_full = false
+	_emit_storage_changed()
+	_deposit_soft(amount, reason)
+	dump_triggered.emit(amount, soft)
+	_log("INFO", "ECONOMY", "Storage dump processed", {
+		"dumped": amount,
+		"balance": soft,
+		"capacity": _current_capacity(),
+		"reason": reason
+	})
+
+func _emit_storage_changed() -> void:
+	var capacity := _current_capacity()
+	if capacity <= 0.0:
+		capacity = 0.0
+	if storage > capacity:
+		storage = capacity
+	if storage < 0.0:
+		storage = 0.0
+	storage_changed.emit(storage, capacity)
 
 func spend_soft(cost: float) -> bool:
 	if soft + 1e-6 < cost:
@@ -135,6 +216,7 @@ func buy_upgrade(id: String) -> bool:
 		return false
 	_set_upgrade_level(id, level + 1)
 	_recompute_feed_stats()
+	_emit_storage_changed()
 	_log("INFO", "ECONOMY", "Upgrade purchased", {
 		"id": id,
 		"level": level + 1,
@@ -158,6 +240,7 @@ func promote_factory() -> bool:
 	_recompute_feed_stats()
 	_update_timers()
 	_update_automation_state()
+	_emit_storage_changed()
 	_log("INFO", "ECONOMY", "Factory promoted", {
 		"tier": factory_tier,
 		"cost": cost,
@@ -216,7 +299,7 @@ func offline_grant(elapsed_seconds: float) -> float:
 	_last_offline_passive_mult = 0.0
 	if base_pps > 0.0:
 		_last_offline_passive_mult = passive_pps / base_pps
-	_add_soft(grant)
+	_apply_income(grant)
 	var log_line: String = "dt=%d passive_mult=%.2f auto=%s grant=%.1f" % [
 		int(sim_time),
 		_last_offline_passive_mult,
@@ -238,9 +321,12 @@ func do_prestige() -> int:
 	_research.prestige_points += earned
 	soft = 0.0
 	total_earned = 0.0
+	storage = 0.0
 	_upgrade_levels.clear()
 	factory_tier = 1
 	_recompute_feed_stats()
+	_refresh_dump_state()
+	_emit_storage_changed()
 	feed_current = feed_capacity
 	burst_active = false
 	soft_changed.emit(soft)
@@ -274,8 +360,16 @@ func _update_timers() -> void:
 	_autosave_timer.start()
 	_update_automation_state()
 
+func _refresh_dump_state() -> void:
+	if _balance == null:
+		_dump_enabled = false
+		return
+	_dump_enabled = int(_balance.constants.get("DUMP_ON_FULL", 0)) != 0
+
 func _on_balance_reload() -> void:
 	_recompute_feed_stats()
+	_refresh_dump_state()
+	_emit_storage_changed()
 	_update_timers()
 
 func _get_upgrade_level(id: String) -> int:
@@ -321,6 +415,23 @@ func current_capacity() -> float:
 
 func get_capacity_limit() -> float:
 	return _current_capacity()
+
+func current_storage() -> float:
+	return storage
+
+func storage_fill_fraction() -> float:
+	var capacity := _current_capacity()
+	if capacity <= 0.0:
+		return 0.0
+	return clamp(storage / capacity, 0.0, 1.0)
+
+func is_dump_enabled() -> bool:
+	return _dump_enabled
+
+func dump_animation_ms() -> int:
+	if _balance == null:
+		return 300
+	return int(_balance.constants.get("DUMP_ANIM_MS", 300))
 
 func upgrade_cost(id: String) -> float:
 	if not _balance.upgrades.has(id):
@@ -392,6 +503,8 @@ func _update_automation_state() -> void:
 
 func refresh_after_load() -> void:
 	_recompute_feed_stats()
+	_refresh_dump_state()
+	_emit_storage_changed()
 	_update_timers()
 	_update_automation_state()
 
@@ -419,6 +532,9 @@ func _recompute_feed_stats() -> void:
 	var refill_scale := 1.0
 	var efficiency_bonus := 0.0
 	var efficiency_scale := 1.0
+	var base_capacity := _base_feed_capacity()
+	var base_refill := _base_feed_refill_rate()
+	var base_consumption := _base_feed_consumption_rate()
 	for id in _balance.upgrades.keys():
 		var row: Dictionary = _balance.upgrades[id]
 		var stat := String(row.get("stat", ""))
@@ -437,15 +553,30 @@ func _recompute_feed_stats() -> void:
 			"feed_efficiency":
 				efficiency_bonus += add * lvl
 				efficiency_scale *= pow(mul, lvl)
-	feed_capacity = max(1.0, (FEED_CAPACITY_BASE + capacity_bonus) * capacity_scale)
-	feed_refill_rate = max(0.0, (FEED_REFILL_BASE + refill_bonus) * refill_scale)
-	feed_consumption_rate = FEED_CONSUMPTION_BASE
+	feed_capacity = max(1.0, (base_capacity + capacity_bonus) * capacity_scale)
+	feed_refill_rate = max(0.0, (base_refill + refill_bonus) * refill_scale)
+	feed_consumption_rate = base_consumption
 	_feed_efficiency_mult = max(0.0, (1.0 + efficiency_bonus) * efficiency_scale)
 	feed_current = clamp(feed_current, 0.0, feed_capacity)
 	if feed_current <= 0.0:
 		_feed_reported_empty = true
 	if feed_current >= feed_capacity:
 		_feed_reported_full = true
+
+func _base_feed_capacity() -> float:
+	if _balance == null:
+		return FEED_CAPACITY_BASE
+	return float(_balance.constants.get("FEED_SUPPLY_MAX", FEED_CAPACITY_BASE))
+
+func _base_feed_refill_rate() -> float:
+	if _balance == null:
+		return FEED_REFILL_BASE
+	return float(_balance.constants.get("FEED_SUPPLY_REFILL_RATE", FEED_REFILL_BASE))
+
+func _base_feed_consumption_rate() -> float:
+	if _balance == null:
+		return FEED_CONSUMPTION_BASE
+	return float(_balance.constants.get("FEED_SUPPLY_DRAIN_RATE", FEED_CONSUMPTION_BASE))
 
 func _log_feed_start(auto_start: bool) -> void:
 	_log("INFO", "FEED", "start", {
@@ -475,6 +606,16 @@ func _log_feed_full() -> void:
 	_feed_reported_full = true
 	_log("INFO", "FEED", "full", {
 		"capacity": feed_capacity
+	})
+
+func _log_storage_full(reason: String, capacity: float) -> void:
+	if _storage_reported_full:
+		return
+	_storage_reported_full = true
+	_log("INFO", "ECONOMY", "Storage full", {
+		"reason": reason,
+		"capacity": capacity,
+		"dump_enabled": _dump_enabled
 	})
 
 func _environment_state() -> Dictionary:

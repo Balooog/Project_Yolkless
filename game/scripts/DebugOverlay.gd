@@ -53,7 +53,14 @@ func _refresh(refresh_tail: bool) -> void:
 		balance_md5 = (logger_node as YolkLogger).hash_md5_from_file("res://game/data/balance.tsv")
 	var save_hash: String = _save.get_current_hash() if _save != null else ""
 	var capacity: float = _economy.get_capacity_limit()
-	var soft_value: float = _economy.soft
+	var storage_value: float = _economy.current_storage()
+	var wallet_value: float = _economy.soft
+	var seed_value: int = 0
+	var config_node := get_node_or_null("/root/Config")
+	if config_node:
+		var seed_variant: Variant = config_node.get("seed")
+		if typeof(seed_variant) == TYPE_INT or typeof(seed_variant) == TYPE_FLOAT:
+			seed_value = int(seed_variant)
 	var feed_fraction: float = _economy.get_feed_fraction()
 	var feed_seconds: float = _economy.get_feed_seconds_to_full()
 	var feeding := _economy.is_feeding()
@@ -80,15 +87,27 @@ func _refresh(refresh_tail: bool) -> void:
 		_log_tail_cache = []
 	var content: Array[String] = []
 	content.append(title)
+	var seed_text := _get_string("debug_overlay_seed", "Seed: {seed}").format({
+		"seed": seed_value
+	})
+	content.append(seed_text)
 	var pps_text := _get_string("debug_overlay_pps", "PPS: {pps}").format({
 		"pps": String.num(_economy.current_pps(), 2)
 	})
 	content.append(pps_text)
-	var capacity_text := _get_string("debug_overlay_capacity", "Capacity: {soft} / {capacity}").format({
-		"soft": String.num(soft_value, 1),
-		"capacity": String.num(capacity, 1)
+	var percent := 0.0
+	if capacity > 0.0:
+		percent = clamp(storage_value / capacity * 100.0, 0.0, 100.0)
+	var storage_text := _get_string("debug_overlay_storage", "Storage: {storage} / {capacity} ({percent}%)").format({
+		"storage": String.num(storage_value, 1),
+		"capacity": String.num(capacity, 1),
+		"percent": String.num(percent, 0)
 	})
-	content.append(capacity_text)
+	content.append(storage_text)
+	var wallet_text := _get_string("debug_overlay_wallet", "Credits: {wallet}").format({
+		"wallet": String.num(wallet_value, 1)
+	})
+	content.append(wallet_text)
 	var feed_text := _get_string("debug_overlay_feed", "Feed: {pct}% | State {state} | Refill {seconds}s").format({
 		"pct": String.num(feed_fraction * 100.0, 0),
 		"state": feed_state_text,

@@ -3,6 +3,9 @@ extends Node
 const SETTINGS_PANEL_SCENE := preload("res://game/scenes/widgets/SettingsPanel.tscn")
 const DEBUG_OVERLAY_SCENE := preload("res://game/scenes/widgets/DebugOverlay.tscn")
 
+const ShopService := preload("res://game/scripts/ShopService.gd")
+const ShopDebug := preload("res://game/scripts/ShopDebug.gd")
+
 const FEED_FILL_HIGH_DEFAULT := Color(0.2, 0.8, 0.35, 1)
 const FEED_FILL_MED_DEFAULT := Color(0.95, 0.68, 0.2, 1)
 const FEED_FILL_LOW_DEFAULT := Color(0.9, 0.2, 0.2, 1)
@@ -23,6 +26,8 @@ const FEED_FLASH_COLOR := Color(1, 0.7, 0.7, 1)
 @onready var lbl_soft: Label = %SoftLabel
 @onready var capacity_label: Label = %CapacityLabel
 @onready var capacity_bar: ProgressBar = %CapacityBar
+@onready var capacity_container: VBoxContainer = capacity_label.get_parent() as VBoxContainer
+@onready var capacity_pulse_label: Label = %CapPulseLabel
 @onready var feed_status_label: Label = %FeedStatus
 @onready var feed_bar: ProgressBar = %FeedBar
 @onready var lbl_pps: Label = %PPSLabel
@@ -51,6 +56,8 @@ const FEED_FLASH_COLOR := Color(1, 0.7, 0.7, 1)
 @onready var toast_label: Label = %ToastLabel
 
 var text_scale := 1.0
+var shop_service: ShopService
+var shop_debug: ShopDebug
 var settings_panel: SettingsPanel
 var debug_overlay: CanvasLayer
 var high_contrast_enabled := false
@@ -58,17 +65,29 @@ var visuals_enabled := true
 var environment_director: EnvironmentDirector
 var _feed_deny_sound_warned := false
 var _toast_tween: Tween
+var _show_cap_pulse := true
 
 func _ready() -> void:
 	res.setup(bal)
 	eco.setup(bal, res)
 	sav.setup(eco, res)
 
+	shop_service = ShopService.new()
+	add_child(shop_service)
+	shop_service.setup(bal, eco)
+	shop_service.state_changed.connect(_on_shop_state_changed)
+
+	shop_debug = ShopDebug.new()
+	add_child(shop_debug)
+	shop_debug.setup(shop_service, eco)
+
 	bal.reloaded.connect(_on_balance_reload)
 	res.changed.connect(_update_research_view)
 	eco.soft_changed.connect(_on_soft_changed)
+	eco.storage_changed.connect(_on_storage_changed)
 	eco.tier_changed.connect(func(_tier: int) -> void: _update_factory_view())
 	eco.burst_state.connect(_on_feed_state_changed)
+	eco.dump_triggered.connect(_on_dump_triggered)
 	btn_burst.button_down.connect(_on_feed_button_down)
 	btn_burst.button_up.connect(_on_feed_button_up)
 	btn_prod.pressed.connect(func(): _attempt_upgrade("prod_1"))
@@ -106,8 +125,8 @@ func _ready() -> void:
 	var logging_force_disable := false
 	var seed := 0
 	if config:
-		logging_enabled = bool(config.logging_enabled)
-		logging_force_disable = bool(config.logging_force_disable)
+		logging_enabled = config.logging_enabled
+		logging_force_disable = config.logging_force_disable
 		seed = int(config.seed)
 	if logger:
 		logger.setup(logging_enabled, logging_force_disable)
@@ -145,6 +164,7 @@ func _ready() -> void:
 	apply_text_scale(text_scale)
 	_apply_contrast_theme()
 	_apply_strings()
+	_apply_hud_flags()
 	_update_all_views()
 	_update_feed_ui()
 	if feed_hint_label:
@@ -152,6 +172,9 @@ func _ready() -> void:
 	if toast_label:
 		toast_label.visible = false
 		toast_label.modulate = Color(1, 1, 1, 0)
+	if capacity_pulse_label:
+		capacity_pulse_label.visible = false
+		capacity_pulse_label.modulate = Color(1, 1, 1, 0)
 
 	_log("INFO", "THEME", "Theme applied", {
 		"currency": "Egg Credits",
@@ -161,7 +184,6 @@ func _ready() -> void:
 	sav.save("startup")
 
 func _process(_delta: float) -> void:
-	_update_capacity_bar()
 	_update_feed_ui()
 	if environment_director:
 		environment_director.update_environment(_delta)
@@ -183,13 +205,34 @@ func _on_balance_reload() -> void:
 	_log("INFO", "BALANCE", "Hot reload acknowledged", {
 		"md5": _hash_from_logger("res://game/data/balance.tsv")
 	})
-	_update_all_views()
 	_apply_strings()
+	_apply_hud_flags()
+	_update_all_views()
+
+func _on_shop_state_changed(_id: String) -> void:
+	_update_upgrade_buttons()
 
 func _on_soft_changed(value: float) -> void:
 	_update_soft_view(value)
 	_update_prestige_view()
 	_update_upgrade_buttons()
+
+func _on_storage_changed(value: float, capacity: float) -> void:
+	_update_storage_view(value, capacity)
+
+func _on_dump_triggered(amount: float, _new_balance: float) -> void:
+	if not _show_cap_pulse:
+		return
+	if eco == null:
+		return
+	if capacity_bar == null:
+		return
+	if amount <= 0.0:
+		return
+	var template := _strings_get("storage_dump_message", "Cap reached! +{amount}")
+	var message := template.format({"amount": _format_num(amount)})
+	if capacity_bar and capacity_bar.has_method("play_dump_pulse"):
+		capacity_bar.call("play_dump_pulse", eco.dump_animation_ms(), message)
 
 func _apply_strings() -> void:
 	btn_settings.text = _strings_get("settings_button", btn_settings.text)
@@ -203,11 +246,27 @@ func _apply_strings() -> void:
 	var strings := _get_strings()
 	if strings:
 		environment_overlay.set_strings(strings)
-	_update_capacity_bar()
-	_update_feed_ui()
+
+func _apply_hud_flags() -> void:
+	if bal == null:
+		return
+	var show_pps: bool = bool(bal.hud_flags.get("SHOW_PPS_LABEL", true))
+	if lbl_pps:
+		lbl_pps.visible = show_pps
+	var show_storage: bool = bool(bal.hud_flags.get("SHOW_STORAGE_BAR", true))
+	if capacity_container:
+		capacity_container.visible = show_storage
+	var show_cap: bool = bool(bal.hud_flags.get("SHOW_CAP_PULSE", true))
+	_show_cap_pulse = show_cap
+	if capacity_bar and capacity_bar.has_method("set_pulse_enabled"):
+		capacity_bar.call("set_pulse_enabled", show_cap)
+	if not show_cap and capacity_pulse_label:
+		capacity_pulse_label.visible = false
+		capacity_pulse_label.modulate = Color(1, 1, 1, 0)
 
 func _update_all_views() -> void:
 	_update_soft_view(eco.soft)
+	_update_storage_view()
 	_update_prestige_view()
 	_update_upgrade_buttons()
 	_update_factory_view()
@@ -215,18 +274,14 @@ func _update_all_views() -> void:
 	_update_feed_ui()
 
 func _update_soft_view(value: float) -> void:
-	var capacity: float = eco.get_capacity_limit()
-	var soft_template := _strings_get("soft_label", "Egg Credits: {value} / {capacity}")
+	var soft_template := _strings_get("soft_label_wallet", "Egg Credits: {value}")
 	lbl_soft.text = soft_template.format({
-		"value": _format_num(value),
-		"capacity": _format_num(capacity)
+		"value": _format_num(value)
 	})
 	var pps_template := _strings_get("pps_label", "Egg Flow: {pps}/s")
 	lbl_pps.text = pps_template.format({
 		"pps": _format_num(eco.current_pps(), 1)
 	})
-	_update_capacity_bar()
-	_update_feed_ui()
 
 func _update_prestige_view() -> void:
 	var next := eco.prestige_points_earned()
@@ -262,14 +317,50 @@ func _update_factory_view() -> void:
 		btn_promote.disabled = eco.soft + 1e-6 < next_cost
 
 func _update_upgrade_buttons() -> void:
+	if shop_service == null:
+		_update_upgrade_buttons_legacy()
+		return
+	_apply_shop_button(btn_prod, "prod_1", "buy_prod")
+	_apply_shop_button(btn_cap, "cap_1", "buy_cap")
+	_apply_auto_button()
+
+func _update_upgrade_buttons_legacy() -> void:
+	var prod_data: Dictionary = {}
+	if bal.upgrades.has("prod_1"):
+		prod_data = bal.upgrades["prod_1"]
+	var cap_data: Dictionary = {}
+	if bal.upgrades.has("cap_1"):
+		cap_data = bal.upgrades["cap_1"]
 	var prod_cost: float = eco.upgrade_cost("prod_1")
 	var cap_cost: float = eco.upgrade_cost("cap_1")
 	var auto_cost: float = eco.upgrade_cost("auto_1")
-	btn_prod.text = _strings_get("buy_prod", btn_prod.text).format({"cost": _format_num(prod_cost)})
-	btn_cap.text = _strings_get("buy_cap", btn_cap.text).format({"cost": _format_num(cap_cost)})
+	var prod_template: String = _strings_get("buy_prod", btn_prod.text)
+	var cap_template: String = _strings_get("buy_cap", btn_cap.text)
+	var prod_visible: bool = bool(prod_data.get("visible", true))
+	var cap_visible: bool = bool(cap_data.get("visible", true))
+	btn_prod.visible = prod_visible
+	btn_cap.visible = cap_visible
+	var prod_text: String = prod_template.format({"cost": _format_num(prod_cost)})
+	var cap_text: String = cap_template.format({"cost": _format_num(cap_cost)})
+	if prod_visible:
+		btn_prod.text = prod_text
+	else:
+		btn_prod.tooltip_text = ""
+	if cap_visible:
+		btn_cap.text = cap_text
+	else:
+		btn_cap.tooltip_text = ""
 	var auto_allowed: bool = eco.can_purchase_upgrade("auto_1")
-	btn_prod.disabled = (not eco.can_purchase_upgrade("prod_1")) or eco.soft + 1e-6 < prod_cost
-	btn_cap.disabled = (not eco.can_purchase_upgrade("cap_1")) or eco.soft + 1e-6 < cap_cost
+	if prod_visible:
+		btn_prod.disabled = (not eco.can_purchase_upgrade("prod_1")) or eco.soft + 1e-6 < prod_cost
+		btn_prod.tooltip_text = prod_text
+	else:
+		btn_prod.disabled = true
+	if cap_visible:
+		btn_cap.disabled = (not eco.can_purchase_upgrade("cap_1")) or eco.soft + 1e-6 < cap_cost
+		btn_cap.tooltip_text = cap_text
+	else:
+		btn_cap.disabled = true
 	var auto_requires: String = String(bal.upgrades.get("auto_1", {}).get("requires", "-"))
 	var requirement_text: String = ""
 	if not auto_allowed and auto_requires.begins_with("factory>="):
@@ -284,6 +375,55 @@ func _update_upgrade_buttons() -> void:
 		"requirement": requirement_text
 	})
 	btn_auto.disabled = (not auto_allowed) or eco.soft + 1e-6 < auto_cost
+	btn_auto.tooltip_text = btn_auto.text
+
+func _apply_shop_button(button: Button, id: String, template_key: String) -> void:
+	var state: Dictionary = shop_service.get_item_state(id)
+	var visible: bool = bool(state.get("visible", true))
+	button.visible = visible
+	if not visible:
+		button.disabled = true
+		button.tooltip_text = ""
+		return
+	var price_text: String = _format_num(float(state.get("price", 0.0)))
+	var template: String = _strings_get(template_key, button.text)
+	var label: String = template.format({"cost": price_text})
+	button.text = label
+	var enabled: bool = bool(state.get("enabled", false))
+	button.disabled = not enabled
+	var tooltip: String = label
+	var reason_text: String = String(state.get("reason_text", ""))
+	if not enabled and reason_text != "":
+		tooltip += "\n" + reason_text
+	button.tooltip_text = tooltip
+
+func _apply_auto_button() -> void:
+	var state: Dictionary = shop_service.get_item_state("auto_1")
+	var visible: bool = bool(state.get("visible", true))
+	btn_auto.visible = visible
+	if not visible:
+		btn_auto.disabled = true
+		btn_auto.tooltip_text = ""
+		return
+	var requirement_text: String = ""
+	if int(state.get("stage_required", 0)) > 0 and not bool(state.get("stage_ok", true)):
+		var stage_name: String = String(state.get("stage_name", ""))
+		if stage_name == "":
+			stage_name = shop_service.stage_display_name(int(state.get("stage_required", 0)))
+		var requirement_template := _strings_get("buy_auto_requirement", " — Requires {stage}")
+		requirement_text = requirement_template.format({"stage": stage_name})
+	var label_template := _strings_get("buy_auto", btn_auto.text)
+	btn_auto.text = label_template.format({
+		"cost": _format_num(state.get("price", 0.0)),
+		"requirement": requirement_text
+	})
+	var enabled: bool = bool(state.get("enabled", false))
+	btn_auto.disabled = not enabled
+	var tooltip: String = btn_auto.text
+	var reason_text: String = String(state.get("reason_text", ""))
+	if not enabled and reason_text != "":
+		tooltip += "\n" + reason_text
+	btn_auto.tooltip_text = tooltip
 
 func _update_research_view() -> void:
 	lbl_research.text = _strings_get("research_header", "Innovation Lab — Research Points: {points}").format({
@@ -317,18 +457,28 @@ func _update_research_view() -> void:
 			})
 			button.disabled = not res.can_buy(node_id)
 
-func _update_capacity_bar() -> void:
-	var capacity: float = eco.get_capacity_limit()
-	var soft_value: float = eco.soft
-	capacity_bar.max_value = max(capacity, 1.0)
-	capacity_bar.value = min(soft_value, capacity)
-	var capacity_template := _strings_get("capacity_bar_label", "Storage: {value} / {capacity}")
+func _update_storage_view(storage_value: float = -1.0, capacity: float = -1.0) -> void:
+	if eco == null:
+		return
+	var cap := capacity if capacity >= 0.0 else eco.get_capacity_limit()
+	var storage := storage_value if storage_value >= 0.0 else eco.current_storage()
+	if capacity_bar:
+		capacity_bar.max_value = max(cap, 1.0)
+		capacity_bar.value = clamp(storage, 0.0, capacity_bar.max_value)
+	var percent := 0.0
+	if cap > 0.0:
+		percent = clamp(storage / cap * 100.0, 0.0, 100.0)
+	var capacity_template := _strings_get("storage_label", "Storage: {storage} / {capacity} ({percent}%)")
 	var formatted := capacity_template.format({
-		"value": _format_num(soft_value),
-		"capacity": _format_num(capacity)
+		"storage": _format_num(storage, 1),
+		"capacity": _format_num(cap, 1),
+		"percent": _format_num(percent, 0)
 	})
-	capacity_label.text = formatted
-	capacity_bar.tooltip_text = formatted
+	if capacity_label:
+		capacity_label.text = formatted
+		capacity_label.tooltip_text = formatted
+	if capacity_bar:
+		capacity_bar.tooltip_text = formatted
 
 func _update_feed_ui() -> void:
 	var fraction: float = eco.get_feed_fraction()
@@ -628,7 +778,8 @@ func _copy_diagnostics() -> void:
 	lines.append("Seed: %d" % seed)
 	lines.append("Tier: %d (%s)" % [eco.factory_tier, eco.factory_name()])
 	lines.append("PPS: %.2f" % eco.current_pps())
-	lines.append("Capacity: %.1f / %.1f" % [eco.soft, eco.get_capacity_limit()])
+	lines.append("Storage: %.1f / %.1f" % [eco.current_storage(), eco.get_capacity_limit()])
+	lines.append("Credits: %.1f" % eco.soft)
 	lines.append("Feed: %.1f / %.1f (%.0f%%)" % [eco.feed_current, eco.feed_capacity, eco.get_feed_fraction() * 100.0])
 	lines.append("Feed refill seconds: %.2f" % eco.get_feed_seconds_to_full())
 	lines.append("Research owned: %s" % ", ".join(res.owned.keys()))

@@ -1,5 +1,6 @@
 # key	value
 soft_label	Egg Credits: {value} / {capacity}
+soft_label_wallet	Egg Credits: {value}
 pps_label	Egg Flow: {pps}/s
 farm_stage	Farm Stage: {name}
 prestige_label	Reputation Stars: {prestige} (Next Rebrand: +{next})
@@ -24,6 +25,8 @@ offline_title	Offline Egg Credits
 offline_summary_title	While you were away…
 offline_summary_body	Your farm produced {amount} at {pct}% passive efficiency. Feed to boost output!
 capacity_bar_label	Storage: {value} / {capacity}
+storage_label	Storage: {storage} / {capacity} ({percent}%)
+storage_dump_message	Cap reached! +{amount}
 feed_bar_label	Feed Supply
 feed_refilling	Refilling silo… {pct}%
 feed_empty	Feed empty
@@ -57,6 +60,9 @@ toast_upgrade_feed_efficiency	Feed Boost +10%
 toast_upgrade_auto	Automation Unlocked
 debug_overlay_title	DEBUG OVERLAY
 debug_overlay_pps	PPS: {pps}
+debug_overlay_seed	Seed: {seed}
+debug_overlay_storage	Storage: {storage} / {capacity} ({percent}%)
+debug_overlay_wallet	Credits: {wallet}
 debug_overlay_capacity	Capacity: {soft} / {capacity}
 debug_overlay_feed	Feed: {pct}% | State {state} | Refill {seconds}s
 debug_overlay_feed_on	ON

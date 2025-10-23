@@ -17,6 +17,7 @@ func save(reason: String = "manual") -> void:
 		"ts": Time.get_unix_time_from_system(),
 		"eco": {
 			"soft": _eco.soft,
+			"storage": _eco.storage,
 			"total_earned": _eco.total_earned,
 			"capacity_rank": _eco.capacity_rank,
 			"prod_rank": _eco.prod_rank,
@@ -39,6 +40,7 @@ func save(reason: String = "manual") -> void:
 	_log("INFO", "SAVE", "Save written", {
 		"reason": reason,
 		"soft": _eco.soft,
+		"storage": _eco.storage,
 		"prestige": _res.prestige_points,
 		"tier": _eco.factory_tier,
 		"hash": hash
@@ -48,6 +50,7 @@ func load_state() -> void:
 	if not FileAccess.file_exists(save_path):
 		_log("INFO", "SAVE", "No save file found", {"path": save_path})
 		_eco.soft = 0.0
+		_eco.storage = 0.0
 		return
 	var file := FileAccess.open(save_path, FileAccess.READ)
 	if file == null:
@@ -75,6 +78,7 @@ func load_state() -> void:
 	var eco_variant: Variant = save_data.get("eco", {})
 	var eco_data: Dictionary = eco_variant if eco_variant is Dictionary else {}
 	_eco.soft = float(eco_data.get("soft", 0.0))
+	_eco.storage = float(eco_data.get("storage", 0.0))
 	_eco.total_earned = float(eco_data.get("total_earned", 0.0))
 	_eco.factory_tier = int(eco_data.get("factory_tier", 1))
 	var upgrades_variant: Variant = save_data.get("upgrades", {})
@@ -101,6 +105,7 @@ func load_state() -> void:
 	_eco.tier_changed.emit(_eco.factory_tier)
 	_log("INFO", "SAVE", "Save loaded", {
 		"soft": _eco.soft,
+		"storage": _eco.storage,
 		"prestige": _res.prestige_points,
 		"tier": _eco.factory_tier,
 		"hash": actual
