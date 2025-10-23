@@ -5,6 +5,7 @@ const TICK_DT = 0.05
 const CONFIG_SCRIPT := preload("res://game/scripts/Config.gd")
 const LOGGER_SCRIPT := preload("res://game/scripts/Logger.gd")
 const ENV_SERVICE_SCRIPT := preload("res://src/services/EnvironmentService.gd")
+const STATBUS_SCRIPT := preload("res://src/services/StatBus.gd")
 
 var _logger: YolkLogger
 var _next_tick_time = 0.0
@@ -29,6 +30,12 @@ func _initialize() -> void:
 		env_instance.name = "EnvironmentServiceSingleton"
 		root.add_child(env_instance)
 		env_node = env_instance
+	var statbus_node := root.get_node_or_null("StatBusSingleton")
+	if statbus_node == null:
+		var statbus_instance := STATBUS_SCRIPT.new()
+		statbus_instance.name = "StatBusSingleton"
+		root.add_child(statbus_instance)
+		statbus_node = statbus_instance
 	await process_frame
 	_logger = logger_node as YolkLogger
 	_configure_seed_and_logging()

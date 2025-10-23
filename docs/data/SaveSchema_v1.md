@@ -48,6 +48,17 @@
 3. Prefer additive migrations with defaults instead of destructive rewrites.
 4. Document migrations in new ADRs and update this file.
 
+### Migration Process
+```
+Process:
+1) On load, read save_version (default 0).
+2) While save_version < CURRENT_VERSION, run migration N→N+1 script from /src/persistence/migrations/.
+3) After applying migrations, validate via SaveValidator and persist with CURRENT_VERSION.
+Tests:
+- /tests/persistence/test_migrations.gd runs fixtures through migration pipeline.
+```
+- TODO: hook this pipeline into `Save.gd` and add initial migration scripts (see [Architecture Alignment TODO](../architecture/Implementation_TODO.md)).
+
 ## Compatibility Notes
 - Use `Config.seed` only for deterministic QA; do not persist in save payloads.
 - Keep floats within reasonable ranges to avoid JSON bloat; compression handled externally.

@@ -46,3 +46,16 @@ graph TD
 - EventDirector: dispatches gentle ±10% events with serene telemetry.
 - Telemetry: captures StatBus snapshots for QA replay.
 
+## Runtime Model
+- Simulation runs single-threaded on the main loop during Phase A.
+- Default cadence is 10 Hz; all updates happen in the following order:
+  1. `EnvironmentService.tick(dt)` updates factors and emits `environment_changed`.
+  2. `PowerService.tick(dt)` pulls environment factors via `current_factors()`.
+  3. `SandboxService.tick(dt)` pulls environment state, computes Comfort Index, emits `ci_changed`.
+  4. `AutomationService.tick(dt)` reads StatBus modifiers and power state.
+  5. `Economy.tick(dt)` pulls modifiers and applies totals (shipments, PPS, storage).
+  6. UI/HUD refresh reads snapshots only—no heavy work in `_process`.
+- StatBus is **pull by default**; services may optionally push high-latency changes via signals.
+- No gameplay threads yet; any future GPU sandbox path must double-buffer results on the main thread.
+
+See also: [Architecture Alignment TODO](Implementation_TODO.md) for tasks needed to match this desired model.

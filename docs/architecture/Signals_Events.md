@@ -28,3 +28,12 @@
 - Payloads should be flat dictionaries for easy serialization.
 - If emitting high-frequency signals (>10 Hz), ensure listeners can throttle updates.
 - When adding a new signal, update this table and cross-link related PXs.
+- Implementation status tracked in [Architecture Alignment TODO](Implementation_TODO.md).
+
+## Listener Map & Throttling
+| Signal | Emitter Path | Typical Hz | Listeners | Throttle Rule |
+| ------ | ------------- | ---------- | --------- | ------------- |
+| `environment_changed(factors)` | `/root/EnvironmentService` | 10 | PowerService `/root/PowerService`, SandboxService `/root/SandboxService`, HUD `/root/Main/UI` | HUD throttled to 5 Hz |
+| `ci_changed(ci, bonus)` | `/root/SandboxService` | 2 | StatBus `/root/StatBus`, HUD comfort widget | none |
+| `power_warning(level)` | `/root/PowerService` | burst | HUD `/root/Main/UI`, AutomationService `/root/AutomationService` | debounce 0.5 s |
+| `throughput_updated(rate, queue)` | `/root/Main/ConveyorManager` | 60 | HUD stats, Telemetry probe | HUD samples at 10 Hz |

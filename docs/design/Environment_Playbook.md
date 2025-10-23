@@ -20,14 +20,19 @@
 | Humidity | `moisture` | 0.3–0.7 | Supports vegetation visuals; extremes reduce comfort. |
 | Light | `breeze` | 0.2–0.9 | Drives particle flow speed. |
 
-## Comfort Index Formula
+## Comfort Index Formula (provisional)
 ```
-ci = clamp(0.0, 1.0, base + vegetation_bonus - stress_penalty)
-ci_bonus = min(0.05, ci * 0.05)
+CI = clamp(
+  0.45 * stability_score      # inverse of rapid state changes
+  + 0.35 * diversity_score    # distinct material coverage 15–45%
+  + 0.20 * entropy_score      # pattern entropy within target band
+, 0.0, 1.0)
+
+ci_bonus = clamp(CI * 0.05, 0.0, 0.05)
 ```
-- `base`: weighted average of heat/moisture/light.
-- `vegetation_bonus`: sandbox flora density.
-- `stress_penalty`: small deduction when power deficits or events active.
+- Log `CI`, components, and preset at 1 Hz in dev builds.
+- Adjust weights to keep average CI ≈ 0.6 under temperate profile.
+- TODO: implement SandboxService pipeline emitting these values (see [Architecture Alignment TODO](../architecture/Implementation_TODO.md)).
 
 ## Smoothing Strategies
 - Apply exponential smoothing (`alpha = 0.25`) to comfort output before updating StatBus.

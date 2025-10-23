@@ -20,12 +20,20 @@
 | [RM-021](RM-021.md) | Environment simulation | [Environment Playbook](../design/Environment_Playbook.md), [StatBus Catalog](../architecture/StatBus_Catalog.md) |
 
 ## Dependency Graph
+```mermaid
+graph TD
+  RM011[RM-011 Economy] --> RM012[RM-012 Upgrades]
+  RM012 --> RM013[RM-013 Automation]
+  RM013 --> RM018[RM-018 Power]
+  RM013 --> RM019[RM-019 Layout]
+  RM018 --> RM021[RM-021 Environment]
+  RM019 --> RM021
+  RM021 --> RM020[RM-020 Art/Audio]
+  RM015[RM-015 Wisdom] --> RM021
+  RM014[RM-014 Telemetry] --> RM011
+  RM010[RM-010 UI] --> RM011
 ```
-RM-011 -> RM-012 -> RM-013 -> RM-018 -> RM-019
-RM-021 -> RM-018
-RM-014 listens to RM-011/013/021 outputs
-RM-010 consumes RM-011/012/013/021 stats
-```
+- See the **Yolkless Roadmap Planning Canvas** for narrative sequencing and quarterly targets.
 
 ## Phase Gates
 - **Prototype Gate:** RM-009, RM-010, RM-011, RM-021.

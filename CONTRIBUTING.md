@@ -26,6 +26,8 @@ Thank you for helping build a cozy idle experience. Follow these practices to ke
 - [ ] Reference comfort-idle guidance (`docs/analysis/IdleGameComparative.md`).
 - [ ] Include validation evidence (screens, logs, headless output).
 - [ ] Update documentation if schema, signals, or stats change.
+- [ ] Performance check: attach profiler snapshot vs `Performance_Budgets.md`.
+- [ ] Headless replay run (e.g., `replay_headless.gd`) with logs attached.
 - [ ] Request review from owner (see Roadmap modules).
 
 ## Coding Standards

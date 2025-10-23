@@ -16,3 +16,4 @@ Paste the Codex canvas prompt here.
 
 ## Notes
 - Open questions, follow-ups, or ADR references.
+- [ ] Update `/docs/architecture/Signals_Events.md` and `/docs/architecture/StatBus_Catalog.md` if new signals or stats were introduced.
