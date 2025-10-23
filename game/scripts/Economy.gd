@@ -1,6 +1,8 @@
 extends Node
 class_name Economy
 
+const EnvironmentService := preload("res://src/services/EnvironmentService.gd")
+
 signal soft_changed(value: float)
 signal storage_changed(value: float, capacity: float)
 signal burst_state(active: bool)
@@ -36,12 +38,14 @@ var _dump_enabled := false
 const FEED_CAPACITY_BASE := 100.0
 const FEED_REFILL_BASE := 16.0
 const FEED_CONSUMPTION_BASE := 25.0
+const AUTOMATION_ENV_THRESHOLD := 0.75
 
 var _feed_efficiency_mult := 1.0
 var _feed_reported_empty := false
 var _feed_reported_full := false
 var _last_offline_passive_mult := 0.0
 var _storage_reported_full := false
+var _automation_env_blocked := false
 
 func setup(balance: Balance, research: Research) -> void:
 	_balance = balance
@@ -72,16 +76,19 @@ func _tick(delta: float) -> void:
 	if _balance == null or _research == null:
 		return
 	var previous_feed: float = feed_current
+	var env_feed_modifier: float = _environment_feed_modifier()
+	var consumption_rate: float = feed_consumption_rate / max(env_feed_modifier, 0.1)
+	var refill_rate: float = feed_refill_rate * clamp(env_feed_modifier, 0.5, 1.5)
 
 	if burst_active:
-		feed_current = max(feed_current - feed_consumption_rate * delta, 0.0)
+		feed_current = max(feed_current - consumption_rate * delta, 0.0)
 		if feed_current <= 0.0:
 			feed_current = 0.0
 			_stop_feeding("empty")
 			_log_feed_empty()
 	else:
 		if feed_current < feed_capacity:
-			feed_current = min(feed_current + feed_refill_rate * delta, feed_capacity)
+			feed_current = min(feed_current + refill_rate * delta, feed_capacity)
 			if feed_current >= feed_capacity:
 				feed_current = feed_capacity
 				_log_feed_full()
@@ -94,6 +101,7 @@ func _tick(delta: float) -> void:
 	var pps: float = _current_pps()
 	var gained: float = pps * delta
 	_apply_income(gained)
+	_update_automation_state()
 
 func try_burst(source_auto: bool = false) -> bool:
 	if burst_active:
@@ -273,7 +281,8 @@ func _base_pps() -> float:
 	var tier_prod: float = float(_balance.factory_tiers.get(factory_tier, {}).get("prod_mult", 1.0))
 	var prod_mult: float = _stat_multiplier("mul_prod")
 	var research_mul: float = float(_research.multipliers["mul_prod"])
-	return P0 * tier_prod * prod_mult * research_mul
+	var env_power: float = _environment_power_modifier()
+	return P0 * tier_prod * prod_mult * research_mul * env_power
 
 func _current_capacity() -> float:
 	if _balance == null or _research == null:
@@ -477,8 +486,14 @@ func get_total_earned() -> float:
 func get_upgrade_levels() -> Dictionary:
 	return _upgrade_levels.duplicate(true)
 
-func _automation_enabled() -> bool:
+func _automation_conditions_met() -> bool:
 	return _has_autoburst_unlock() and _tier_allows_auto()
+
+func _automation_environment_ok() -> bool:
+	return _environment_feed_modifier() >= AUTOMATION_ENV_THRESHOLD
+
+func _automation_enabled() -> bool:
+	return _automation_conditions_met() and _automation_environment_ok()
 
 func _has_autoburst_unlock() -> bool:
 	for id in _balance.upgrades.keys():
@@ -494,12 +509,33 @@ func _tier_allows_auto() -> bool:
 	return unlocks.find("auto") != -1
 
 func _update_automation_state() -> void:
-	if _automation_enabled():
-		if _auto_timer.is_stopped():
-			_auto_timer.start()
-	else:
+	if _auto_timer == null:
+		return
+	var conditions_met := _automation_conditions_met()
+	if not conditions_met:
 		if not _auto_timer.is_stopped():
 			_auto_timer.stop()
+		if _automation_env_blocked:
+			_automation_env_blocked = false
+		return
+	var env_ok := _automation_environment_ok()
+	if not env_ok:
+		if not _auto_timer.is_stopped():
+			_auto_timer.stop()
+		if not _automation_env_blocked:
+			_automation_env_blocked = true
+			_log("INFO", "AUTOMATION", "Autoburst paused due to environment", {
+				"feed_modifier": _environment_feed_modifier(),
+				"threshold": AUTOMATION_ENV_THRESHOLD
+			})
+		return
+	if _automation_env_blocked:
+		_automation_env_blocked = false
+		_log("INFO", "AUTOMATION", "Autoburst restored", {
+			"feed_modifier": _environment_feed_modifier()
+		})
+	if _auto_timer.is_stopped():
+		_auto_timer.start()
 
 func refresh_after_load() -> void:
 	_recompute_feed_stats()
@@ -619,17 +655,46 @@ func _log_storage_full(reason: String, capacity: float) -> void:
 	})
 
 func _environment_state() -> Dictionary:
-	var node := get_node_or_null("/root/EnvironmentDirectorSingleton")
-	if node is EnvironmentDirector:
-		return (node as EnvironmentDirector).get_state()
+	var service: EnvironmentService = _environment_service()
+	if service:
+		return service.get_state()
 	return {}
 
+func _environment_modifiers() -> Dictionary:
+	var service: EnvironmentService = _environment_service()
+	if service:
+		return service.get_modifiers()
+	var state := _environment_state()
+	if state.is_empty():
+		return {}
+	var modifiers_variant: Variant = state.get("modifiers", {})
+	if modifiers_variant is Dictionary:
+		return modifiers_variant
+	return {}
+
+func _environment_feed_modifier() -> float:
+	var modifiers := _environment_modifiers()
+	if modifiers.has("feed"):
+		return clamp(float(modifiers.get("feed", 1.0)), 0.1, 3.0)
+	return 1.0
+
+func _environment_power_modifier() -> float:
+	var modifiers := _environment_modifiers()
+	if modifiers.has("power"):
+		return clamp(float(modifiers.get("power", 1.0)), 0.5, 1.5)
+	return 1.0
+
 func _environment_prestige_multiplier(state: Dictionary = {}) -> float:
-	var env_state := state
+	var env_state: Dictionary = state
 	if env_state.is_empty():
 		env_state = _environment_state()
 	if env_state.is_empty():
 		return 1.0
+	var modifiers_variant: Variant = env_state.get("modifiers", {})
+	if modifiers_variant is Dictionary:
+		var modifiers_dict: Dictionary = modifiers_variant as Dictionary
+		if modifiers_dict.has("prestige"):
+			return clamp(float(modifiers_dict.get("prestige", 1.0)), 0.5, 1.5)
 	var pollution := float(env_state.get("pollution", 0.0))
 	var stress := float(env_state.get("stress", 0.0))
 	var reputation := float(env_state.get("reputation", 0.0))
@@ -640,3 +705,9 @@ func _log(level: String, category: String, message: String, context: Dictionary 
 	var logger_node := get_node_or_null("/root/Logger")
 	if logger_node is YolkLogger:
 		(logger_node as YolkLogger).log(level, category, message, context)
+
+func _environment_service() -> EnvironmentService:
+	var node := get_node_or_null("/root/EnvironmentServiceSingleton")
+	if node is EnvironmentService:
+		return node as EnvironmentService
+	return null

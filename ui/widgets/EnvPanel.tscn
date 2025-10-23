@@ -1,0 +1,152 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://ui/widgets/EnvPanel.gd" id="1"]
+
+[node name="EnvPanel" type="VBoxContainer"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+script = ExtResource("1")
+
+[node name="HeaderPanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+
+[node name="HeaderBox" type="VBoxContainer" parent="HeaderPanel"]
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="TitleRow" type="HBoxContainer" parent="HeaderPanel/HeaderBox"]
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="WeatherIcon" type="TextureRect" parent="HeaderPanel/HeaderBox/TitleRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(28, 28)
+stretch_mode = 5
+
+[node name="HeaderTitle" type="Label" parent="HeaderPanel/HeaderBox/TitleRow"]
+unique_name_in_owner = true
+text = "Environment"
+
+[node name="TitleSpacer" type="Control" parent="HeaderPanel/HeaderBox/TitleRow"]
+size_flags_horizontal = 3
+
+[node name="PresetSelector" type="OptionButton" parent="HeaderPanel/HeaderBox/TitleRow"]
+unique_name_in_owner = true
+visible = false
+size_flags_horizontal = 0
+custom_minimum_size = Vector2(120, 0)
+text = "Preset"
+
+[node name="ToggleButton" type="Button" parent="HeaderPanel/HeaderBox/TitleRow"]
+unique_name_in_owner = true
+size_flags_horizontal = 0
+text = "Details"
+
+[node name="SummaryRow" type="HBoxContainer" parent="HeaderPanel/HeaderBox"]
+size_flags_horizontal = 3
+
+[node name="PhaseLabel" type="Label" parent="HeaderPanel/HeaderBox/SummaryRow"]
+unique_name_in_owner = true
+text = "DAY"
+
+[node name="SummarySpacer" type="Control" parent="HeaderPanel/HeaderBox/SummaryRow"]
+size_flags_horizontal = 3
+
+[node name="SummaryLabel" type="Label" parent="HeaderPanel/HeaderBox/SummaryRow"]
+unique_name_in_owner = true
+text = "18.0 °C  |  80% Air"
+
+[node name="DetailPanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+
+[node name="DetailMargin" type="MarginContainer" parent="DetailPanel"]
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="DetailGrid" type="GridContainer" parent="DetailPanel/DetailMargin"]
+columns = 2
+theme_override_constants/hseparation = 12
+theme_override_constants/vseparation = 4
+
+[node name="TemperatureLabel" type="Label" parent="DetailPanel/DetailMargin/DetailGrid"]
+unique_name_in_owner = true
+text = "Temperature"
+
+[node name="TemperatureValue" type="Label" parent="DetailPanel/DetailMargin/DetailGrid"]
+unique_name_in_owner = true
+text = "18.0 °C"
+
+[node name="LightLabel" type="Label" parent="DetailPanel/DetailMargin/DetailGrid"]
+unique_name_in_owner = true
+text = "Light"
+
+[node name="LightValue" type="Label" parent="DetailPanel/DetailMargin/DetailGrid"]
+unique_name_in_owner = true
+text = "70%"
+
+[node name="HumidityLabel" type="Label" parent="DetailPanel/DetailMargin/DetailGrid"]
+unique_name_in_owner = true
+text = "Humidity"
+
+[node name="HumidityValue" type="Label" parent="DetailPanel/DetailMargin/DetailGrid"]
+unique_name_in_owner = true
+text = "60%"
+
+[node name="AirLabel" type="Label" parent="DetailPanel/DetailMargin/DetailGrid"]
+unique_name_in_owner = true
+text = "Air Quality"
+
+[node name="AirValue" type="Label" parent="DetailPanel/DetailMargin/DetailGrid"]
+unique_name_in_owner = true
+text = "85%"
+
+[node name="PollutionLabel" type="Label" parent="DetailPanel/DetailMargin/DetailGrid"]
+unique_name_in_owner = true
+text = "Pollution"
+
+[node name="PollutionValue" type="Label" parent="DetailPanel/DetailMargin/DetailGrid"]
+unique_name_in_owner = true
+text = "12"
+
+[node name="StressLabel" type="Label" parent="DetailPanel/DetailMargin/DetailGrid"]
+unique_name_in_owner = true
+text = "Stress"
+
+[node name="StressValue" type="Label" parent="DetailPanel/DetailMargin/DetailGrid"]
+unique_name_in_owner = true
+text = "8"
+
+[node name="ReputationLabel" type="Label" parent="DetailPanel/DetailMargin/DetailGrid"]
+unique_name_in_owner = true
+text = "Reputation"
+
+[node name="ReputationValue" type="Label" parent="DetailPanel/DetailMargin/DetailGrid"]
+unique_name_in_owner = true
+text = "72"
+
+[node name="FeedLabel" type="Label" parent="DetailPanel/DetailMargin/DetailGrid"]
+unique_name_in_owner = true
+text = "Feed Modifier"
+
+[node name="FeedValue" type="Label" parent="DetailPanel/DetailMargin/DetailGrid"]
+unique_name_in_owner = true
+text = "1.0×"
+
+[node name="PowerLabel" type="Label" parent="DetailPanel/DetailMargin/DetailGrid"]
+unique_name_in_owner = true
+text = "Power Modifier"
+
+[node name="PowerValue" type="Label" parent="DetailPanel/DetailMargin/DetailGrid"]
+unique_name_in_owner = true
+text = "1.0×"
+
+[node name="PrestigeLabel" type="Label" parent="DetailPanel/DetailMargin/DetailGrid"]
+unique_name_in_owner = true
+text = "Prestige Modifier"
+
+[node name="PrestigeValue" type="Label" parent="DetailPanel/DetailMargin/DetailGrid"]
+unique_name_in_owner = true
+text = "1.0×"

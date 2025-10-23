@@ -59,6 +59,45 @@ static func make_button_style(state: String, high_contrast: bool) -> StyleBoxFla
 	style.border_color = outline
 	return style
 
+static func make_weather_icon_circle(fill_color: Color, outline_color: Color) -> Texture2D:
+	var size: int = 40
+	var image := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	image.fill(Color(0, 0, 0, 0))
+	var center := Vector2((size - 1) * 0.5, (size - 1) * 0.5)
+	var radius := float(size) * 0.32
+	for y in range(size):
+		for x in range(size):
+			var point := Vector2(float(x), float(y))
+			var distance := point.distance_to(center)
+			if distance <= radius:
+				image.set_pixel(x, y, fill_color)
+			elif distance <= radius + 1.3:
+				image.set_pixel(x, y, outline_color)
+	return ImageTexture.create_from_image(image)
+
+static func make_weather_icon_triangle(fill_color: Color, outline_color: Color) -> Texture2D:
+	var size: int = 40
+	var image := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	image.fill(Color(0, 0, 0, 0))
+	var top: int = 4
+	var bottom: int = size - 4
+	for y in range(top, bottom):
+		var t := float(y - top) / float(bottom - top)
+		var half_width := (1.0 - t) * (size * 0.42)
+		var min_x: int = int(round(size * 0.5 - half_width))
+		var max_x: int = int(round(size * 0.5 + half_width))
+		for x in range(min_x, max_x + 1):
+			var clamped_x: int = min(max(x, 0), size - 1)
+			var color := fill_color
+			if x == min_x or x == max_x or y == bottom - 1:
+				color = outline_color
+			image.set_pixel(clamped_x, y, color)
+	var column := int(size * 0.5)
+	for y in range(top + 6, bottom - 6):
+		image.set_pixel(column, y, outline_color)
+	image.set_pixel(column, bottom - 4, outline_color)
+	return ImageTexture.create_from_image(image)
+
 static func make_env_bg(size: Vector2) -> Node2D:
 	var root := Node2D.new()
 	root.name = "EnvironmentProceduralRoot"

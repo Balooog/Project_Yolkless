@@ -9,7 +9,7 @@ const CRITICAL_SCRIPTS := [
 	"res://game/scripts/Main.gd",
 	"res://game/scripts/DebugOverlay.gd",
 	"res://game/scripts/ProceduralFactory.gd",
-	"res://game/scenes/modules/environment/PollutionOverlay.gd",
+	"res://ui/widgets/EnvPanel.gd",
 ]
 
 func _initialize():
@@ -26,7 +26,7 @@ func _initialize():
 	if not _exercise_procedural_styles():
 		ok = false
 
-	if not _instantiate_pollution_overlay():
+	if not _instantiate_env_panel():
 		ok = false
 
 	if ok:
@@ -56,14 +56,14 @@ func _exercise_procedural_styles() -> bool:
 		ok = false
 	return ok
 
-func _instantiate_pollution_overlay() -> bool:
-	var scene := load("res://game/scenes/modules/environment/PollutionOverlay.tscn")
+func _instantiate_env_panel() -> bool:
+	var scene := load("res://ui/widgets/EnvPanel.tscn")
 	if scene == null or not (scene is PackedScene):
-		push_error("failed to load PollutionOverlay scene")
+		push_error("failed to load EnvPanel scene")
 		return false
 	var instance = scene.instantiate()
 	if instance == null:
-		push_error("failed to instantiate PollutionOverlay")
+		push_error("failed to instantiate EnvPanel")
 		return false
 	get_root().add_child(instance)
 	get_root().remove_child(instance)

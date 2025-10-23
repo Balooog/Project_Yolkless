@@ -78,9 +78,11 @@ code docs/prompts/PX-021.1.md   # paste canvas text
 
 ## Environment Simulation
 
-- RM-021 plans a new `EnvironmentService` driving temperature, light, humidity, and air quality curves that gently influence power, feed, and prestige systems.
-- UI and presentation updates (weather icon, environment panel, ambience shifts) will live under the new `ui/` and `src/` directories as work lands.
-- Legacy `EnvironmentDirector` notes remain archived in `docs/prompts/RM-010.md`; refer to `docs/roadmap/RM-021.md` for active requirements.
+- `src/services/EnvironmentService.gd` runs as an autoload, streaming seasonal curves from `data/environment_curves.tsv` and emitting feed/power/prestige modifiers.
+- Feed drain/refill and autoburst availability respect the live feed modifier; the power modifier flows straight into the economy's base PPS for downstream systems.
+- `ui/widgets/EnvPanel.tscn` replaces the legacy pollution overlay with a header summary, preset selector, and expandable detail grid fed by the service.
+- Use the preset dropdown in the panel header to cycle seasonal/debug presets without leaving the main scene.
+- Legacy `EnvironmentDirector` notes remain archived in `docs/prompts/RM-010.md` for reference, but the main scene now binds directly to `EnvironmentService`.
 
 ## Accessibility & Diagnostics
 
