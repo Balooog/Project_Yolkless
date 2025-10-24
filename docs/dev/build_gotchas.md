@@ -33,4 +33,9 @@ Quick reference for the recurring issues we've tripped over while bringing Yolkl
   ```
 - After that, `_factory_viewport.size = Vector2i(...)` is safe.
 
+## Prototype resolution sweep
+- Use `tools/run_resolutions.sh` to open the project at 480×960, 600×360, 800×600, 1024×768, 1280×720, 1600×900, and 1920×1080 in sequence; close each window to advance.
+- Override the binary with `GODOT_BIN=godot` (or alias) and pass extra flags via `GODOT_ARGS` when needed.
+- Breakpoint logic must read the actual window size via `DisplayServer.window_get_size()`. The project stretches with `keep_width`, so `Control.size.x` stays at the design width (1280) even when the window is narrower—leading to tablets/phones being misdetected. The desktop breakpoint is tuned at 1150 px with ±40 px tolerance so the default 1280×720 window (after decorations) still registers as desktop.
+
 Keep this list updated whenever a CI failure exposes another “gotcha”. A short note now saves everyone a debugging session later.

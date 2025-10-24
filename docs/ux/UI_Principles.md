@@ -21,6 +21,7 @@
 - Factory/environment visuals render inside the dedicated viewport panel.
 - Always maintain ≥16 px padding between canvas edge and UI overlays.
 - Zoom/pan gestures should respect calm motion speeds; no sudden jumps.
+- Sandbox (environment stage) stays above the conveyor belt so both remain visible across breakpoints.
 
 ## Accessibility
 - Support text scale presets (100/110/125%).

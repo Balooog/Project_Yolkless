@@ -115,7 +115,7 @@ theme_override_colors/font_color = Color(0.95, 0.82, 0.18, 1)
 [node name="MainStack" type="HBoxContainer" parent="RootMargin/RootStack"]
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/separation = 24
+theme_override_constants/separation = 16
 
 [node name="SideDock" type="VBoxContainer" parent="RootMargin/RootStack/MainStack"]
 visible = false
@@ -145,15 +145,15 @@ text = "Prestige"
 
 [node name="CanvasWrapper" type="Control" parent="RootMargin/RootStack/MainStack"]
 layout_mode = 2
-offset_left = 244.0
-offset_right = 1032.0
+offset_left = 0.0
+offset_right = 0.0
 offset_bottom = 488.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="EnvironmentWrapper" type="VBoxContainer" parent="RootMargin/RootStack/MainStack"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(280, 0)
+custom_minimum_size = Vector2(220, 0)
 size_flags_horizontal = 1
 size_flags_vertical = 3
 theme_override_constants/separation = 12
@@ -167,7 +167,7 @@ size_flags_vertical = 0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 12
-custom_minimum_size = Vector2(320, 0)
+custom_minimum_size = Vector2(220, 0)
 
 [node name="CanvasPanel" type="PanelContainer" parent="RootMargin/RootStack/MainStack/CanvasWrapper"]
 layout_mode = 2

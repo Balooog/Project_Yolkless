@@ -8,9 +8,10 @@
 - On desktop width, confirm the Environment panel appears on the right rail, updates phase/weather text, and still allows preset switching and detail toggling.
 
 ## Responsive Behaviour
-- Resize viewport to ≤ 640 px: side dock hides, bottom bar remains, sheet anchors to bottom with 360 px height.
-- Resize viewport to 641–899 px: sheet height adjusts to 320 px and canvas hint updates to tablet messaging.
-- Resize viewport to ≥ 900 px: bottom bar hides, side dock appears, sheet moves to right edge with 320 px width.
+- Resize viewport to ≤ 600 px: side dock hides, bottom bar remains, sheet anchors to bottom at 360 px height, Environment panel collapses.
+- Resize viewport to 601–899 px: confirm bottom bar layout persists and sheet height trims to 320 px while canvas hint reflects touch controls.
+- Resize viewport to 900–1279 px: Environment column appears with right-rail sheet (≈240–300 px) while bottom bar stays active.
+- Resize viewport to ≥ 1280 px: bottom bar hides, side dock tabs appear, sheet and environment share the right rail with expanded widths.
 
 ## Input Mapping
 - Keyboard: `1`–`5` change tabs Home→Prestige in order, `F` triggers feed action.

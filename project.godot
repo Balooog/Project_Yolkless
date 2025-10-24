@@ -29,6 +29,13 @@ SimulationClock="*res://src/services/SimulationClock.gd"
 ProceduralFactory="*res://game/scripts/ProceduralFactory.gd"
 ArtRegistry="*res://game/scripts/ArtRegistry.gd"
 
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/handheld/orientation=1
+
 [input]
 
 burst_hold={

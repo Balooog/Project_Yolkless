@@ -14,8 +14,10 @@ signal save_import_requested
 signal settings_requested
 signal layout_changed
 
-const DESKTOP_BREAKPOINT := 900.0
-const TABLET_BREAKPOINT := 640.0
+const PHONE_BREAKPOINT := 600.0
+const TABLET_BREAKPOINT := 900.0
+const DESKTOP_BREAKPOINT := 1280.0
+const BREAKPOINT_FUZZ := 40.0
 const SHEET_HEIGHT_DESKTOP := 420.0
 const SHEET_HEIGHT_TABLET := 320.0
 const SHEET_HEIGHT_MOBILE := 360.0
@@ -34,12 +36,16 @@ var _metrics := {
 var _home_feed_default_text := "Hold to Feed"
 var _is_desktop_layout := false
 
+@onready var _root_margin_container: MarginContainer = $RootMargin
 @onready var _bottom_bar: Control = $RootMargin/RootStack/BottomBar
+@onready var _main_stack: HBoxContainer = $RootMargin/RootStack/MainStack
 @onready var _side_dock: Control = $RootMargin/RootStack/MainStack/SideDock
 @onready var _sheet_overlay: Control = $RootMargin/RootStack/MainStack/CanvasWrapper/MobileSheetAnchor/SheetOverlay
+@onready var _canvas_wrapper: Control = $RootMargin/RootStack/MainStack/CanvasWrapper
 @onready var _canvas_panel: Control = $RootMargin/RootStack/MainStack/CanvasWrapper/CanvasPanel
 @onready var _canvas_info: Label = $RootMargin/RootStack/MainStack/CanvasWrapper/CanvasPanel/CanvasInfo
 @onready var _canvas_message: Label = $RootMargin/RootStack/MainStack/CanvasWrapper/CanvasPanel/CanvasMessage
+@onready var _canvas_placeholder: ColorRect = $RootMargin/RootStack/MainStack/CanvasWrapper/CanvasPanel/CanvasPlaceholder
 @onready var _feed_button: Button = $RootMargin/RootStack/BottomBar/TabBar/FeedButton
 @onready var _alert_pill: Label = $RootMargin/RootStack/TopBanner/BannerContent/AlertPill
 @onready var _environment_wrapper: Control = $RootMargin/RootStack/MainStack/EnvironmentWrapper
@@ -86,6 +92,10 @@ var _metric_labels: Dictionary
 var _tab_buttons: Array[BaseButton] = []
 var _dock_buttons: Array[BaseButton] = []
 var _sheets: Array[Control] = []
+var _current_root_margin: float = 24.0
+var _current_column_separation: float = 12.0
+var _factory_design_width: float = 960.0
+var _factory_design_height: float = 720.0
 
 func _ready() -> void:
 	_register_tab_buttons()
@@ -93,6 +103,8 @@ func _ready() -> void:
 	if _factory_viewport_container is SubViewportContainer:
 		var container := _factory_viewport_container as SubViewportContainer
 		container.stretch = false
+	if _canvas_wrapper:
+		_canvas_wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_feed_button.pressed.connect(_on_feed_pressed)
 	_feed_button.button_down.connect(_on_feed_hold_button_down)
 	_feed_button.button_up.connect(_on_feed_hold_button_up)
@@ -148,10 +160,16 @@ func set_canvas_hint(hint: String) -> void:
 
 func set_canvas_message(message: String) -> void:
 	_custom_canvas_message = message
+	if not _canvas_message:
+		return
 	if _custom_canvas_message == "":
-		_canvas_message.text = "Interact here with pinch, pan, and keyboard navigation."
+		_canvas_message.text = ""
+		_canvas_message.tooltip_text = ""
+		_canvas_message.visible = false
 	else:
 		_canvas_message.text = _custom_canvas_message
+		_canvas_message.tooltip_text = _custom_canvas_message
+	_refresh_canvas_message_visibility()
 
 func update_home(data: Dictionary) -> void:
 	if data.has("soft"):
@@ -167,11 +185,16 @@ func update_home(data: Dictionary) -> void:
 		_home_feed_status_label.text = status
 		_home_feed_status_label.tooltip_text = status
 	if data.has("feed_hint"):
-		var hint = String(data["feed_hint"])
-		_home_feed_hint_label.visible = hint != ""
-		if hint != "":
+		var hint: String = String(data["feed_hint"])
+		var has_hint: bool = not hint.is_empty()
+		if has_hint:
 			_home_feed_hint_label.text = hint
 			_home_feed_hint_label.tooltip_text = hint
+			_home_feed_hint_label.modulate = Color(1.0, 1.0, 1.0, 1.0)
+		else:
+			_home_feed_hint_label.text = " "
+			_home_feed_hint_label.tooltip_text = ""
+			_home_feed_hint_label.modulate = Color(1.0, 1.0, 1.0, 0.0)
 	if data.has("feed_fraction"):
 		var fraction = clamp(float(data.get("feed_fraction", 0.0)), 0.0, 1.0)
 		_home_feed_bar.max_value = 1.0
@@ -182,12 +205,16 @@ func update_home(data: Dictionary) -> void:
 			var copy = (style as StyleBox).duplicate(true)
 			_home_feed_bar.add_theme_stylebox_override("fill", copy)
 	if data.has("queue"):
-		var queue = int(data["queue"])
+		var queue: int = int(data["queue"])
 		if queue > 0:
-			_home_feed_queue_label.visible = true
-			_home_feed_queue_label.text = "Queue: %d" % queue
+			var queue_text := "Queue: %d" % queue
+			_home_feed_queue_label.text = queue_text
+			_home_feed_queue_label.tooltip_text = queue_text
+			_home_feed_queue_label.modulate = Color(1.0, 1.0, 1.0, 1.0)
 		else:
-			_home_feed_queue_label.visible = false
+			_home_feed_queue_label.text = " "
+			_home_feed_queue_label.tooltip_text = ""
+			_home_feed_queue_label.modulate = Color(1.0, 1.0, 1.0, 0.0)
 	if data.has("feed_button"):
 		var feed_state = data.get("feed_button")
 		if feed_state is Dictionary:
@@ -247,11 +274,17 @@ func update_prestige(data: Dictionary) -> void:
 func set_feed_queue(count: int) -> void:
 	_feed_queue_count = max(count, 0)
 	_update_feed_button_label()
+	if _home_feed_queue_label == null:
+		return
 	if _feed_queue_count > 0:
-		_home_feed_queue_label.visible = true
-		_home_feed_queue_label.text = "Queue: %d" % _feed_queue_count
+		var queue_text := "Queue: %d" % _feed_queue_count
+		_home_feed_queue_label.text = queue_text
+		_home_feed_queue_label.tooltip_text = queue_text
+		_home_feed_queue_label.modulate = Color(1.0, 1.0, 1.0, 1.0)
 	else:
-		_home_feed_queue_label.visible = false
+		_home_feed_queue_label.text = " "
+		_home_feed_queue_label.tooltip_text = ""
+		_home_feed_queue_label.modulate = Color(1.0, 1.0, 1.0, 0.0)
 
 func set_feed_status(status_text: String, fraction: float, active: bool) -> void:
 	_feed_active = active
@@ -299,6 +332,14 @@ func get_factory_viewport() -> SubViewport:
 
 func get_factory_viewport_container() -> Control:
 	return _factory_viewport_container
+
+func mark_canvas_ready() -> void:
+	if _canvas_placeholder:
+		_canvas_placeholder.visible = false
+	if _canvas_info:
+		_canvas_info.visible = false
+	if _canvas_message and _custom_canvas_message == "":
+		_canvas_message.visible = false
 
 func get_canvas_rect() -> Rect2:
 	if _canvas_panel:
@@ -419,18 +460,24 @@ func _show_tab(tab_id: String) -> void:
 	_sheet_overlay.visible = true
 
 func _update_layout() -> void:
-	var viewport_width := size.x
-	var is_desktop := viewport_width >= DESKTOP_BREAKPOINT
-	var is_tablet := viewport_width >= TABLET_BREAKPOINT
+	var window_size: Vector2 = _current_window_size()
+	var viewport_width: float = window_size.x
+	var is_desktop: bool = viewport_width >= DESKTOP_BREAKPOINT - BREAKPOINT_FUZZ
+	var is_tablet: bool = viewport_width >= TABLET_BREAKPOINT - BREAKPOINT_FUZZ
+	_update_root_margins(viewport_width)
+	_apply_bottom_bar_spacing(viewport_width, is_desktop)
+	_apply_column_spacing(is_desktop, is_tablet)
 	_is_desktop_layout = is_desktop
 	_bottom_bar.visible = not is_desktop
 	_side_dock.visible = is_desktop
-	var show_environment := viewport_width >= TABLET_BREAKPOINT
+	var show_environment: bool = viewport_width >= TABLET_BREAKPOINT - BREAKPOINT_FUZZ
+	var side_sheet_width: float = _side_sheet_width(viewport_width)
+	var environment_column_width: float = min(420.0, max(_environment_column_width(viewport_width), side_sheet_width))
 	if _environment_wrapper:
 		_environment_wrapper.visible = show_environment
 		if show_environment:
-			_environment_wrapper.custom_minimum_size = Vector2(280.0, 0.0)
-			_environment_wrapper.size_flags_horizontal = 1
+			_environment_wrapper.custom_minimum_size = Vector2(environment_column_width, 0.0)
+			_environment_wrapper.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		else:
 			_environment_wrapper.custom_minimum_size = Vector2(0.0, 0.0)
 			_environment_wrapper.size_flags_horizontal = 0
@@ -441,17 +488,22 @@ func _update_layout() -> void:
 		sheet_height = SHEET_HEIGHT_DESKTOP
 	elif is_tablet:
 		sheet_height = SHEET_HEIGHT_TABLET
-	_configure_sheet_position(sheet_height, is_desktop)
+	var use_side_anchor := show_environment
+	_configure_sheet_position(sheet_height, use_side_anchor, side_sheet_width)
+	_adjust_canvas_width(window_size.x, environment_column_width)
 	_apply_canvas_hint()
+	_refresh_canvas_message_visibility()
 	_sync_factory_viewport_size()
 	layout_changed.emit()
 
-func _configure_sheet_position(sheet_height: float, is_desktop: bool) -> void:
+func _configure_sheet_position(sheet_height: float, use_side_anchor: bool, side_width: float) -> void:
 	var margin := 16.0
-	if is_desktop:
+	if use_side_anchor:
 		_move_sheet_to_anchor(_desktop_sheet_anchor)
 		if _desktop_sheet_anchor:
 			_desktop_sheet_anchor.visible = true
+			_desktop_sheet_anchor.custom_minimum_size = Vector2(side_width, 0.0)
+			_desktop_sheet_anchor.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		if _mobile_sheet_anchor:
 			_mobile_sheet_anchor.visible = false
 			_mobile_sheet_anchor.anchor_left = 0.0
@@ -471,7 +523,8 @@ func _configure_sheet_position(sheet_height: float, is_desktop: bool) -> void:
 			_sheet_overlay.offset_right = 0.0
 			_sheet_overlay.offset_top = 0.0
 			_sheet_overlay.offset_bottom = 0.0
-			_sheet_overlay.custom_minimum_size = Vector2(0.0, 0.0)
+			_sheet_overlay.custom_minimum_size = Vector2(side_width, 0.0)
+			_sheet_overlay.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	else:
 		_move_sheet_to_anchor(_mobile_sheet_anchor)
 		if _desktop_sheet_anchor:
@@ -496,34 +549,164 @@ func _configure_sheet_position(sheet_height: float, is_desktop: bool) -> void:
 			_sheet_overlay.offset_top = 0.0
 			_sheet_overlay.offset_bottom = 0.0
 			_sheet_overlay.custom_minimum_size = Vector2(0.0, 0.0)
+			_sheet_overlay.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+func _environment_column_width(viewport_width: float) -> float:
+	if viewport_width >= 1600.0:
+		return 280.0
+	if viewport_width >= 1400.0:
+		return 260.0
+	if viewport_width >= 1200.0:
+		return 240.0
+	if viewport_width >= 1024.0:
+		return 220.0
+	if viewport_width >= TABLET_BREAKPOINT - BREAKPOINT_FUZZ:
+		return 220.0
+	return 0.0
+
+func _side_sheet_width(viewport_width: float) -> float:
+	if viewport_width >= 1600.0:
+		return 280.0
+	if viewport_width >= 1400.0:
+		return 260.0
+	if viewport_width >= 1200.0:
+		return 240.0
+	if viewport_width >= 1024.0:
+		return 220.0
+	if viewport_width >= TABLET_BREAKPOINT - BREAKPOINT_FUZZ:
+		return 220.0
+	return 0.0
+
+func _current_window_size() -> Vector2:
+	var window_size: Vector2 = Vector2(size.x, size.y)
+	var window := get_window()
+	if window:
+		var win_size_vec := Vector2(float(window.size.x), float(window.size.y))
+		if win_size_vec.x > 0.0 and win_size_vec.y > 0.0:
+			window_size = win_size_vec
+	else:
+		var viewport := get_viewport()
+		if viewport:
+			var visible := viewport.get_visible_rect()
+			if visible.size.x > 0.0 and visible.size.y > 0.0:
+				window_size = visible.size
+	return window_size
+
+func _update_root_margins(viewport_width: float) -> void:
+	if _root_margin_container == null:
+		return
+	var margin := 24.0
+	if viewport_width < TABLET_BREAKPOINT:
+		margin = 18.0
+	if viewport_width < PHONE_BREAKPOINT:
+		margin = 12.0
+	_current_root_margin = margin
+	_set_margin(_root_margin_container, margin, margin, margin, margin)
+
+func _apply_bottom_bar_spacing(viewport_width: float, is_desktop: bool) -> void:
+	if _bottom_bar == null:
+		return
+	var margin_container := _bottom_bar as MarginContainer
+	if margin_container == null:
+		return
+	var horizontal := 12.0
+	var top := 16.0
+	if viewport_width < TABLET_BREAKPOINT:
+		horizontal = 10.0
+		top = 14.0
+	if viewport_width < PHONE_BREAKPOINT:
+		horizontal = 8.0
+		top = 12.0
+	if is_desktop:
+		top = 0.0
+	_set_margin(margin_container, horizontal, top, horizontal, 0.0)
+
+func _set_margin(container: MarginContainer, left: float, top: float, right: float, bottom: float) -> void:
+	container.add_theme_constant_override("margin_left", int(round(left)))
+	container.add_theme_constant_override("margin_top", int(round(top)))
+	container.add_theme_constant_override("margin_right", int(round(right)))
+	container.add_theme_constant_override("margin_bottom", int(round(bottom)))
+
+func _set_root_side_margins(left: float, right: float) -> void:
+	if _root_margin_container == null:
+		return
+	_root_margin_container.add_theme_constant_override("margin_left", int(round(left)))
+	_root_margin_container.add_theme_constant_override("margin_right", int(round(right)))
+
+func _apply_column_spacing(is_desktop: bool, is_tablet: bool) -> void:
+	if _main_stack == null:
+		return
+	var separation := 12
+	if is_desktop:
+		separation = 12
+	elif is_tablet:
+		separation = 12
+	_main_stack.add_theme_constant_override("separation", separation)
+	_current_column_separation = separation
+
+func _adjust_canvas_width(window_width: float, environment_width: float) -> void:
+	if _canvas_wrapper == null:
+		return
+	var side_dock_width: float = 0.0
+	if _side_dock and _side_dock.visible:
+		if _side_dock.custom_minimum_size.x > 0.0:
+			side_dock_width = _side_dock.custom_minimum_size.x
+		else:
+			side_dock_width = _side_dock.size.x
+	var layout_width: float = float(ProjectSettings.get_setting("display/window/size/viewport_width"))
+	var env_min: float = environment_width
+	if _environment_wrapper:
+		env_min = max(env_min, float(_environment_wrapper.custom_minimum_size.x))
+	var dock_min: float = side_dock_width
+	if _side_dock:
+		dock_min = max(dock_min, float(_side_dock.custom_minimum_size.x))
+	var env_width: float = env_min
+	var dock_width: float = dock_min
+	var gutter: float = maxf(_current_column_separation, 16.0)
+	var reserved: float = env_width + dock_width + (_current_root_margin * 2.0) + gutter
+	var min_canvas: float = maxf(layout_width - reserved, 640.0)
+	var occupied: float = env_width + dock_width + gutter + min_canvas
+	var extra: float = maxf(layout_width - occupied, 0.0)
+	_canvas_wrapper.custom_minimum_size = Vector2(min_canvas, 0.0)
+	var side_margin: float = _current_root_margin + extra * 0.5
+	_set_root_side_margins(side_margin, side_margin)
+	if OS.is_debug_build():
+		var msg := "UI layout -> window: %.1f env: %.1f dock: %.1f min_canvas: %.1f" % [
+			layout_width,
+			env_width,
+			dock_width,
+			min_canvas
+		]
+		print_debug(msg)
 
 func _apply_canvas_hint() -> void:
+	if _canvas_info == null:
+		return
 	if _custom_canvas_hint != "":
 		_canvas_info.text = _custom_canvas_hint
+		_canvas_info.visible = true
 		return
 	if _side_dock.visible:
 		_canvas_info.text = "Factory Canvas — Desktop dock active (hotkeys 1-5)"
 	else:
 		_canvas_info.text = "Factory Canvas — Tab sheets overlay (hotkeys 1-5, feed = F)"
+	_canvas_info.visible = not _canvas_placeholder or _canvas_placeholder.visible
 
 func _update_feed_button_label() -> void:
+	# Keep buttons enabled so release events (button_up) still fire while feeding.
+	_feed_button.disabled = false
+	_home_feed_button.disabled = false
 	if _feed_active:
 		_feed_button.text = "Feeding..."
-		_feed_button.disabled = true
+		_home_feed_button.text = "Feeding..."
 	else:
-		_feed_button.disabled = false
 		if _feed_queue_count > 1:
 			_feed_button.text = "Feed x" + str(_feed_queue_count)
 		elif _feed_queue_count == 1:
 			_feed_button.text = "Feed x1"
 		else:
 			_feed_button.text = "Feed"
-	if _feed_active:
-		_home_feed_button.text = "Feeding..."
-		_home_feed_button.disabled = true
-	else:
 		_home_feed_button.text = _home_feed_default_text
-		_home_feed_button.disabled = false
 
 func _sync_factory_viewport_size() -> void:
 	if _factory_viewport == null:
@@ -548,3 +731,11 @@ func _apply_button_state(button: Button, state: Dictionary) -> void:
 		button.disabled = bool(state["disabled"])
 	if state.has("tooltip"):
 		button.tooltip_text = String(state["tooltip"])
+
+func _refresh_canvas_message_visibility() -> void:
+	if not _canvas_message:
+		return
+	if _custom_canvas_message == "":
+		_canvas_message.visible = false
+	else:
+		_canvas_message.visible = not _is_desktop_layout

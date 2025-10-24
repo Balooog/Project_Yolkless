@@ -11,6 +11,8 @@ func _run() -> void:
 	_test_buffers_are_distinct()
 	_test_sand_falls()
 	_test_liquid_falls()
+	_test_liquid_slides_left_when_blocked()
+	_test_liquid_slides_right_when_blocked()
 	_test_compute_comfort_components()
 	if _had_failure:
 		print("SandboxGrid suite: failures detected")
@@ -60,6 +62,46 @@ func _test_liquid_falls() -> void:
 		"source cell should clear after liquid descends"
 	)
 
+func _test_liquid_slides_left_when_blocked() -> void:
+	var grid: SandboxGrid = SandboxGrid.new()
+	grid.set_random_number_generator(_rng_for_direction(true))
+	grid._reset_buffers()
+	grid._current[0][1] = SandboxGrid.MATERIAL_WATER
+	grid._current[1][1] = SandboxGrid.MATERIAL_STONE
+	grid._current[0][0] = SandboxGrid.MATERIAL_AIR
+	grid._current[0][2] = SandboxGrid.MATERIAL_STONE
+	grid.step(0.016)
+	_assert_eq(
+		grid._current[0][0],
+		SandboxGrid.MATERIAL_WATER,
+		"liquid should slide left when below is blocked and left is open"
+	)
+	_assert_eq(
+		grid._current[0][1],
+		SandboxGrid.MATERIAL_AIR,
+		"origin cell should clear after lateral slide"
+	)
+
+func _test_liquid_slides_right_when_blocked() -> void:
+	var grid: SandboxGrid = SandboxGrid.new()
+	grid.set_random_number_generator(_rng_for_direction(false))
+	grid._reset_buffers()
+	grid._current[0][1] = SandboxGrid.MATERIAL_WATER
+	grid._current[1][1] = SandboxGrid.MATERIAL_STONE
+	grid._current[0][0] = SandboxGrid.MATERIAL_STONE
+	grid._current[0][2] = SandboxGrid.MATERIAL_AIR
+	grid.step(0.016)
+	_assert_eq(
+		grid._current[0][2],
+		SandboxGrid.MATERIAL_WATER,
+		"liquid should slide right when below is blocked and right is open"
+	)
+	_assert_eq(
+		grid._current[0][1],
+		SandboxGrid.MATERIAL_AIR,
+		"origin cell should clear after lateral slide"
+	)
+
 func _test_compute_comfort_components() -> void:
 	var grid: SandboxGrid = SandboxGrid.new()
 	grid._reset_buffers()
@@ -92,6 +134,18 @@ func _assert_almost(actual: float, expected: float, epsilon: float, message: Str
 func _assert_true(condition: bool, message: String) -> void:
 	if not condition:
 		_fail(message)
+
+func _rng_for_direction(want_left: bool) -> RandomNumberGenerator:
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+	for seed in range(1, 1000):
+		rng.seed = seed
+		var sample: float = rng.randf()
+		var satisfied: bool = sample < 0.5 if want_left else sample >= 0.5
+		if satisfied:
+			rng.seed = seed
+			return rng
+	_fail("Could not find RNG seed for direction (want_left=%s)" % want_left)
+	return rng
 
 func _fail(message: String) -> void:
 	push_error(message)
