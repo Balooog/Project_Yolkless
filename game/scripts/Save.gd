@@ -165,7 +165,7 @@ func grant_offline() -> float:
 	var elapsed := Time.get_unix_time_from_system() - last_timestamp
 	if elapsed <= 5:
 		return 0.0
-	var grant := _eco.offline_grant(elapsed)
+	var grant: float = _eco.offline_grant(elapsed)
 	_log("INFO", "OFFLINE", "Offline resume", {"dt": elapsed, "grant": grant})
 	return grant
 

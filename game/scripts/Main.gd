@@ -39,6 +39,7 @@ var environment_panel: EnvPanel
 @onready var feed_status_label: Label = %FeedStatus
 @onready var feed_bar: ProgressBar = %FeedBar
 @onready var lbl_pps: Label = %PPSLabel
+@onready var lbl_power: Label = %PowerLabel
 @onready var lbl_tier: Label = %TierLabel
 @onready var lbl_prestige: Label = %PrestigeLabel
 @onready var research_header_label: Label = %ResearchHeader
@@ -64,7 +65,7 @@ var environment_panel: EnvPanel
 @onready var toast_label: Label = %ToastLabel
 @onready var conveyor_manager: ConveyorManager = %ConveyorManager
 @onready var conveyor_layer := %ConveyorLayer
-@onready var ui_prototype: UIArchitecturePrototype = %PrototypeUI
+@onready var ui_prototype := %PrototypeUI as UIArchitecturePrototype
 
 var text_scale := 1.0
 var shop_service: ShopService
@@ -74,6 +75,9 @@ var debug_overlay: CanvasLayer
 var high_contrast_enabled := false
 var visuals_enabled := true
 var environment_service: EnvironmentService
+var power_service: PowerService
+var automation_service: AutomationService
+var sandbox_service: SandboxService
 var _feed_deny_sound_warned := false
 var _toast_tween: Tween
 var _show_cap_pulse := true
@@ -95,6 +99,8 @@ var _prototype_metrics := {
 var _prototype_feed_status := "Feed silo ready"
 var _prototype_feed_fraction := 0.0
 var _prototype_feed_queue := 0
+var _comfort_index: float = 0.0
+var _comfort_bonus: float = 0.0
 var factory_viewport: SubViewport
 
 func _ready() -> void:
@@ -226,6 +232,9 @@ func _ready() -> void:
 		director.activate("feed_particles", visuals_enabled)
 
 	environment_service = _get_environment_service()
+	power_service = _get_power_service()
+	automation_service = _get_automation_service()
+	sandbox_service = _get_sandbox_service()
 	if environment_service:
 		environment_service.set_strings(strings)
 		var env_root := environment_root_node
@@ -247,6 +256,13 @@ func _ready() -> void:
 		var env_state: Dictionary = environment_service.get_state()
 		if not env_state.is_empty():
 			_on_environment_state_changed(env_state)
+	if power_service:
+		if not power_service.power_state_changed.is_connected(_on_power_state_changed):
+			power_service.power_state_changed.connect(_on_power_state_changed)
+		if not power_service.power_warning.is_connected(_on_power_warning):
+			power_service.power_warning.connect(_on_power_warning)
+	if sandbox_service and not sandbox_service.ci_changed.is_connected(_on_ci_changed):
+		sandbox_service.ci_changed.connect(_on_ci_changed)
 
 	if ui_prototype:
 		_sync_prototype_all()
@@ -367,6 +383,7 @@ func _update_all_views() -> void:
 	_update_research_view()
 	_update_feed_ui()
 	_update_conveyor_view(_conveyor_rate, _conveyor_queue)
+	_update_power_label()
 
 func _update_soft_view(value: float) -> void:
 	var soft_template := _strings_get("soft_label_wallet", "Egg Credits: {value}")
@@ -377,13 +394,14 @@ func _update_soft_view(value: float) -> void:
 	lbl_pps.text = pps_template.format({
 		"pps": _format_num(eco.current_pps(), 1)
 	})
+	_update_power_label()
 	_prototype_metrics["credits"] = "₡ " + _format_num(value)
 	_prototype_metrics["pps"] = _format_num(eco.current_pps(), 1) + " PPS"
 	_commit_prototype_metrics()
 	_refresh_prototype_home_sheet()
 
 func _update_prestige_view() -> void:
-	var next := eco.prestige_points_earned()
+	var next: int = eco.prestige_points_earned()
 	var prestige_template := _strings_get("prestige_label", "Reputation Stars: {prestige} (Next Rebrand: +{next})")
 	lbl_prestige.text = prestige_template.format({
 		"prestige": res.prestige_points,
@@ -398,16 +416,16 @@ func _update_prestige_view() -> void:
 	_refresh_prototype_prestige_sheet()
 
 func _update_factory_view() -> void:
-	var name := eco.factory_name()
+	var name: String = eco.factory_name()
 	var stage_template := _strings_get("farm_stage", "Farm Stage: {name}")
 	lbl_tier.text = stage_template.format({"name": name})
-	var next_cost := eco.next_factory_cost()
-	var next_name := eco.factory_name(eco.factory_tier + 1)
+	var next_cost: float = eco.next_factory_cost()
+	var next_name: String = eco.factory_name(eco.factory_tier + 1)
 	if next_cost <= 0.0:
 		btn_promote.text = _strings_get("promote_disabled", "Stage Mastered")
 		btn_promote.disabled = true
 	else:
-		var label_name := next_name
+		var label_name: String = next_name
 		if label_name == "":
 			label_name = _strings_get("promote", "Next Stage")
 		var promote_template := _strings_get("promote_button", "Upgrade to {name} ({cost} 🥚)")
@@ -428,6 +446,7 @@ func _update_conveyor_view(rate: float, queue_len: int) -> void:
 		"rate": _format_num(rate, 1),
 		"queue": queue_len
 	})
+	_update_power_label()
 
 func _update_conveyor_spawn(delta: float) -> void:
 	if not visuals_enabled:
@@ -508,8 +527,8 @@ func _update_upgrade_buttons_legacy() -> void:
 	if not auto_allowed and auto_requires.begins_with("factory>="):
 		var parts: PackedStringArray = auto_requires.split(">=")
 		if parts.size() >= 2:
-			var need := int(parts[1])
-			var stage_name := eco.factory_name(need)
+			var need: int = int(parts[1])
+			var stage_name: String = eco.factory_name(need)
 			if stage_name != "":
 				requirement_text = _strings_get("buy_auto_requirement", " — Requires {stage}").format({"stage": stage_name})
 	btn_auto.text = _strings_get("buy_auto", btn_auto.text).format({
@@ -607,16 +626,16 @@ func _update_research_view() -> void:
 func _update_storage_view(storage_value: float = -1.0, capacity: float = -1.0) -> void:
 	if eco == null:
 		return
-	var cap := capacity if capacity >= 0.0 else eco.get_capacity_limit()
-	var storage := storage_value if storage_value >= 0.0 else eco.current_storage()
+	var cap: float = capacity if capacity >= 0.0 else eco.get_capacity_limit()
+	var storage: float = storage_value if storage_value >= 0.0 else eco.current_storage()
 	if capacity_bar:
 		capacity_bar.max_value = max(cap, 1.0)
 		capacity_bar.value = clamp(storage, 0.0, capacity_bar.max_value)
-	var percent := 0.0
+	var percent: float = 0.0
 	if cap > 0.0:
 		percent = clamp(storage / cap * 100.0, 0.0, 100.0)
-	var capacity_template := _strings_get("storage_label", "Storage: {storage} / {capacity} ({percent}%)")
-	var formatted := capacity_template.format({
+	var capacity_template: String = _strings_get("storage_label", "Storage: {storage} / {capacity} ({percent}%)")
+	var formatted: String = capacity_template.format({
 		"storage": _format_num(storage, 1),
 		"capacity": _format_num(cap, 1),
 		"percent": _format_num(percent, 0)
@@ -681,6 +700,7 @@ func _update_feed_ui() -> void:
 		ui_prototype.set_feed_status(status, fraction, eco.is_feeding())
 		ui_prototype.set_feed_queue(_prototype_feed_queue)
 		ui_prototype.set_canvas_message(status)
+	_update_power_label()
 	_refresh_prototype_home_sheet()
 
 func _get_feed_fill_color(fraction: float) -> Color:
@@ -712,7 +732,7 @@ func _sync_prototype_all() -> void:
 	_refresh_prototype_prestige_sheet()
 	_refresh_prototype_automation_sheet()
 	if _prototype_available():
-		var feeding := eco != null and eco.is_feeding()
+		var feeding: bool = eco != null and eco.is_feeding()
 		ui_prototype.set_feed_status(_prototype_feed_status, _prototype_feed_fraction, feeding)
 		ui_prototype.set_feed_queue(_prototype_feed_queue)
 		ui_prototype.set_canvas_message(_prototype_feed_status)
@@ -849,6 +869,26 @@ func _on_feed_state_changed(_active: bool) -> void:
 func _on_conveyor_throughput_updated(rate: float, queue_len: int) -> void:
 	_update_conveyor_view(rate, queue_len)
 
+func _on_ci_changed(ci: float, bonus: float) -> void:
+	_comfort_index = clamp(ci, 0.0, 1.0)
+	_comfort_bonus = max(bonus, 0.0)
+	_update_power_label()
+	if _prototype_available():
+		var bonus_text: String = _format_num(_comfort_bonus * 100.0, 1)
+		ui_prototype.set_canvas_hint("Comfort bonus +%s%%" % bonus_text)
+
+func _on_power_state_changed(state: float) -> void:
+	_update_power_label()
+	if automation_service:
+		automation_service.set_power_state(state)
+
+func _on_power_warning(level: StringName) -> void:
+	_log("WARN", "POWER", "power_warning", {"level": String(level)})
+	if level == StringName("critical"):
+		_show_toast(_strings_get("power_warning_critical", "Power grid critical!"))
+	elif level == StringName("warning"):
+		_show_toast(_strings_get("power_warning_low", "Power grid unstable."))
+
 func _on_visuals_toggled(enabled: bool) -> void:
 	visuals_enabled = enabled
 	var director := _get_visual_director()
@@ -964,7 +1004,7 @@ func _attempt_feed_start(source: String) -> void:
 	if eco.feed_current <= 0.0:
 		_handle_feed_denied()
 		return
-	var started := eco.try_burst(source == "auto")
+	var started: bool = eco.try_burst(source == "auto")
 	if not started and not eco.is_feeding():
 		_handle_feed_denied()
 	_update_feed_ui()
@@ -1011,7 +1051,7 @@ func _attempt_promote() -> void:
 		_update_factory_view()
 
 func _attempt_prestige() -> void:
-	var gained := eco.do_prestige()
+	var gained: int = eco.do_prestige()
 	_log("INFO", "ECONOMY", "Prestige accepted", {"gained": gained})
 	_update_all_views()
 
@@ -1019,7 +1059,7 @@ func _show_upgrade_toast(id: String) -> void:
 	var key := _upgrade_toast_key(id)
 	if key == "":
 		return
-	var message := _strings_get(key, "")
+	var message: String = _strings_get(key, "")
 	if message == "":
 		return
 	_show_toast(message)
@@ -1048,7 +1088,7 @@ func _show_toast(message: String) -> void:
 	toast_label.visible = true
 	if _toast_tween and _toast_tween.is_running():
 		_toast_tween.kill()
-	var tween := create_tween()
+	var tween: Tween = create_tween()
 	_toast_tween = tween
 	toast_label.modulate = Color(1, 1, 1, 0)
 	tween.tween_property(toast_label, "modulate:a", 1.0, 0.1)
@@ -1063,15 +1103,15 @@ func _hide_toast() -> void:
 	_toast_tween = null
 
 func _show_offline_popup(amount: float) -> void:
-	var title := _strings_get("offline_summary_title", "While you were away…")
-	var body_template := _strings_get(
+	var title: String = _strings_get("offline_summary_title", "While you were away…")
+	var body_template: String = _strings_get(
 		"offline_summary_body",
 		"Your farm produced {amount} at {pct}% passive efficiency. Feed to boost output!"
 	)
 	var passive_pct: float = eco.last_offline_passive_multiplier() * 100.0
 	var decimals: int = 1 if passive_pct < 10.0 else 0
-	var pct_text := String.num(passive_pct, decimals)
-	var body := body_template.format({"amount": "+%s" % _format_num(amount), "pct": pct_text})
+	var pct_text: String = String.num(passive_pct, decimals)
+	var body: String = body_template.format({"amount": "+%s" % _format_num(amount), "pct": pct_text})
 	offline_label.text = "%s\n%s" % [title, body]
 	offline_popup.popup_centered()
 
@@ -1200,6 +1240,24 @@ func _get_environment_service() -> EnvironmentService:
 		return node as EnvironmentService
 	return null
 
+func _get_power_service() -> PowerService:
+	var node := get_node_or_null("/root/PowerServiceSingleton")
+	if node is PowerService:
+		return node as PowerService
+	return null
+
+func _get_automation_service() -> AutomationService:
+	var node := get_node_or_null("/root/AutomationServiceSingleton")
+	if node is AutomationService:
+		return node as AutomationService
+	return null
+
+func _get_sandbox_service() -> SandboxService:
+	var node := get_node_or_null("/root/SandboxServiceSingleton")
+	if node is SandboxService:
+		return node as SandboxService
+	return null
+
 func _center_environment_root() -> void:
 	if environment_root_node == null:
 		return
@@ -1270,6 +1328,26 @@ func _get_strings() -> StringsCatalog:
 	if node is StringsCatalog:
 		return node as StringsCatalog
 	return null
+
+
+func _update_power_label() -> void:
+	if lbl_power == null:
+		return
+	if power_service == null:
+		lbl_power.text = "Power Load: n/a"
+		lbl_power.tooltip_text = "Power service offline"
+		return
+	var ratio: float = clamp(power_service.current_state(), 0.0, 1.3)
+	var ratio_text: String = _format_num(ratio * 100.0, 0)
+	var label: String = "Power Load: %s%%" % ratio_text
+	if _comfort_bonus > 0.0:
+		var comfort_text: String = _format_num(_comfort_bonus * 100.0, 1)
+		label += " | Comfort +%s%%" % comfort_text
+	lbl_power.text = label
+	var tooltip_lines: Array[String] = ["Power ratio %.2f" % ratio]
+	if _comfort_bonus > 0.0:
+		tooltip_lines.append("Comfort bonus +%.2f%%" % (_comfort_bonus * 100.0))
+	lbl_power.tooltip_text = "\n".join(tooltip_lines)
 
 func _sanitize_log_line(line: String) -> String:
 	var logger := _get_logger()

@@ -26,7 +26,6 @@ var feed_consumption_rate: float = 20.0
 var burst_active := false
 var _is_auto_burst := false
 
-var _auto_timer: Timer
 var _autosave_timer: Timer
 
 var _balance: Balance
@@ -46,19 +45,18 @@ var _feed_reported_empty := false
 var _feed_reported_full := false
 var _last_offline_passive_mult := 0.0
 var _storage_reported_full := false
-var _automation_env_blocked := false
 var _statbus: StatBus
+var _automation_service: AutomationService
+var _power_service: PowerService
+var _use_scheduler := false
 
 func setup(balance: Balance, research: Research) -> void:
 	_balance = balance
 	_research = research
 	_balance.reloaded.connect(_on_balance_reload)
+	_research.changed.connect(_on_research_changed)
 	set_process(true)
- 	_statbus = _statbus_ref()
-	_auto_timer = Timer.new()
-	_auto_timer.one_shot = false
-	add_child(_auto_timer)
-	_auto_timer.timeout.connect(_auto_burst_tick)
+	_statbus = _statbus_ref()
 	_autosave_timer = Timer.new()
 	_autosave_timer.one_shot = false
 	add_child(_autosave_timer)
@@ -68,19 +66,26 @@ func setup(balance: Balance, research: Research) -> void:
 	_refresh_dump_state()
 	_emit_storage_changed()
 	_update_timers()
+	_bind_services()
 	_register_statbus_metrics()
 
 func _process(delta: float) -> void:
+	if _use_scheduler:
+		return
 	_tick(delta)
 
 func simulate_tick(delta: float) -> void:
 	_tick(delta)
+
+func set_scheduler_enabled(enabled: bool) -> void:
+	_use_scheduler = enabled
 
 func _tick(delta: float) -> void:
 	if _balance == null or _research == null:
 		return
 	var previous_feed: float = feed_current
 	var env_feed_modifier: float = _environment_feed_modifier()
+	_update_power_service(_environment_power_modifier())
 	var consumption_rate: float = feed_consumption_rate / max(env_feed_modifier, 0.1)
 	var refill_rate: float = feed_refill_rate * clamp(env_feed_modifier, 0.5, 1.5)
 
@@ -108,7 +113,7 @@ func _tick(delta: float) -> void:
 	_update_feed_fraction_stat()
 	var gained: float = pps * delta
 	_apply_income(gained)
-	_update_automation_state()
+	_refresh_automation_binding()
 
 func try_burst(source_auto: bool = false) -> bool:
 	if burst_active:
@@ -241,7 +246,7 @@ func buy_upgrade(id: String) -> bool:
 		"pps": current_pps()
 	})
 	autosave.emit("upgrade")
-	_update_automation_state()
+	_refresh_automation_binding()
 	return true
 
 func promote_factory() -> bool:
@@ -255,7 +260,7 @@ func promote_factory() -> bool:
 	tier_changed.emit(factory_tier)
 	_recompute_feed_stats()
 	_update_timers()
-	_update_automation_state()
+	_refresh_automation_binding()
 	_emit_storage_changed()
 	_log("INFO", "ECONOMY", "Factory promoted", {
 		"tier": factory_tier,
@@ -289,9 +294,9 @@ func _base_pps() -> float:
 	var tier_prod: float = float(_balance.factory_tiers.get(factory_tier, {}).get("prod_mult", 1.0))
 	var prod_mult: float = _stat_multiplier("mul_prod")
 	var research_mul: float = float(_research.multipliers["mul_prod"])
-var env_power: float = _environment_power_modifier()
-var comfort_bonus: float = 1.0 + _statbus_value(&"ci_bonus", 0.0)
-return P0 * tier_prod * prod_mult * research_mul * env_power * comfort_bonus
+	var env_power: float = _environment_power_modifier()
+	var comfort_bonus: float = 1.0 + _statbus_value(&"ci_bonus", 0.0)
+	return P0 * tier_prod * prod_mult * research_mul * env_power * comfort_bonus
 
 func _current_capacity() -> float:
 	if _balance == null or _research == null:
@@ -349,7 +354,7 @@ func do_prestige() -> int:
 	burst_active = false
 	soft_changed.emit(soft)
 	tier_changed.emit(factory_tier)
-	_update_automation_state()
+	_refresh_automation_binding()
 	var env_state := _environment_state()
 	var env_multiplier := _environment_prestige_multiplier()
 	_log("INFO", "ECONOMY", "Prestige performed", {
@@ -366,17 +371,21 @@ func do_prestige() -> int:
 func _update_timers() -> void:
 	if _balance == null:
 		return
-	var base_cd: float = float(_balance.constants.get("BURST_COOLDOWN", 10.0))
-	var auto_tick: float = float(_balance.automation.get("auto_burst", {}).get("value", base_cd))
-	var auto_cd_adjust: float = float(_research.multipliers.get("auto_cd", 0.0))
-	var adj: float = clamp(auto_tick + auto_cd_adjust, 0.1, 999.0)
-	_auto_timer.wait_time = adj
 	_autosave_interval = _balance.constants.get("AUTOSAVE_SECONDS", 30.0)
 	_autosave_timer.wait_time = _autosave_interval
 	if not _autosave_timer.is_stopped():
 		_autosave_timer.stop()
 	_autosave_timer.start()
-	_update_automation_state()
+	_refresh_automation_interval()
+	_refresh_automation_binding()
+
+func _automation_interval() -> float:
+	if _balance == null:
+		return 10.0
+	var base_cd: float = float(_balance.constants.get("BURST_COOLDOWN", 10.0))
+	var auto_tick: float = float(_balance.automation.get("auto_burst", {}).get("value", base_cd))
+	var auto_cd_adjust: float = float(_research.multipliers.get("auto_cd", 0.0))
+	return clamp(auto_tick + auto_cd_adjust, 0.1, 999.0)
 
 func _refresh_dump_state() -> void:
 	if _balance == null:
@@ -389,6 +398,10 @@ func _on_balance_reload() -> void:
 	_refresh_dump_state()
 	_emit_storage_changed()
 	_update_timers()
+
+func _on_research_changed() -> void:
+	_refresh_automation_interval()
+	_refresh_automation_binding()
 
 func _get_upgrade_level(id: String) -> int:
 	return int(_upgrade_levels.get(id, 0))
@@ -496,6 +509,8 @@ func get_upgrade_levels() -> Dictionary:
 	return _upgrade_levels.duplicate(true)
 
 func _automation_conditions_met() -> bool:
+	if _balance == null:
+		return false
 	return _has_autoburst_unlock() and _tier_allows_auto()
 
 func _automation_environment_ok() -> bool:
@@ -504,7 +519,18 @@ func _automation_environment_ok() -> bool:
 func _automation_enabled() -> bool:
 	return _automation_conditions_met() and _automation_environment_ok()
 
+func _handle_autoburst_request() -> bool:
+	if not _automation_conditions_met():
+		return false
+	if not _automation_environment_ok():
+		return false
+	if feed_current <= 0.0:
+		return false
+	return try_burst(true)
+
 func _has_autoburst_unlock() -> bool:
+	if _balance == null:
+		return false
 	for id in _balance.upgrades.keys():
 		var row: Dictionary = _balance.upgrades[id]
 		if row.get("stat", "") != "unlock_autoburst":
@@ -514,44 +540,17 @@ func _has_autoburst_unlock() -> bool:
 	return false
 
 func _tier_allows_auto() -> bool:
+	if _balance == null:
+		return false
 	var unlocks := String(_balance.factory_tiers.get(factory_tier, {}).get("unlocks", ""))
 	return unlocks.find("auto") != -1
-
-func _update_automation_state() -> void:
-	if _auto_timer == null:
-		return
-	var conditions_met := _automation_conditions_met()
-	if not conditions_met:
-		if not _auto_timer.is_stopped():
-			_auto_timer.stop()
-		if _automation_env_blocked:
-			_automation_env_blocked = false
-		return
-	var env_ok := _automation_environment_ok()
-	if not env_ok:
-		if not _auto_timer.is_stopped():
-			_auto_timer.stop()
-		if not _automation_env_blocked:
-			_automation_env_blocked = true
-			_log("INFO", "AUTOMATION", "Autoburst paused due to environment", {
-				"feed_modifier": _environment_feed_modifier(),
-				"threshold": AUTOMATION_ENV_THRESHOLD
-			})
-		return
-	if _automation_env_blocked:
-		_automation_env_blocked = false
-		_log("INFO", "AUTOMATION", "Autoburst restored", {
-			"feed_modifier": _environment_feed_modifier()
-		})
-	if _auto_timer.is_stopped():
-		_auto_timer.start()
 
 func refresh_after_load() -> void:
 	_recompute_feed_stats()
 	_refresh_dump_state()
 	_emit_storage_changed()
 	_update_timers()
-	_update_automation_state()
+	_refresh_automation_binding()
 
 func _meets_requirements(row: Dictionary) -> bool:
 	var requires: String = String(row.get("requires", "-"))
@@ -607,6 +606,7 @@ func _recompute_feed_stats() -> void:
 		_feed_reported_empty = true
 	if feed_current >= feed_capacity:
 		_feed_reported_full = true
+	_refresh_automation_binding()
 	_update_feed_fraction_stat()
 
 func _base_feed_capacity() -> float:
@@ -744,11 +744,51 @@ func _update_feed_fraction_stat() -> void:
 		return
 	_statbus.set_stat(&"feed_fraction", get_feed_fraction(), "Economy")
 
+func _update_power_service(value: float) -> void:
+	var service := _get_power_service()
+	if service:
+		service.update_power_state(value)
+	var auto_service := _get_automation_service()
+	if auto_service:
+		auto_service.set_power_state(value)
+
 func _statbus_value(key: StringName, default_value: float = 0.0) -> float:
 	_statbus_ref()
 	if _statbus == null:
 		return default_value
 	return _statbus.get_stat(key, default_value)
+
+func _bind_services() -> void:
+	_power_service = _get_power_service()
+	_automation_service = _get_automation_service()
+	_update_power_service(_environment_power_modifier())
+	_refresh_automation_interval()
+	_refresh_automation_binding()
+
+func _refresh_automation_binding() -> void:
+	var service := _get_automation_service()
+	if service == null:
+		return
+	if not service.has_target(_automation_target_id()):
+		service.register_autoburst(_automation_target_id(), _automation_interval(), Callable(self, "_handle_autoburst_request"), AutomationService.MODE_MANUAL)
+	var mode := AutomationService.MODE_OFF
+	if _automation_conditions_met():
+		mode = AutomationService.MODE_MANUAL
+		if _automation_environment_ok():
+			mode = AutomationService.MODE_AUTO
+	service.set_mode(_automation_target_id(), mode)
+
+func _refresh_automation_interval() -> void:
+	var service := _get_automation_service()
+	if service == null:
+		return
+	if not service.has_target(_automation_target_id()):
+		service.register_autoburst(_automation_target_id(), _automation_interval(), Callable(self, "_handle_autoburst_request"), AutomationService.MODE_MANUAL)
+	else:
+		service.update_interval(_automation_target_id(), _automation_interval())
+
+func _automation_target_id() -> StringName:
+	return StringName("economy_feed_autoburst")
 
 func _statbus_ref() -> StatBus:
 	if _statbus and is_instance_valid(_statbus):
@@ -757,6 +797,24 @@ func _statbus_ref() -> StatBus:
 	if node is StatBus:
 		_statbus = node as StatBus
 		return _statbus
+	return null
+
+func _get_automation_service() -> AutomationService:
+	if _automation_service and is_instance_valid(_automation_service):
+		return _automation_service
+	var node := get_node_or_null("/root/AutomationServiceSingleton")
+	if node is AutomationService:
+		_automation_service = node as AutomationService
+		return _automation_service
+	return null
+
+func _get_power_service() -> PowerService:
+	if _power_service and is_instance_valid(_power_service):
+		return _power_service
+	var node := get_node_or_null("/root/PowerServiceSingleton")
+	if node is PowerService:
+		_power_service = node as PowerService
+		return _power_service
 	return null
 
 func _log(level: String, category: String, message: String, context: Dictionary = {}) -> void:

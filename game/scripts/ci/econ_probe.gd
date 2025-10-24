@@ -6,6 +6,9 @@ const CONFIG_SCRIPT := preload("res://game/scripts/Config.gd")
 const LOGGER_SCRIPT := preload("res://game/scripts/Logger.gd")
 const ENV_SERVICE_SCRIPT := preload("res://src/services/EnvironmentService.gd")
 const STATBUS_SCRIPT := preload("res://src/services/StatBus.gd")
+const SANDBOX_SCRIPT := preload("res://src/services/SandboxService.gd")
+const POWER_SCRIPT := preload("res://src/services/PowerService.gd")
+const AUTOMATION_SCRIPT := preload("res://src/services/AutomationService.gd")
 
 var _logger: YolkLogger
 var _next_tick_time = 0.0
@@ -30,6 +33,24 @@ func _initialize() -> void:
 		env_instance.name = "EnvironmentServiceSingleton"
 		root.add_child(env_instance)
 		env_node = env_instance
+	var sandbox_node := root.get_node_or_null("SandboxServiceSingleton")
+	if sandbox_node == null:
+		var sandbox_instance := SANDBOX_SCRIPT.new()
+		sandbox_instance.name = "SandboxServiceSingleton"
+		root.add_child(sandbox_instance)
+		sandbox_node = sandbox_instance
+	var power_node := root.get_node_or_null("PowerServiceSingleton")
+	if power_node == null:
+		var power_instance := POWER_SCRIPT.new()
+		power_instance.name = "PowerServiceSingleton"
+		root.add_child(power_instance)
+		power_node = power_instance
+	var automation_node := root.get_node_or_null("AutomationServiceSingleton")
+	if automation_node == null:
+		var automation_instance := AUTOMATION_SCRIPT.new()
+		automation_instance.name = "AutomationServiceSingleton"
+		root.add_child(automation_instance)
+		automation_node = automation_instance
 	var statbus_node := root.get_node_or_null("StatBusSingleton")
 	if statbus_node == null:
 		var statbus_instance := STATBUS_SCRIPT.new()
@@ -95,6 +116,7 @@ func _run_scenario(name: String, seconds: float, strategy: Callable) -> Dictiona
 	var research: Research = ctx["research"]
 	var economy: Economy = ctx["economy"]
 	var shipments: Array[Dictionary] = []
+	var comfort_samples: Array[Dictionary] = []
 	_next_tick_time = 0.0
 	economy.dump_triggered.connect(func(amount: float, wallet: float) -> void:
 		shipments.append({
@@ -110,6 +132,7 @@ func _run_scenario(name: String, seconds: float, strategy: Callable) -> Dictiona
 				"wallet": wallet
 			})
 	)
+	var sandbox := get_tree().get_root().get_node_or_null("SandboxServiceSingleton")
 	var total_time = 0.0
 	var tick_count = 0
 	while total_time < seconds:
@@ -121,6 +144,13 @@ func _run_scenario(name: String, seconds: float, strategy: Callable) -> Dictiona
 			economy.stop_burst("probe")
 		_next_tick_time = total_time + tick
 		economy.simulate_tick(tick)
+		if sandbox and sandbox.has_method("current_ci"):
+			var sample := {"time": _next_tick_time, "ci": sandbox.current_ci(), "bonus": sandbox.current_bonus()}
+			if sandbox.has_method("last_comfort_components"):
+				var components := sandbox.last_comfort_components()
+				for key in components.keys():
+					sample[key] = components[key]
+			comfort_samples.append(sample)
 		total_time = _next_tick_time
 		tick_count += 1
 	var summary = {
@@ -133,6 +163,8 @@ func _run_scenario(name: String, seconds: float, strategy: Callable) -> Dictiona
 		"shipments": shipments,
 		"shipment_count": shipments.size(),
 		"first_shipment_s": shipments[0].get("time", 0.0) if shipments.size() > 0 else -1.0,
+		"comfort_samples": comfort_samples,
+		"comfort_components": sandbox and sandbox.has_method("last_comfort_components") ? sandbox.last_comfort_components() : {},
 		"constants": {
 			"P0": balance.constants.get("P0", 0.0),
 			"BURST_MULT": balance.constants.get("BURST_MULT", 0.0),

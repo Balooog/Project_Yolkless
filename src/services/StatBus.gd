@@ -11,8 +11,8 @@ var _values: Dictionary = {}
 var _last_clamp_log: Dictionary = {}
 
 func register_stat(key: Variant, config: Dictionary = {}) -> void:
-	var stat_key := StringName(key)
-	var merged := (_registry.get(stat_key, {}) as Dictionary).duplicate(true)
+	var stat_key: StringName = StringName(key)
+	var merged: Dictionary = (_registry.get(stat_key, {}) as Dictionary).duplicate(true)
 	for c_key in config.keys():
 		merged[c_key] = config[c_key]
 	if not merged.has("stack"):
@@ -24,26 +24,26 @@ func register_stat(key: Variant, config: Dictionary = {}) -> void:
 		_values[stat_key] = 0.0
 
 func get_stat(key: Variant, default_value: float = 0.0) -> float:
-	var stat_key := StringName(key)
+	var stat_key: StringName = StringName(key)
 	if _values.has(stat_key):
 		return _values[stat_key]
 	return default_value
 
 func set_stat(key: Variant, value: float, source: Variant = StringName()) -> float:
-	var stat_key := StringName(key)
+	var stat_key: StringName = StringName(key)
 	if not _registry.has(stat_key):
 		register_stat(stat_key, {})
-	var config := _registry[stat_key]
-	var target_value := float(value)
+	var config: Dictionary = _registry[stat_key]
+	var target_value: float = float(value)
 	if config.has("cap"):
-		var cap_value := float(config["cap"])
+		var cap_value: float = float(config["cap"])
 		if target_value > cap_value:
 			if _should_log_clamp(stat_key):
 				_log("INFO", "STATBUS", "clamp %s %.3f→%.3f" % [String(stat_key), target_value, cap_value], {
 					"source": String(source)
 				})
 			target_value = cap_value
-	var previous := _values.get(stat_key, null)
+	var previous: Variant = _values.get(stat_key, null)
 	if previous == target_value:
 		return target_value
 	_values[stat_key] = target_value
@@ -51,12 +51,12 @@ func set_stat(key: Variant, value: float, source: Variant = StringName()) -> flo
 	return target_value
 
 func add_stat(key: Variant, delta: float, source: Variant = StringName()) -> float:
-	var stat_key := StringName(key)
+	var stat_key: StringName = StringName(key)
 	var current := get_stat(stat_key, 0.0)
 	return set_stat(stat_key, current + delta, source)
 
 func reset_stat(key: Variant) -> void:
-	var stat_key := StringName(key)
+	var stat_key: StringName = StringName(key)
 	if not _registry.has(stat_key):
 		return
 	var default_value := float(_registry[stat_key].get("default", 0.0))
