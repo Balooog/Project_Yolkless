@@ -24,6 +24,8 @@ graph TD
 - Consumes environment factors and runs the 128×72 comfort simulation.
 - Outputs Comfort Index and `ci_bonus` to StatBus and Economy.
 - Update cadence 2–5 Hz with double buffering to prevent hitches.
+- Current implementation runs a 128×72 CA grid and outputs stability/diversity metrics; further tuning tracked in `Implementation_TODO.md`.
+- `SandboxGrid` is a `RefCounted` helper with typed `Array[Array]` buffers so it can be preloaded headless; when extending it, keep the typed buffers and Godot 4 conditional syntax (`value_if_true if condition else value_if_false`) to avoid parser regressions.
 
 ## StatBus
 - Lightweight stat aggregation layer (see `StatBus_Catalog.md`).
@@ -57,5 +59,6 @@ graph TD
   6. UI/HUD refresh reads snapshots only—no heavy work in `_process`.
 - StatBus is **pull by default**; services may optionally push high-latency changes via signals.
 - No gameplay threads yet; any future GPU sandbox path must double-buffer results on the main thread.
+- `SimulationClock` autoload currently orchestrates the fixed 10 Hz loop and enables services to opt-out of their legacy per-frame processing.
 
 See also: [Architecture Alignment TODO](Implementation_TODO.md) for tasks needed to match this desired model.

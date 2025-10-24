@@ -4,7 +4,7 @@
 
 ## Log Formats
 - **CSV (`logs/telemetry/*.csv`)**: Columns include `timestamp`, `pps`, `storage`, `ci_bonus`, `event`, `power_state`.
-- **JSON (`logs/telemetry/*.json`)**: Batch summaries with averages and percentiles for automation.
+- **JSON (`logs/telemetry/*.json`)**: Batch summaries with averages/percentiles plus per-scenario arrays for shipments and comfort samples (`{ "time", "ci", "bonus" }`).
 - All entries include `scenario` tag (e.g., `hands_off`, `burst_cycle`).
 
 ## Headless CLI

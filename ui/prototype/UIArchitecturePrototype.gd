@@ -60,7 +60,7 @@ var _is_desktop_layout := false
 @onready var _home_copy_button: Button = $RootMargin/RootStack/MainStack/CanvasWrapper/MobileSheetAnchor/SheetOverlay/HomeSheet/HomeMargin/HomeColumn/HomeUtilityRow/HomeCopyButton
 @onready var _home_paste_button: Button = $RootMargin/RootStack/MainStack/CanvasWrapper/MobileSheetAnchor/SheetOverlay/HomeSheet/HomeMargin/HomeColumn/HomeUtilityRow/HomePasteButton
 @onready var _home_settings_button: Button = $RootMargin/RootStack/MainStack/CanvasWrapper/MobileSheetAnchor/SheetOverlay/HomeSheet/HomeMargin/HomeColumn/HomeUtilityRow/HomeSettingsButton
-@onready var _factory_viewport_container: ViewportContainer = $RootMargin/RootStack/MainStack/CanvasWrapper/CanvasPanel/FactoryViewportContainer
+@onready var _factory_viewport_container: Control = $RootMargin/RootStack/MainStack/CanvasWrapper/CanvasPanel/FactoryViewportContainer
 @onready var _factory_viewport: SubViewport = $RootMargin/RootStack/MainStack/CanvasWrapper/CanvasPanel/FactoryViewportContainer/FactoryViewport
 
 @onready var _store_buttons: Dictionary = {
@@ -90,6 +90,9 @@ var _sheets: Array[Control] = []
 func _ready() -> void:
 	_register_tab_buttons()
 	_register_sheets()
+	if _factory_viewport_container is SubViewportContainer:
+		var container := _factory_viewport_container as SubViewportContainer
+		container.stretch = false
 	_feed_button.pressed.connect(_on_feed_pressed)
 	_feed_button.button_down.connect(_on_feed_hold_button_down)
 	_feed_button.button_up.connect(_on_feed_hold_button_up)
@@ -294,7 +297,7 @@ func get_environment_panel() -> Control:
 func get_factory_viewport() -> SubViewport:
 	return _factory_viewport
 
-func get_factory_viewport_container() -> ViewportContainer:
+func get_factory_viewport_container() -> Control:
 	return _factory_viewport_container
 
 func get_canvas_rect() -> Rect2:

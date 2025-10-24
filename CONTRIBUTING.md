@@ -39,6 +39,7 @@ Thank you for helping build a cozy idle experience. Follow these practices to ke
 - Run `./tools/headless_tick.sh 300` for economy regressions.
 - Check performance budgets if touching core loops.
 - Ensure comfort metrics (`ci_bonus`) remain within +5% cap.
+- If the headless build surfaces parser errors or warnings, consult [docs/dev/build_gotchas.md](docs/dev/build_gotchas.md) for the latest Godot 4 fixes.
 
 ## Documentation
 - Add new stats to [StatBus Catalog](docs/architecture/StatBus_Catalog.md).

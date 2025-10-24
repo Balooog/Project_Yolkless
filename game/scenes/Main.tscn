@@ -108,6 +108,12 @@ unique_name_in_owner = true
 size_flags_horizontal = 1
 horizontal_alignment = 2
 
+[node name="PowerLabel" type="Label" parent="UI/RootMargin/RootColumn/VBox/StatsBox"]
+unique_name_in_owner = true
+size_flags_horizontal = 1
+horizontal_alignment = 2
+text = "Power Load: n/a"
+
 [node name="CapacityContainer" type="VBoxContainer" parent="UI/RootMargin/RootColumn/VBox"]
 custom_minimum_size = Vector2(0, 48)
 

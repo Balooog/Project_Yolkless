@@ -10,9 +10,9 @@ var _economy: Economy
 var _research: Research
 var _save: Save
 var _balance: Balance
-var _time_accumulator := 0.0
-var _log_refresh_accumulator := 0.0
-var _tail_dirty := true
+var _time_accumulator: float = 0.0
+var _log_refresh_accumulator: float = 0.0
+var _tail_dirty: bool = true
 var _log_tail_cache: Array[String] = []
 
 func configure(economy: Economy, research: Research, save: Save, balance: Balance) -> void:
@@ -39,7 +39,7 @@ func _process(delta: float) -> void:
 		_tail_dirty = true
 	if _time_accumulator >= update_frequency:
 		_time_accumulator = 0.0
-		var refresh_tail := _tail_dirty
+		var refresh_tail: bool = _tail_dirty
 		_tail_dirty = false
 		_refresh(refresh_tail)
 
@@ -63,13 +63,13 @@ func _refresh(refresh_tail: bool) -> void:
 			seed_value = int(seed_variant)
 	var feed_fraction: float = _economy.get_feed_fraction()
 	var feed_seconds: float = _economy.get_feed_seconds_to_full()
-	var feeding := _economy.is_feeding()
+	var feeding: bool = _economy.is_feeding()
 	var feed_state_key := "debug_overlay_feed_on" if feeding else "debug_overlay_feed_off"
 	var feed_state_text := _get_string(feed_state_key, "ON" if feeding else "OFF")
 	var research_mult: Dictionary = _research.multipliers
-	var logging_status := "OFF"
-	var log_size := "0 B"
-	var log_rotations := 0
+	var logging_status: String = "OFF"
+	var log_size: String = "0 B"
+	var log_rotations: int = 0
 	if logger_node is YolkLogger:
 		var stats: Dictionary = (logger_node as YolkLogger).get_log_stats()
 		if stats.get("enabled", false):

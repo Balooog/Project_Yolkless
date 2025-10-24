@@ -1,8 +1,6 @@
 extends Node
 class_name EnvironmentService
 
-const StatBus := preload("res://src/services/StatBus.gd")
-
 signal environment_updated(state: Dictionary)
 signal day_phase_changed(phase: StringName)
 signal preset_changed(preset: StringName)
@@ -33,7 +31,7 @@ var _stage_cache: Dictionary = {}
 var _stage_instances: Dictionary = {}
 var _active_stage: Node2D
 var _strings: StringsCatalog
-var _statbus: StatBus
+var _use_scheduler := false
 
 func _ready() -> void:
 	_load_presets()
@@ -41,8 +39,6 @@ func _ready() -> void:
 	set_process(true)
 	_emit_state(true)
 	preset_changed.emit(_current_preset_id)
- 	_statbus = _statbus_ref()
- 	_register_statbus_keys()
 
 func set_strings(strings: StringsCatalog) -> void:
 	_strings = strings
@@ -132,6 +128,17 @@ func cycle_preset(step: int = 1) -> void:
 	select_preset(_preset_order[index])
 
 func _process(delta: float) -> void:
+	if _use_scheduler:
+		return
+	_step(delta)
+
+func step(delta: float) -> void:
+	_step(delta)
+
+func set_scheduler_enabled(enabled: bool) -> void:
+	_use_scheduler = enabled
+
+func _step(delta: float) -> void:
 	if _paused:
 		return
 	_advance_time(delta)
@@ -151,7 +158,6 @@ func _emit_state(force_emit: bool = false) -> void:
 	else:
 		_current_modifiers = {}
 	_apply_state_to_stage(_current_state)
-	_update_statbus_state(_current_state)
 	var phase := StringName(_current_state.get("phase", ""))
 	if phase != _last_phase:
 		_last_phase = phase
@@ -411,31 +417,6 @@ func _apply_state_to_stage(state: Dictionary) -> void:
 			float(state.get("stress", 0.0)),
 			float(state.get("reputation", 0.0))
 		)
-
-func _register_statbus_keys() -> void:
-	_statbus_ref()
-	if _statbus == null:
-		return
-	_statbus.register_stat(&"comfort_index", {"stack": "replace", "default": 0.0})
-	_statbus.register_stat(&"ci_bonus", {"stack": "add", "cap": 0.05, "default": 0.0})
-
-func _update_statbus_state(state: Dictionary) -> void:
-	_register_statbus_keys()
-	if _statbus == null:
-		return
-	var comfort := float(state.get("comfort_index", 0.0))
-	var ci_bonus := float(state.get("ci_bonus", 0.0))
-	_statbus.set_stat(&"comfort_index", comfort, "Environment")
-	_statbus.set_stat(&"ci_bonus", ci_bonus, "Environment")
-
-func _statbus_ref() -> StatBus:
-	if _statbus and is_instance_valid(_statbus):
-		return _statbus
-	var node := get_node_or_null("/root/StatBusSingleton")
-	if node is StatBus:
-		_statbus = node as StatBus
-		return _statbus
-	return null
 
 func _log_snapshot() -> void:
 	var logger := _logger()
