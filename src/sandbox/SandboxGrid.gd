@@ -20,7 +20,7 @@ var breeze: float = 0.5
 var _current: Array[Array] = []
 var _next: Array[Array] = []
 var _previous: Array[Array] = []
-var _rng := RandomNumberGenerator.new()
+var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 func _init() -> void:
 	_reset_buffers()
@@ -223,3 +223,8 @@ func _calculate_entropy() -> float:
 		var p := count / total
 		entropy -= p * log(p)
 	return clamp(entropy / 4.0, 0.0, 1.0)
+
+func set_random_number_generator(rng: RandomNumberGenerator) -> void:
+	if rng == null:
+		return
+	_rng = rng

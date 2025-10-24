@@ -83,6 +83,7 @@ func _build_environment() -> void:
 		_env_root.queue_free()
 	var size := _canvas_size
 	_env_root = ProceduralFactory.make_env_bg(size)
+	_env_root.position = Vector2(0.0, -size.y * 0.12)
 	add_child(_env_root)
 	sky = _env_root.get_node_or_null("Sky") as ColorRect
 	ground = _env_root.get_node_or_null("Ground") as ColorRect

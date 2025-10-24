@@ -23,7 +23,7 @@ manager_path = NodePath("../../ConveyorManager")
 
 [node name="ConveyorBelt" type="Node2D" parent="."]
 unique_name_in_owner = true
-position = Vector2(140, 240)
+position = Vector2(-220, 150)
 script = ExtResource("2")
 belt_width = 28.0
 stripe_spacing = 56.0

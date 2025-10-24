@@ -1308,6 +1308,8 @@ func _move_environment_into_viewport(viewport: SubViewport) -> void:
 	viewport.add_child(environment_root_node)
 	if viewport.size != Vector2i.ZERO:
 		environment_root_node.position = Vector2(viewport.size.x, viewport.size.y) * 0.5
+	if _prototype_available():
+		ui_prototype.mark_canvas_ready()
 
 func _update_factory_viewport_bounds() -> void:
 	if factory_viewport == null:

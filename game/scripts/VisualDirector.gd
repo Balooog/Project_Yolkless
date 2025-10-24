@@ -6,6 +6,9 @@ const UPDATE_INTERVAL := 0.2
 const FEED_PARTICLES_SCENE := preload("res://game/scenes/modules/visuals/FeedParticles.tscn")
 const VISUAL_HOST_PATH := NodePath("/root/Main/VisualLayer/VisualViewport")
 const FEED_ANCHOR_PATHS := [
+	NodePath("UI/PrototypeUI/RootMargin/RootStack/BottomBar/TabBar/FeedButton"),
+	NodePath("UI/PrototypeUI/RootMargin/RootStack/MainStack/CanvasWrapper/MobileSheetAnchor/SheetOverlay/HomeSheet/HomeMargin/HomeColumn/HomeFeedButton"),
+	NodePath("UI/PrototypeUI/RootMargin/RootStack/MainStack/CanvasWrapper/MobileSheetAnchor/SheetOverlay/HomeSheet/HomeMargin/HomeColumn/HomeFeedBar"),
 	NodePath("UI/RootMargin/RootColumn/VBox/BurstRow/BurstButton"),
 	NodePath("UI/RootMargin/RootColumn/VBox/BurstRow/FeedContainer/FeedBar"),
 	NodePath("UI/VBox/BurstRow/FeedContainer/FeedBar")
