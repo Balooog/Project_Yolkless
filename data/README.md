@@ -20,7 +20,7 @@ This directory houses authored TSV/JSON files that feed the game’s balance, ev
   - **Owner:** Systems Design  
   - **Reload:** Planned hot-reload via `EventDirector.reload_config()`.
 
-- `environment_curves.tsv` — Temperature, light, humidity, air-quality curves (RM-021).  
+- `environment_profiles.tsv` — Environment presets (day length, climate swings, tier gating) consumed by `EnvironmentService`.  
   - **Owner:** World Atmosphere Team  
   - **Reload:** `EnvironmentService.reload_curves()` (to implement).
 

@@ -18,6 +18,5 @@ set -x
 "$GODOT_BIN" \
   --headless \
   --path "$ROOT_DIR" \
-  --script "res://game/scripts/ci/econ_probe.gd" \
-  -- \
-  --seconds="$SECONDS_TO_SIM"
+  --script "res://tools/replay_headless.gd" \
+  --duration="$SECONDS_TO_SIM"

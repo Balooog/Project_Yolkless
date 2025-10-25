@@ -140,6 +140,7 @@ func _ready() -> void:
 	set_metrics(_metrics)
 	_sync_factory_viewport_size()
 	_update_layout()
+	_setup_focus_modes()
 	_show_tab(_current_tab)
 
 func set_metrics(metrics: Dictionary) -> void:
@@ -324,6 +325,9 @@ func get_action_buttons() -> Array[Button]:
 			buttons.append(value)
 	return buttons
 
+func get_current_tab() -> String:
+	return _current_tab
+
 func get_environment_panel() -> Control:
 	return _environment_panel
 
@@ -369,6 +373,48 @@ func _move_sheet_to_anchor(anchor: Control) -> void:
 	_sheet_overlay.size_flags_horizontal = 3
 	_sheet_overlay.size_flags_vertical = 3
 
+func _setup_focus_modes() -> void:
+	for button in get_action_buttons():
+		button.focus_mode = Control.FOCUS_ALL
+	for button in _tab_buttons:
+		button.focus_mode = Control.FOCUS_ALL
+	for button in _dock_buttons:
+		button.focus_mode = Control.FOCUS_ALL
+	if _feed_button:
+		_feed_button.focus_mode = Control.FOCUS_ALL
+
+func _focus_default_for_tab(tab_id: String) -> void:
+	match tab_id:
+		"home":
+			if _home_feed_button:
+				_home_feed_button.grab_focus()
+			elif _feed_button:
+				_feed_button.grab_focus()
+		"store":
+			if not _grab_first_button(_store_buttons) and _feed_button:
+				_feed_button.grab_focus()
+		"research":
+			if not _grab_first_button(_research_buttons) and _feed_button:
+				_feed_button.grab_focus()
+		"automation":
+			if not _grab_first_button(_automation_buttons) and _feed_button:
+				_feed_button.grab_focus()
+		"prestige":
+			if _prestige_button:
+				_prestige_button.grab_focus()
+			elif _feed_button:
+				_feed_button.grab_focus()
+		_:
+			if _feed_button:
+				_feed_button.grab_focus()
+
+func _grab_first_button(collection: Dictionary) -> bool:
+	for value in collection.values():
+		if value is Button:
+			(value as Button).grab_focus()
+			return true
+	return false
+
 func _register_tab_buttons() -> void:
 	var bottom_bar := $RootMargin/RootStack/BottomBar/TabBar
 	for child in bottom_bar.get_children():
@@ -413,22 +459,32 @@ func _button_tab_id(button: BaseButton) -> String:
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_tab_home"):
 		_show_tab("home")
+		tab_selected.emit("home")
 		accept_event()
 	elif event.is_action_pressed("ui_tab_store"):
 		_show_tab("store")
+		tab_selected.emit("store")
 		accept_event()
 	elif event.is_action_pressed("ui_tab_research"):
 		_show_tab("research")
+		tab_selected.emit("research")
 		accept_event()
 	elif event.is_action_pressed("ui_tab_automation"):
 		_show_tab("automation")
+		tab_selected.emit("automation")
 		accept_event()
 	elif event.is_action_pressed("ui_tab_prestige"):
 		_show_tab("prestige")
+		tab_selected.emit("prestige")
 		accept_event()
 	elif event.is_action_pressed("ui_tab_feed"):
 		_on_feed_pressed()
 		accept_event()
+	elif event.is_action_pressed("ui_cancel"):
+		if _current_tab != "home":
+			_show_tab("home")
+			tab_selected.emit("home")
+			accept_event()
 
 func _on_tab_pressed(tab_id: String) -> void:
 	_show_tab(tab_id)
@@ -458,6 +514,7 @@ func _show_tab(tab_id: String) -> void:
 	for sheet in _sheets:
 		sheet.visible = sheet.get_meta("tab_id") == tab_id
 	_sheet_overlay.visible = true
+	_focus_default_for_tab(tab_id)
 
 func _update_layout() -> void:
 	var window_size: Vector2 = _current_window_size()

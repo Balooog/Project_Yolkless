@@ -1,6 +1,6 @@
 # Yolkless Balance TSV Schema
 
-**File:** `res://game/data/balance.tsv` (TSV; `\t` separated).  
+**File:** `res://data/balance.tsv` (TSV; `\t` separated).  
 **Sections** are bracketed headers. Comment lines start with `#`.
 
 ## [CONSTANTS]

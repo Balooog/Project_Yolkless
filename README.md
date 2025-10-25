@@ -23,12 +23,12 @@ When adding new systems, prefer the `src/`, `ui/`, and `data/` layout and migrat
 
 ## Usage
 
-- `./tools/run_dev.sh` launches the playable prototype. Press `R` in-game to hot-reload `game/data/balance.tsv` after tweaking numbers.
+- `./tools/run_dev.sh` launches the playable prototype. Press `R` in-game to hot-reload `data/balance.tsv` after tweaking numbers.
 - Core loop preview: hold the Burst button or press `Space`, buy upgrades, promote the farm, prestige to earn research points, and purchase research nodes.
 - Naming, icons, and copy follow `docs/theme_map.md` (Egg Credits, Reputation Stars, Innovation Lab, etc.).
 - Strings and balance data hot-reload together; editing `strings_egg.tsv` + tapping `R` updates live UI text.
 - Set `Config.seed` in the inspector to a non-zero value to enable deterministic RNG for repeatable PPS/burst timing runs.
-- Early game now starts at 0/50 credits; prod_1 (10 🥚) and cap_1 (12 🥚) unlock within seconds, and manual feeding clearly boosts PPS for the opening minute.
+- Early game now starts at 0/50 credits; Feeding Efficiency (`prod_1`, 50 🥚) unlocks after the first shipment, Feed Silo (`feed_storage`, 90 🥚) is reachable within five minutes, and the new **Ship Now** button lets you cash in crates instantly at a reduced payout.
 - CI smoke tests: run `./tools/ci_smoke.sh` (uses `godot4 --headless -s res://game/scripts/ci_smoke.gd`) for a sub-second load check; if the import cache is cold it performs a one-time `--import` warmup first. When a deeper pass is required, use `./tools/check_only.sh`, which wraps `godot4 --headless --verbose --check-only project.godot` and streams output to `logs/godot-check.log`; give it up to 600 s on fresh workspaces.
 
 ## Ship cycle (WSL quick flow)
@@ -69,6 +69,7 @@ code docs/prompts/PX-021.1.md   # paste canvas text
 - The `VisualViewport` control stretches with the window, keeping particle modules centered and auto-resized across any viewport.
 - All player-facing strings are driven via `game/data/strings_egg.tsv`; pressing `R` refreshes both numbers and copy.
 - The top stats row now surfaces conveyor throughput (`items/sec` and queue) straight from the ConveyorManager.
+- Storage panel includes a **Ship Now** button (75 % payout) plus a tooltip that explains when to launch shipments manually.
 - Press `F3` to toggle the debug overlay with live PPS, capacity, burst state, tier, research multipliers, hashes, and log context.
 
 ## Hold-to-Feed Meter
@@ -79,7 +80,7 @@ code docs/prompts/PX-021.1.md   # paste canvas text
 
 ## Environment Simulation
 
-- `src/services/EnvironmentService.gd` runs as an autoload, streaming seasonal curves from `data/environment_curves.tsv` and emitting feed/power/prestige modifiers.
+- `src/services/EnvironmentService.gd` runs as an autoload, streaming seasonal curves from `data/environment_profiles.tsv` and emitting feed/power/prestige modifiers.
 - Feed drain/refill and autoburst availability respect the live feed modifier; the power modifier flows straight into the economy's base PPS for downstream systems.
 - `ui/widgets/EnvPanel.tscn` replaces the legacy pollution overlay with a header summary, preset selector, and expandable detail grid fed by the service.
 - Upcoming SandboxService listens to environment factor signals, runs the comfort index simulation, and grants a capped +5 % PPS “Comfort Bonus”.
@@ -113,12 +114,15 @@ code docs/prompts/PX-021.1.md   # paste canvas text
 
 - `tools/run_dev.sh` — launch the game (set `NO_WINDOW=1` to use headless mode)
 - `tools/ci_smoke.sh` — warm imports if needed, then run the fast CI smoke script
+- `tools/bootstrap_godot.sh` — fetch/prepare the official Godot CLI tarball locally (avoids snap sandbox limits)
 - `tools/check_only.sh` — verbose `godot4 --check-only` wrapper that tees logs to `logs/godot-check.log`
-- `tools/headless_tick.sh <seconds>` — runs the headless economy probe (`godot4 --headless` + `res://game/scripts/ci/econ_probe.gd`) and streams dumps/summary data to `logs/yolkless.log`
+- `tools/check_only_ci.sh` — CI-friendly wrapper that bootstraps Godot if needed and emits ✅/❌ around `tools/check_only.sh`
+- `tools/headless_tick.sh <seconds>` — runs the replay harness (`godot4 --headless` + `res://tools/replay_headless.gd`) and writes telemetry to `logs/telemetry/`
+- `tools/export_palette.gd` — generate palette PNG + JSON from `data/materials.tsv` to keep UI colors in sync
 - `tools/build_linux.sh` — export a Linux build (requires configured export preset)
 
 Make scripts executable: `chmod +x tools/*.sh`.
 
 ## Balance Data
 
-- `game/data/balance.tsv` — master table defining constants, upgrades, factory tiers, automation rules, research nodes, and prestige math. Press `R` during a session to reload.
+- `data/balance.tsv` — master table defining constants, upgrades, factory tiers, automation rules, research nodes, and prestige math. Press `R` during a session to reload.

@@ -13,6 +13,14 @@
 - Tier promotions trigger preset swaps; ensure 10 s crossfade to avoid abrupt changes.
 - Wisdom prestige grants access to `space_colony`; apply linear interpolation over 30 s.
 
+## Factor Mapping Table
+
+| Factor | Sandbox Variable | Range | Effect |
+| --- | --- | --- | --- |
+| temperature | `heat` | −20 °C → +40 °C mapped to 0.1–0.9 | Adjusts material diffusion; higher heat increases active cell energy until comfort plateaus. |
+| humidity | `moisture` | 0–100 % mapped to 0.2–0.8 | Alters vegetation/steam frequency; extremes trigger comfort penalties. |
+| light | `breeze` | 0–1 (normalized luminance) | Controls drift speed and particle direction; higher light increases shimmer tempo. |
+
 ## Sandbox Input Mapping
 | Factor | Sandbox Input | Range | Effect |
 | ------ | ------------- | ----- | ------ |
@@ -46,3 +54,5 @@ ci_bonus = clamp(CI * 0.05, 0.0, 0.05)
 ## References
 - Architecture flow: [Overview](../architecture/Overview.md)
 - StatBus fields: [StatBus Catalog](../architecture/StatBus_Catalog.md)
+- Sandbox renderer: [Module brief](../modules/sandbox.md)
+- QA telemetry: [Telemetry & Replay](../quality/Telemetry_Replay.md)

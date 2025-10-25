@@ -24,6 +24,7 @@ func setup(id: int, type_name: StringName, spawn: float, move_speed: float, extr
 	metadata = extra.duplicate(true)
 	state = STATE_MOVING
 	distance = 0.0
+	visible = true
 	queue_redraw()
 
 func set_state(new_state: String) -> void:
@@ -37,6 +38,17 @@ func set_distance(new_distance: float) -> void:
 
 func set_tint(color: Color) -> void:
 	tint = color
+	queue_redraw()
+
+func reset_for_pool() -> void:
+	item_id = -1
+	item_type = &""
+	spawn_time = 0.0
+	speed = 0.0
+	state = STATE_MOVING
+	distance = 0.0
+	metadata.clear()
+	visible = false
 	queue_redraw()
 
 func _draw() -> void:

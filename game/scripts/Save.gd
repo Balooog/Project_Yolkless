@@ -5,6 +5,9 @@ class_name Save
 
 var _eco: Economy
 var _res: Research
+const SaveMigrator := preload("res://src/persistence/SaveMigrator.gd")
+const CURRENT_VERSION := SaveMigrator.CURRENT_VERSION
+var _migrator: SaveMigrator = SaveMigrator.new()
 
 func setup(eco: Economy, res: Research) -> void:
 	_eco = eco
@@ -14,6 +17,7 @@ func setup(eco: Economy, res: Research) -> void:
 
 func save(reason: String = "manual") -> void:
 	var payload_dict := {
+		"save_version": CURRENT_VERSION,
 		"ts": Time.get_unix_time_from_system(),
 		"eco": {
 			"soft": _eco.soft,
@@ -75,6 +79,8 @@ func load_state() -> void:
 		_log("WARN", "SAVE", "Malformed save data", {"path": save_path})
 		return
 	var save_data: Dictionary = save_data_variant
+	if _migrator:
+		save_data = _migrator.migrate(save_data)
 	var eco_variant: Variant = save_data.get("eco", {})
 	var eco_data: Dictionary = eco_variant if eco_variant is Dictionary else {}
 	_eco.soft = float(eco_data.get("soft", 0.0))

@@ -1,0 +1,53 @@
+{
+	"generated_at": "2025-10-25 16:52:33",
+	"materials": [
+		{
+			"contrast_hint": "light_text",
+			"hex": "#2F3540",
+			"id": "bg_dawn",
+			"usage": "Night backdrop and low-light panels"
+		},
+		{
+			"contrast_hint": "light_text",
+			"hex": "#3E4A5C",
+			"id": "bg_day",
+			"usage": "Daytime canvas background"
+		},
+		{
+			"contrast_hint": "dark_text",
+			"hex": "#E3B341",
+			"id": "accent_warm",
+			"usage": "Feed highlights and alert copy"
+		},
+		{
+			"contrast_hint": "dark_text",
+			"hex": "#7FC8F8",
+			"id": "accent_cool",
+			"usage": "Comfort overlays and environment highlights"
+		},
+		{
+			"contrast_hint": "dark_text",
+			"hex": "#4FB477",
+			"id": "success_soft",
+			"usage": "Shipment confirmation pulses"
+		},
+		{
+			"contrast_hint": "dark_text",
+			"hex": "#F3A25B",
+			"id": "warning_soft",
+			"usage": "Gentle warnings (power dips)"
+		},
+		{
+			"contrast_hint": "toggle_safe",
+			"hex": "#1B9AAA",
+			"id": "cb_sky",
+			"usage": "Color-blind friendly highlight"
+		},
+		{
+			"contrast_hint": "toggle_safe",
+			"hex": "#FF7F50",
+			"id": "cb_coral",
+			"usage": "Color-blind friendly accent"
+		}
+	]
+}

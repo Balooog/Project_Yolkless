@@ -1,0 +1,39 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://ui/components/TopBanner.gd" id="1"]
+
+[node name="TopBanner" type="Control"]
+script = ExtResource("1")
+size_flags_horizontal = 3
+size_flags_vertical = 0
+
+[node name="BannerContainer" type="HBoxContainer" parent="."]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+size_flags_vertical = 0
+theme_override_constants/separation = 12
+
+[node name="CreditsValue" type="Label" parent="BannerContainer"]
+unique_name_in_owner = true
+clip_text = true
+text = "₡ 0"
+
+[node name="StorageValue" type="Label" parent="BannerContainer"]
+unique_name_in_owner = true
+clip_text = true
+text = "Storage 0 / 0"
+
+[node name="PpsValue" type="Label" parent="BannerContainer"]
+unique_name_in_owner = true
+clip_text = true
+text = "0 PPS"
+
+[node name="ResearchValue" type="Label" parent="BannerContainer"]
+unique_name_in_owner = true
+clip_text = true
+text = "0 RP"
+
+[node name="AlertPill" type="Label" parent="BannerContainer"]
+unique_name_in_owner = true
+clip_text = true
+text = "All Clear"

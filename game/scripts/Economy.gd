@@ -3,6 +3,7 @@ class_name Economy
 
 const StatBus := preload("res://src/services/StatBus.gd")
 const EnvironmentService := preload("res://src/services/EnvironmentService.gd")
+const StatsProbe := preload("res://src/services/StatsProbe.gd")
 
 signal soft_changed(value: float)
 signal storage_changed(value: float, capacity: float)
@@ -39,6 +40,8 @@ const FEED_CAPACITY_BASE := 100.0
 const FEED_REFILL_BASE := 16.0
 const FEED_CONSUMPTION_BASE := 25.0
 const AUTOMATION_ENV_THRESHOLD := 0.75
+const MANUAL_SHIP_EFFICIENCY := 0.75
+const SNAPSHOT_INTERVAL := 20.0
 
 var _feed_efficiency_mult := 1.0
 var _feed_reported_empty := false
@@ -49,6 +52,8 @@ var _statbus: StatBus
 var _automation_service: AutomationService
 var _power_service: PowerService
 var _use_scheduler := false
+var _snapshot_timer: float = 0.0
+var _stats_probe: StatsProbe
 
 func setup(balance: Balance, research: Research) -> void:
 	_balance = balance
@@ -68,6 +73,7 @@ func setup(balance: Balance, research: Research) -> void:
 	_update_timers()
 	_bind_services()
 	_register_statbus_metrics()
+	_stats_probe = _get_stats_probe()
 
 func _process(delta: float) -> void:
 	if _use_scheduler:
@@ -83,6 +89,7 @@ func set_scheduler_enabled(enabled: bool) -> void:
 func _tick(delta: float) -> void:
 	if _balance == null or _research == null:
 		return
+	var tick_start := Time.get_ticks_usec()
 	var previous_feed: float = feed_current
 	var env_feed_modifier: float = _environment_feed_modifier()
 	_update_power_service(_environment_power_modifier())
@@ -114,6 +121,15 @@ func _tick(delta: float) -> void:
 	var gained: float = pps * delta
 	_apply_income(gained)
 	_refresh_automation_binding()
+	_snapshot_timer += delta
+	if _snapshot_timer >= SNAPSHOT_INTERVAL:
+		_snapshot_timer = 0.0
+		_log_economy_snapshot(base_pps, pps)
+	var tick_ms := float(Time.get_ticks_usec() - tick_start) / 1000.0
+	var feed_fraction := 0.0
+	if feed_capacity > 0.0:
+		feed_fraction = clamp(feed_current / feed_capacity, 0.0, 1.0)
+	_record_stats_probe(tick_ms, pps, base_pps, feed_fraction)
 
 func try_burst(source_auto: bool = false) -> bool:
 	if burst_active:
@@ -456,6 +472,27 @@ func storage_fill_fraction() -> float:
 		return 0.0
 	return clamp(storage / capacity, 0.0, 1.0)
 
+func manual_ship_efficiency() -> float:
+	return MANUAL_SHIP_EFFICIENCY
+
+func manual_ship_now() -> float:
+	if storage <= 0.0:
+		return 0.0
+	var shipped: float = storage
+	storage = 0.0
+	_storage_reported_full = false
+	_emit_storage_changed()
+	var payout: float = shipped * MANUAL_SHIP_EFFICIENCY
+	_deposit_soft(payout, "manual")
+	dump_triggered.emit(payout, soft)
+	_log("INFO", "ECONOMY", "Manual shipment processed", {
+		"stored": shipped,
+		"payout": payout,
+		"efficiency": MANUAL_SHIP_EFFICIENCY,
+		"capacity": _current_capacity()
+	})
+	return payout
+
 func is_dump_enabled() -> bool:
 	return _dump_enabled
 
@@ -654,6 +691,21 @@ func _log_feed_full() -> void:
 		"capacity": feed_capacity
 	})
 
+func _log_economy_snapshot(base_pps: float, pps: float) -> void:
+	_log("INFO", "ECONOMY", "snapshot", {
+		"pps_base": base_pps,
+		"pps": pps,
+		"storage": storage,
+		"capacity": _current_capacity(),
+		"wallet": soft,
+		"feed_pct": get_feed_fraction(),
+		"burst_active": burst_active,
+		"automation_ready": _automation_enabled(),
+		"automation_unlocked": _has_autoburst_unlock(),
+		"env_feed_modifier": _environment_feed_modifier(),
+		"env_power_modifier": _environment_power_modifier()
+	})
+
 func _log_storage_full(reason: String, capacity: float) -> void:
 	if _storage_reported_full:
 		return
@@ -816,6 +868,25 @@ func _get_power_service() -> PowerService:
 		_power_service = node as PowerService
 		return _power_service
 	return null
+
+func _get_stats_probe() -> StatsProbe:
+	var node := get_node_or_null("/root/StatsProbeSingleton")
+	if node is StatsProbe:
+		return node as StatsProbe
+	return null
+
+func _record_stats_probe(tick_ms: float, pps: float, base_pps: float, feed_fraction: float) -> void:
+	if _stats_probe == null or not is_instance_valid(_stats_probe):
+		_stats_probe = _get_stats_probe()
+	if _stats_probe == null:
+		return
+	_stats_probe.record_tick({
+		"service": "economy",
+		"tick_ms": tick_ms,
+		"pps": pps,
+		"storage": storage,
+		"feed_fraction": feed_fraction
+	})
 
 func _log(level: String, category: String, message: String, context: Dictionary = {}) -> void:
 	var logger_node := get_node_or_null("/root/Logger")

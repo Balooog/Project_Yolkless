@@ -8,6 +8,7 @@ const SandboxService := preload("res://src/services/SandboxService.gd")
 const Economy := preload("res://game/scripts/Economy.gd")
 const AutomationService := preload("res://src/services/AutomationService.gd")
 const PowerService := preload("res://src/services/PowerService.gd")
+const StatsProbe := preload("res://src/services/StatsProbe.gd")
 
 # NOTE: Placeholder scheduler keeping Environment → Sandbox → Economy order.
 # PowerService and AutomationService integration currently handled inside Economy; update once dedicated ticks are available.
@@ -18,6 +19,7 @@ var _sandbox: SandboxService
 var _economy: Economy
 var _automation: AutomationService
 var _power: PowerService
+var _stats_probe: StatsProbe
 
 func _ready() -> void:
 	set_process(true)
@@ -41,6 +43,7 @@ func _step(dt: float) -> void:
 		_automation.step(dt)
 	if _economy:
 		_economy.simulate_tick(dt)
+	_process_stats_probe(dt)
 
 func _ensure_references() -> void:
 	if _environment == null or not is_instance_valid(_environment):
@@ -73,3 +76,12 @@ func _ensure_references() -> void:
 				_economy = eco_node
 	if _economy:
 		_economy.set_scheduler_enabled(true)
+	if _stats_probe == null or not is_instance_valid(_stats_probe):
+		var probe_node := get_node_or_null("/root/StatsProbeSingleton")
+		if probe_node is StatsProbe:
+			_stats_probe = probe_node as StatsProbe
+
+func _process_stats_probe(dt: float) -> void:
+	if _stats_probe == null or not is_instance_valid(_stats_probe):
+		return
+	_stats_probe.process(dt)

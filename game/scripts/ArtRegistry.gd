@@ -4,8 +4,8 @@ const ASSET_MAP_PATH := "res://assets/AssetMap.json"
 const PLACEHOLDER_TOKEN := "/placeholder/"
 
 var _asset_map: Dictionary = {}
-var _texture_cache: Dictionary[String, Texture2D] = {}
-var _style_cache: Dictionary[String, StyleBox] = {}
+var _texture_cache: Dictionary = {}
+var _style_cache: Dictionary = {}
 
 func _ready() -> void:
 	_reload_asset_map()

@@ -1,7 +1,7 @@
 extends SceneTree
 
 const REQUIRED_DATA := [
-	"res://game/data/balance.tsv",
+	"res://data/balance.tsv",
 	"res://game/data/strings_egg.tsv",
 ]
 

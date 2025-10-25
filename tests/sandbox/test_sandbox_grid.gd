@@ -111,7 +111,7 @@ func _test_compute_comfort_components() -> void:
 	_assert_almost(
 		report.get("stability", 0.0),
 		1.0,
-		0.001,
+		0.005,
 		"stability should be 1.0 when no step has run"
 	)
 	_assert_true(

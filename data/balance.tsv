@@ -1,5 +1,5 @@
 =========================================================
-File: game/data/balance.tsv   (use TSV to avoid CSV comma headaches)
+File: data/balance.tsv   (use TSV to avoid CSV comma headaches)
 Sections are keyworded; parser reads until next [SECTION]
 =========================================================
 [CONSTANTS]
@@ -25,7 +25,7 @@ id	kind	stat	mult_add	mult_mul	base_cost	growth	requires
 prod_1	prod	mul_prod	0.1	1.0	50	1.15	-
 cap_1	cap	mul_cap	0.1	1.0	140	1.18	-
 auto_1	auto	unlock_autoburst	0	1.0	2500	1.0	factory>=3
-feed_storage	feed	feed_capacity	10.0	1.0	320	1.20	-
+feed_storage	feed	feed_capacity	10.0	1.0	90	1.20	-
 feed_refill	feed	feed_refill	1.0	1.10	280	1.25	-
 feed_efficiency	feed	feed_efficiency	0.10	1.0	360	1.30	-
 
