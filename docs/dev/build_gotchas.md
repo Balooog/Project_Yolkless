@@ -11,6 +11,7 @@ Quick reference for the recurring issues we've tripped over while bringing Yolkl
 - Always annotate locals when accessing dictionaries (`var next_cost: float = ...`) and reuse typed cached members instead of relying on inference.
 - Arrays default to `Array` (Variant) when untyped. For nested buffers (e.g. `SandboxGrid`'s 2‑D grid), declare them as `Array[Array]` and type any duplicated locals (`var row: Array = _current[y]`) to avoid Variant bleed-through and accidental aliasing.
 - Files that have mixed indentation (tabs + spaces) also fail to parse; stick with tabs for GDScript.
+- StatsProbe hooks are particularly sensitive to this—always type locals (e.g. `var avg: float`) and avoid mixing tabs/spaces or the autoload will refuse to preload, breaking the entire service chain.
 
 ## No more `condition ? a : b`
 - Godot 4 dropped the C-style ternary operator. Scripts that still use `foo ? bar : baz` fail to preload with “Unexpected `?`” parse errors.
@@ -32,6 +33,9 @@ Quick reference for the recurring issues we've tripped over while bringing Yolkl
       container.stretch = false
   ```
 - After that, `_factory_viewport.size = Vector2i(...)` is safe.
+
+## Logging and instrumentation overhead
+- Any heavy logging in `_process`/`step` needs to be deferred (`call_deferred`) or offloaded, otherwise the extra dictionary duplication shows up as >0.5 ms environment ticks. This was caught during the PX-021 telemetry pass—defer the work before filing perf bugs.
 
 ## Prototype resolution sweep
 - Use `tools/run_resolutions.sh` to open the project at 480×960, 600×360, 800×600, 1024×768, 1280×720, 1600×900, and 1920×1080 in sequence; close each window to advance.

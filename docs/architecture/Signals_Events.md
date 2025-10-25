@@ -37,3 +37,14 @@
 | `ci_changed(ci, bonus)` | `/root/SandboxService` | 2 | StatBus `/root/StatBus`, HUD comfort widget | none |
 | `power_warning(level)` | `/root/PowerService` | burst | HUD `/root/Main/UI`, AutomationService `/root/AutomationService` | debounce 0.5 s |
 | `throughput_updated(rate, queue)` | `/root/Main/ConveyorManager` | 60 | HUD stats, Telemetry probe | HUD samples at 10 Hz |
+
+## Signal Lifetimes & Context
+
+| Signal | Thread | Emission Timing | Notes |
+| --- | --- | --- | --- |
+| `environment_updated` | Main thread | End of EnvironmentService tick | Safe to mutate StatBus/SceneTree. |
+| `ci_changed` | Main thread | After SandboxService smoothing (2 Hz) | Renderer metrics may dispatch separately via StatsProbe worker in future PX-021.3. |
+| `power_state_changed` | Main thread | Immediately after power ledger recompute | Listener must avoid heavy work; throttle in UI. |
+| `auto_burst_enqueued` | Main thread | Within AutomationService tick | Emits during queue increments; avoid expensive logging. |
+| `throughput_updated` | Main thread | Every frame (60 Hz) | Downstream should sample at ≤10 Hz to avoid UI spam. |
+| `stats_probe_alert` *(future)* | Worker thread | After StatsProbe batch flush | Must `call_deferred` to interact with UI/SceneTree. |

@@ -1,8 +1,8 @@
 extends RefCounted
 class_name SandboxGrid
 
-const WIDTH := 128
-const HEIGHT := 72
+const WIDTH := 40
+const HEIGHT := 22
 
 const MATERIAL_AIR := 0
 const MATERIAL_SAND := 1
@@ -13,13 +13,15 @@ const MATERIAL_PLANT := 5
 const MATERIAL_STONE := 6
 const MATERIAL_STEAM := 7
 
+const MAX_ACTIVE_FRACTION := 0.45
+
 var heat: float = 0.5
 var moisture: float = 0.5
 var breeze: float = 0.5
 
-var _current: Array[Array] = []
-var _next: Array[Array] = []
-var _previous: Array[Array] = []
+var _current: Array = []
+var _next: Array = []
+var _previous: Array = []
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 func _init() -> void:
@@ -30,19 +32,21 @@ func _reset_buffers() -> void:
 	_next = []
 	_previous = []
 	for _y in range(HEIGHT):
-		var row: Array = []
-		row.resize(WIDTH)
-		for x in range(WIDTH):
-			row[x] = MATERIAL_AIR
-		var fresh: Array = row.duplicate()
-		_current.append(fresh)
-		_next.append(fresh.duplicate())
-		_previous.append(fresh.duplicate())
+		_current.append(_make_row())
+		_next.append(_make_row())
+		_previous.append(_make_row())
+
+func _make_row() -> Array[int]:
+	var row: Array[int] = []
+	row.resize(WIDTH)
+	for x in range(WIDTH):
+		row[x] = MATERIAL_AIR
+	return row
 
 func seed_grid() -> void:
 	_rng.randomize()
 	for y in range(HEIGHT):
-		var row: Array = _current[y]
+		var row: Array[int] = _current[y]
 		for x in range(WIDTH):
 			var roll: float = _rng.randf()
 			if roll < 0.02:
@@ -51,20 +55,21 @@ func seed_grid() -> void:
 				row[x] = MATERIAL_STONE
 			else:
 				row[x] = MATERIAL_AIR
-		var duplicate_row: Array = row.duplicate()
-		_current[y] = duplicate_row
-		_next[y] = duplicate_row.duplicate()
-		_previous[y] = duplicate_row.duplicate()
+		_sync_row_to_buffers(y)
+
+func _sync_row_to_buffers(y: int) -> void:
+	var row: Array[int] = _current[y]
+	var next_row: Array[int] = _next[y]
+	var prev_row: Array[int] = _previous[y]
+	for x in range(WIDTH):
+		var value: int = row[x]
+		next_row[x] = value
+		prev_row[x] = value
 
 func step(delta: float) -> void:
 	if WIDTH <= 0 or HEIGHT <= 0:
 		return
-	for y in range(HEIGHT):
-		var source: Array = _current[y]
-		var target: Array = _next[y]
-		for x in range(WIDTH):
-			target[x] = source[x]
-		_next[y] = target
+	_copy_current_into_next()
 	for y in range(HEIGHT):
 		for x in range(WIDTH):
 			var mat := int(_current[y][x])
@@ -84,6 +89,7 @@ func step(delta: float) -> void:
 				_:
 					pass
 	_swap_buffers()
+	_cap_active_cells()
 
 func compute_comfort() -> Dictionary:
 	var stability := _calculate_stability()
@@ -104,14 +110,10 @@ func get_snapshot() -> Array:
 	return snapshot
 
 func _swap_buffers() -> void:
-	_previous = []
-	for y in range(HEIGHT):
-		_previous.append(_current[y].duplicate())
-	var temp: Array[Array] = _current
+	_copy_current_into_previous()
+	var temp: Array = _current
 	_current = _next
 	_next = temp
-	for y in range(HEIGHT):
-		_next[y] = _current[y].duplicate()
 
 func _apply_sand(x: int, y: int) -> void:
 	var below := y + 1
@@ -152,7 +154,9 @@ func _apply_fire(x: int, y: int, delta: float) -> void:
 				_next[ny][nx] = MATERIAL_FIRE
 
 func _apply_plant(x: int, y: int, _delta: float) -> void:
-	var grow_chance: float = clamp(0.015 + moisture * 0.04 - heat * 0.012, 0.0, 0.06)
+	var overfill: float = max(active_cell_fraction() - MAX_ACTIVE_FRACTION, 0.0)
+	var suppression: float = clamp(1.0 - overfill * 3.0, 0.1, 1.0)
+	var grow_chance: float = clamp((0.010 + moisture * 0.02 - heat * 0.008) * suppression, 0.0, 0.04)
 	if _rng.randf() < grow_chance:
 		for dir in [[0, 1], [0, -1], [1, 0], [-1, 0]]:
 			var nx: int = x + dir[0]
@@ -165,7 +169,7 @@ func _apply_plant(x: int, y: int, _delta: float) -> void:
 		var nx2: int = x + dx
 		var ny2: int = y - 1
 		if ny2 >= 0 and nx2 >= 0 and nx2 < WIDTH:
-			if _current[ny2][nx2] == MATERIAL_WATER and _rng.randf() < 0.1:
+			if _current[ny2][nx2] == MATERIAL_WATER and _rng.randf() < 0.05:
 				_next[ny2][nx2] = MATERIAL_PLANT
 
 func _apply_steam(x: int, y: int) -> void:
@@ -182,6 +186,20 @@ func _move_cell(x: int, y: int, nx: int, ny: int) -> void:
 	var mat := int(_current[y][x])
 	_next[ny][nx] = mat
 	_next[y][x] = MATERIAL_AIR
+
+func _copy_current_into_next() -> void:
+	for y in range(HEIGHT):
+		var source: Array[int] = _current[y]
+		var target: Array[int] = _next[y]
+		for x in range(WIDTH):
+			target[x] = source[x]
+
+func _copy_current_into_previous() -> void:
+	for y in range(HEIGHT):
+		var source: Array[int] = _current[y]
+		var target: Array[int] = _previous[y]
+		for x in range(WIDTH):
+			target[x] = source[x]
 
 func _calculate_stability() -> float:
 	if _previous.is_empty():
@@ -228,3 +246,50 @@ func set_random_number_generator(rng: RandomNumberGenerator) -> void:
 	if rng == null:
 		return
 	_rng = rng
+
+func active_cell_fraction() -> float:
+	var total_cells: int = WIDTH * HEIGHT
+	if total_cells <= 0:
+		return 0.0
+	var active := 0
+	for y in range(HEIGHT):
+		var row: Array[int] = _current[y]
+		for x in range(WIDTH):
+			if row[x] != MATERIAL_AIR:
+				active += 1
+	return float(active) / float(total_cells)
+
+func _cap_active_cells() -> void:
+	var limit: int = int(round(MAX_ACTIVE_FRACTION * float(WIDTH * HEIGHT)))
+	var active: int = int(active_cell_fraction() * float(WIDTH * HEIGHT))
+	if active <= limit:
+		return
+	var to_remove: int = active - limit
+	var attempts: int = 0
+	var max_attempts: int = WIDTH * HEIGHT * 4
+	while to_remove > 0 and attempts < max_attempts:
+		attempts += 1
+		var x: int = _rng.randi_range(0, WIDTH - 1)
+		var y: int = _rng.randi_range(0, HEIGHT - 1)
+		var mat: int = int(_current[y][x])
+		if mat == MATERIAL_AIR or mat == MATERIAL_STONE:
+			continue
+		_current[y][x] = MATERIAL_AIR
+		_next[y][x] = MATERIAL_AIR
+		_previous[y][x] = MATERIAL_AIR
+		to_remove -= 1
+	if to_remove > 0:
+		for y in range(HEIGHT):
+			var row: Array[int] = _current[y]
+			for x in range(WIDTH):
+				if to_remove <= 0:
+					break
+				var mat := int(row[x])
+				if mat == MATERIAL_AIR or mat == MATERIAL_STONE:
+					continue
+				row[x] = MATERIAL_AIR
+				_next[y][x] = MATERIAL_AIR
+				_previous[y][x] = MATERIAL_AIR
+				to_remove -= 1
+			if to_remove <= 0:
+				break

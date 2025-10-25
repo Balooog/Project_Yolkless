@@ -1,0 +1,21 @@
+id	family	tier	tier_name	flavor	stat	base_mult	increment	cost_formula	unlock_via
+feed_handmix	feed_optimization	0	Hand Mix	"Mix grain by hand; hens learn your rhythm."	feed_rate	1.00	0.05	base+10*level	shop
+feed_automixer	feed_optimization	1	Auto Mixer	"Clockwork paddles keep the mash perfect."	feed_rate	1.05	0.07	base+25*level	shop
+feed_synth	feed_optimization	2	Feed Synth	"Lab-grown nutrients hum with gentle energy."	feed_capacity	1.10	0.10	base+50*level	research
+feed_printer	feed_optimization	3	Nutrient Printer	"Precision nozzles print meals on demand."	feed_capacity	1.20	0.12	base+90*level	research
+ship_crate	shipment_tech	0	Basic Crate	"The starter box says hello to the world."	shipment_yield	1.00	0.00	base+0	shop
+ship_drone	shipment_tech	1	Drone Fleet	"Now the sky joins your supply chain."	shipment_speed	1.00	0.10	base+40*level	shop
+ship_freighter	shipment_tech	2	Freighter Line	"Trucks queue at dawn for your eggs."	shipment_yield	1.10	0.15	base+80*level	research
+ship_hyperloop	shipment_tech	3	Hyperloop Conduit	"Crates vanish into light-wrapped rails."	shipment_yield	1.25	0.20	base+140*level	wisdom
+auto_hand	coop_automation	0	Hand Feeder	"Trusted crew keeps a gentle pace."	tick_rate	1.00	0.00	base+0	shop
+auto_unit	coop_automation	1	Auto Feeder	"Mechanical arms never miss a beat."	tick_rate	1.05	0.05	base+60*level	research
+auto_smart	coop_automation	2	Smart Coop	"Sensors listen for clucks before dispensing."	auto_ready	1.10	0.08	base+110*level	research
+auto_sentient	coop_automation	3	Self-aware Roost	"The coop hums: 'Rest now, we'll handle it.'"	auto_ready	1.15	0.10	base+160*level	wisdom
+power_candle	power_efficiency	0	Candle Array	"Simple warmth keeps the chill away."	power_ratio	1.00	0.00	base+0	shop
+power_solar	power_efficiency	1	Solar Canopy	"Panels tilt with the sun’s slow dance."	power_ratio	1.05	0.05	base+70*level	research
+power_fusion	power_efficiency	2	Fusion Core	"Containment rings glow soft blue."	power_reserve	1.12	0.08	base+130*level	research
+power_zero	power_efficiency	3	Zero-Point Grid	"The air shimmers with captured dawnlight."	power_reserve	1.20	0.12	base+200*level	wisdom
+comfort_chimes	comfort_tuning	0	Windchimes	"Each breeze whispers calm."	ci_cap	1.00	0.00	base+0	shop
+comfort_garden	comfort_tuning	1	Zen Garden	"Sand patterns mirror the coop’s heartbeat."	ci_cap	1.05	0.04	base+50*level	research
+comfort_orb	comfort_tuning	2	Orb Projector	"Light motes dance with the hens."	ci_gain	1.08	0.06	base+90*level	research
+comfort_dream	comfort_tuning	3	Dream Synth	"Harmonics soothe feathers and soul alike."	ci_gain	1.12	0.08	base+140*level	wisdom

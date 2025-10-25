@@ -18,8 +18,8 @@ var _eco: Economy
 var _strings: StringsCatalog
 var _visual_host: Node
 var _timer: Timer
-var _modules: Dictionary[StringName, Node] = {}
-var _module_scenes: Dictionary[StringName, PackedScene] = {
+var _modules: Dictionary = {}
+var _module_scenes: Dictionary = {
 	StringName(MODULE_FEED_PARTICLES_ID): FEED_PARTICLES_SCENE
 }
 var _last_feed_fraction: float = 0.0
@@ -70,7 +70,7 @@ func update_state(feed_fraction: float, pps: float, is_feeding: bool) -> void:
 	_last_is_feeding = is_feeding
 	var invalid: Array[StringName] = []
 	for key in _modules.keys():
-		var node := _modules[key]
+		var node = _modules[key]
 		if not node or not is_instance_valid(node):
 			invalid.append(key)
 			continue

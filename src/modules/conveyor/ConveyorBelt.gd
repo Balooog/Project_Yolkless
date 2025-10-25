@@ -94,9 +94,12 @@ func remove_item(item: ConveyorItem, queue_free_item: bool = false) -> void:
 
 func clear_items() -> void:
 	for item in _items:
-		if item.get_parent() == self:
-			remove_child(item)
-		item.queue_free()
+		if manager:
+			manager.recycle_item(item)
+		else:
+			if item.get_parent() == self:
+				remove_child(item)
+			item.queue_free()
 	_items.clear()
 	_item_velocity.clear()
 

@@ -138,6 +138,11 @@ theme_override_colors/fill = Color(0.95, 0.82, 0.18, 1)
 script = ExtResource("7")
 pulse_label_path = NodePath("../CapPulseLabel")
 
+[node name="ShipNowButton" type="Button" parent="UI/RootMargin/RootColumn/VBox/CapacityContainer"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+text = "Ship Now"
+
 [node name="PPSLabel" type="Label" parent="UI/RootMargin/RootColumn/VBox"]
 unique_name_in_owner = true
 
@@ -182,6 +187,11 @@ size_flags_horizontal = 3
 [node name="BuyCap" type="Button" parent="UI/RootMargin/RootColumn/VBox"]
 unique_name_in_owner = true
 size_flags_horizontal = 3
+
+[node name="BuyFeed" type="Button" parent="UI/RootMargin/RootColumn/VBox"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+text = "Buy Feed"
 
 [node name="BuyAuto" type="Button" parent="UI/RootMargin/RootColumn/VBox"]
 unique_name_in_owner = true

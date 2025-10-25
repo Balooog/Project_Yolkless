@@ -21,12 +21,15 @@ signal preset_selected(preset: StringName)
 @onready var feed_value: Label = %FeedValue
 @onready var power_value: Label = %PowerValue
 @onready var prestige_value: Label = %PrestigeValue
+@onready var comfort_value: Label = %ComfortValue
+@onready var comfort_bonus_value: Label = %ComfortBonusValue
 
 var _strings: StringsCatalog
 var _high_contrast := false
 var _last_state: Dictionary = {}
 var _preset_ids: Array[StringName] = []
 var _suppress_preset_signal := false
+var _sandbox_metrics: Dictionary = {}
 const DEFAULT_ICON_KEY := "weather_icon_day"
 
 func _ready() -> void:
@@ -55,6 +58,19 @@ func set_high_contrast(enabled: bool) -> void:
 
 func update_state(state: Dictionary) -> void:
 	_last_state = state.duplicate(true)
+	_update_state_texts()
+
+func update_comfort(ci: float, bonus: float, metrics: Dictionary = {}) -> void:
+	var clamped_ci: float = clamp(ci, 0.0, 1.0)
+	var clamped_bonus: float = max(bonus, 0.0)
+	var comfort_data: Dictionary = {
+		"ci": clamped_ci,
+		"bonus": clamped_bonus
+	}
+	if not metrics.is_empty():
+		for key in metrics.keys():
+			comfort_data[key] = metrics[key]
+	_sandbox_metrics = comfort_data
 	_update_state_texts()
 
 func set_presets(presets: Array) -> void:
@@ -102,11 +118,16 @@ func _update_state_texts() -> void:
 	var humidity_pct := float(_last_state.get("humidity_pct", 0.0))
 	var air_pct := float(_last_state.get("air_quality_pct", 0.0))
 	var modifiers: Dictionary = _last_state.get("modifiers", {})
+	var comfort_ci: float = float(_sandbox_metrics.get("ci", _last_state.get("comfort_index", 0.0)))
+	var comfort_bonus: float = float(_sandbox_metrics.get("bonus", _last_state.get("ci_bonus", 0.0)))
 
 	summary_label.text = "%s  |  %s" % [
 		_format_temp_summary(temp_c),
 		_format_air_summary(air_pct)
 	]
+	var comfort_summary := _format_comfort_summary(comfort_bonus)
+	if comfort_summary != "":
+		summary_label.text += "  |  %s" % comfort_summary
 
 	if weather_icon:
 		var icon_key := _weather_icon_key(phase, air_pct)
@@ -123,6 +144,10 @@ func _update_state_texts() -> void:
 	feed_value.text = "%0.1f×" % float(modifiers.get("feed", 1.0))
 	power_value.text = "%0.1f×" % float(modifiers.get("power", 1.0))
 	prestige_value.text = "%0.1f×" % float(modifiers.get("prestige", 1.0))
+	var comfort_percent: float = clamp(comfort_ci * 100.0, 0.0, 100.0)
+	comfort_value.text = "%0.0f%%" % comfort_percent
+	var bonus_percent: float = max(comfort_bonus * 100.0, 0.0)
+	comfort_bonus_value.text = "+%0.1f%%" % bonus_percent
 
 	_sync_selector_to_state()
 
@@ -145,6 +170,8 @@ func _apply_styles() -> void:
 		%FeedLabel,
 		%PowerLabel,
 		%PrestigeLabel,
+		%ComfortLabel,
+		%ComfortBonusLabel,
 		temp_value,
 		light_value,
 		humidity_value,
@@ -154,7 +181,9 @@ func _apply_styles() -> void:
 		reputation_value,
 		feed_value,
 		power_value,
-		prestige_value
+		prestige_value,
+		comfort_value,
+		comfort_bonus_value
 	]:
 		label.add_theme_color_override("font_color", label_color)
 	var normal := ArtRegistry.get_style("ui_button", _high_contrast)
@@ -196,6 +225,8 @@ func _apply_strings() -> void:
 	%FeedLabel.text = _strings.get_text("environment_feed_modifier", %FeedLabel.text)
 	%PowerLabel.text = _strings.get_text("environment_power_modifier", %PowerLabel.text)
 	%PrestigeLabel.text = _strings.get_text("environment_prestige_modifier", %PrestigeLabel.text)
+	%ComfortLabel.text = _strings.get_text("environment_comfort_index", %ComfortLabel.text)
+	%ComfortBonusLabel.text = _strings.get_text("environment_comfort_bonus", %ComfortBonusLabel.text)
 	_apply_tooltips()
 
 func _display_phase(phase: String) -> String:
@@ -211,6 +242,10 @@ func _format_temp_summary(temp_c: float) -> String:
 
 func _format_air_summary(air_pct: float) -> String:
 	return "%0.0f%% Air" % air_pct
+
+func _format_comfort_summary(comfort_bonus: float) -> String:
+	var bonus_percent: float = max(comfort_bonus * 100.0, 0.0)
+	return "Comfort +%0.1f%%" % bonus_percent
 
 func _weather_icon_key(phase: String, air_pct: float) -> String:
 	if air_pct < 55.0:
@@ -249,6 +284,10 @@ func _apply_tooltips() -> void:
 	_set_tooltip(power_value, "environment_power_modifier_tooltip")
 	_set_tooltip(%PrestigeLabel, "environment_prestige_modifier_tooltip")
 	_set_tooltip(prestige_value, "environment_prestige_modifier_tooltip")
+	_set_tooltip(%ComfortLabel, "environment_comfort_index_tooltip")
+	_set_tooltip(comfort_value, "environment_comfort_index_tooltip")
+	_set_tooltip(%ComfortBonusLabel, "environment_comfort_bonus_tooltip")
+	_set_tooltip(comfort_bonus_value, "environment_comfort_bonus_tooltip")
 
 func _set_tooltip(control: Control, key: String) -> void:
 	if control == null:

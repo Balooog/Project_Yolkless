@@ -1,0 +1,3 @@
+id	branch	stat	mult_add	mult_mul	cost	prereq	tier
+wisdom_1	production	mul_prod	0.0	1.10	3	-	0
+automation_insight	automation	auto_cd	-1.0	1.0	5	wisdom_1	1

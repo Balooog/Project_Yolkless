@@ -1,5 +1,7 @@
 # Architecture Overview
 
+> See [Glossary](../Glossary.md) for terminology.
+
 > High-level map for Project Yolkless systems. This snapshot keeps comfort-idle pacing and serenity at the core while clarifying responsibilities.
 
 ```mermaid
@@ -21,11 +23,12 @@ graph TD
 - Runs as an autoload, with CA-free logic for minimal frame cost.
 
 ## Sandbox Service
-- Consumes environment factors and runs the 128×72 comfort simulation.
+- Consumes environment factors and runs the 40×22 comfort simulation.
 - Outputs Comfort Index and `ci_bonus` to StatBus and Economy.
 - Update cadence 2–5 Hz with double buffering to prevent hitches.
-- Current implementation runs a 128×72 CA grid and outputs stability/diversity metrics; further tuning tracked in `Implementation_TODO.md`.
+- Current implementation runs a 40×22 CA grid and outputs stability/diversity metrics; further tuning tracked in `Implementation_TODO.md`.
 - `SandboxGrid` is a `RefCounted` helper with typed `Array[Array]` buffers so it can be preloaded headless; when extending it, keep the typed buffers and Godot 4 conditional syntax (`value_if_true if condition else value_if_false`) to avoid parser regressions.
+- Visual output flows through `src/sandbox/SandboxRenderer.gd`, mounted by `scenes/sandbox/SandboxCanvas.tscn` so `Main.gd` can replace the legacy environment root with the sandbox viewport when enabled.
 
 ## StatBus
 - Lightweight stat aggregation layer (see `StatBus_Catalog.md`).
@@ -61,4 +64,28 @@ graph TD
 - No gameplay threads yet; any future GPU sandbox path must double-buffer results on the main thread.
 - `SimulationClock` autoload currently orchestrates the fixed 10 Hz loop and enables services to opt-out of their legacy per-frame processing.
 
+### Tick-Order Timeline
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Environment
+    participant Sandbox
+    participant StatBus
+    participant Economy
+    participant UI
+    Environment->>Sandbox: emit factors (10 Hz)
+    Sandbox->>StatBus: update ci_bonus (2 Hz)
+    StatBus->>Economy: apply modifiers (10 Hz)
+    Economy->>UI: refresh HUD snapshots (5 Hz)
+```
+
+### Update Frequencies & Threading
+- EnvironmentService: 10 Hz (main thread)
+- PowerService / AutomationService / Economy: synchronous 10 Hz (main thread)
+- SandboxService: logic 2–5 Hz (main thread); renderer optional worker thread (future shader path)
+- UI: refreshed on demand, but heavyweight ops throttled to 5 Hz
+- All signals emitted from the main thread unless otherwise noted; GPU/off-thread experiments must marshal back to main before touching SceneTree.
+
 See also: [Architecture Alignment TODO](Implementation_TODO.md) for tasks needed to match this desired model.
+See also: [Service Data Flow Diagram](DataFlow_Diagram.md) for a visual overview.

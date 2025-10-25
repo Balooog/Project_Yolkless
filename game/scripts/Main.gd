@@ -3,8 +3,8 @@ extends Node
 const SETTINGS_PANEL_SCENE := preload("res://game/scenes/widgets/SettingsPanel.tscn")
 const DEBUG_OVERLAY_SCENE := preload("res://game/scenes/widgets/DebugOverlay.tscn")
 
-const ShopService := preload("res://game/scripts/ShopService.gd")
-const ShopDebug := preload("res://game/scripts/ShopDebug.gd")
+const ShopService := preload("res://src/shop/ShopService.gd")
+const ShopDebug := preload("res://src/shop/ShopDebug.gd")
 const EnvPanel := preload("res://ui/widgets/EnvPanel.gd")
 const EnvironmentService := preload("res://src/services/EnvironmentService.gd")
 const FactoryConveyor := preload("res://game/scripts/conveyor/FactoryConveyor.gd")
@@ -34,6 +34,7 @@ var environment_panel: EnvPanel
 @onready var lbl_conveyor: Label = %ConveyorLabel
 @onready var capacity_label: Label = %CapacityLabel
 @onready var capacity_bar: ProgressBar = %CapacityBar
+@onready var btn_ship_now: Button = %ShipNowButton
 @onready var capacity_container: VBoxContainer = capacity_label.get_parent() as VBoxContainer
 @onready var capacity_pulse_label: Label = %CapPulseLabel
 @onready var feed_status_label: Label = %FeedStatus
@@ -48,6 +49,7 @@ var environment_panel: EnvPanel
 @onready var btn_burst: Button = %BurstButton
 @onready var btn_prod: Button = %BuyProd
 @onready var btn_cap: Button = %BuyCap
+@onready var btn_feed: Button = %BuyFeed
 @onready var btn_auto: Button = %BuyAuto
 @onready var btn_promote: Button = %Promote
 @onready var btn_prestige: Button = %PrestigeButton
@@ -104,6 +106,8 @@ var _comfort_bonus: float = 0.0
 var factory_viewport: SubViewport
 
 func _ready() -> void:
+	_configure_input_actions()
+
 	res.setup(bal)
 	eco.setup(bal, res)
 	sav.setup(eco, res)
@@ -128,6 +132,7 @@ func _ready() -> void:
 	btn_burst.button_up.connect(_on_feed_button_up)
 	btn_prod.pressed.connect(func(): _attempt_upgrade("prod_1"))
 	btn_cap.pressed.connect(func(): _attempt_upgrade("cap_1"))
+	btn_feed.pressed.connect(func(): _attempt_upgrade("feed_storage"))
 	btn_auto.pressed.connect(func(): _attempt_upgrade("auto_1"))
 	btn_promote.pressed.connect(_attempt_promote)
 	btn_prestige.pressed.connect(_attempt_prestige)
@@ -138,6 +143,7 @@ func _ready() -> void:
 	btn_r_cap.pressed.connect(func(): _attempt_research("r_cap_1"))
 	btn_r_auto.pressed.connect(func(): _attempt_research("r_auto_1"))
 	offline_close.pressed.connect(func(): offline_popup.hide())
+	btn_ship_now.pressed.connect(_on_ship_now_pressed)
 
 	if ui_prototype:
 		if not ui_prototype.feed_requested.is_connected(_on_prototype_feed_requested):
@@ -263,6 +269,8 @@ func _ready() -> void:
 			power_service.power_warning.connect(_on_power_warning)
 	if sandbox_service and not sandbox_service.ci_changed.is_connected(_on_ci_changed):
 		sandbox_service.ci_changed.connect(_on_ci_changed)
+	if environment_panel and sandbox_service:
+		environment_panel.update_comfort(sandbox_service.current_ci(), sandbox_service.current_bonus(), sandbox_service.last_comfort_components())
 
 	if ui_prototype:
 		_sync_prototype_all()
@@ -299,6 +307,15 @@ func _process(delta: float) -> void:
 	_update_conveyor_spawn(delta)
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		if settings_panel and settings_panel.visible:
+			settings_panel.hide()
+			get_tree().set_input_as_handled()
+			return
+		if ui_prototype and ui_prototype.get_current_tab() != "home":
+			ui_prototype.show_tab("home")
+			get_tree().set_input_as_handled()
+			return
 	if event.is_action_pressed("feed_hold") or event.is_action_pressed("burst_hold"):
 		_attempt_feed_start("input")
 	if event.is_action_released("feed_hold") or event.is_action_released("burst_hold"):
@@ -312,7 +329,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _on_balance_reload() -> void:
 	_log("INFO", "BALANCE", "Hot reload acknowledged", {
-		"md5": _hash_from_logger("res://game/data/balance.tsv")
+		"md5": _hash_from_logger("res://data/balance.tsv")
 	})
 	_apply_strings()
 	_apply_hud_flags()
@@ -343,10 +360,16 @@ func _on_dump_triggered(amount: float, _new_balance: float) -> void:
 	if capacity_bar and capacity_bar.has_method("play_dump_pulse"):
 		capacity_bar.call("play_dump_pulse", eco.dump_animation_ms(), message)
 
+func _on_ship_now_pressed() -> void:
+	if eco == null:
+		return
+	var _payout := eco.manual_ship_now()
+
 func _apply_strings() -> void:
 	btn_settings.text = _strings_get("settings_button", btn_settings.text)
 	btn_export.text = _strings_get("export_button", btn_export.text)
 	btn_import.text = _strings_get("import_button", btn_import.text)
+	btn_ship_now.text = _strings_get("ship_now_button", btn_ship_now.text)
 	research_header_label.text = _strings_get("research_header_title", research_header_label.text)
 	var close_text := _strings_get("close_button", offline_close.text)
 	offline_close.text = close_text
@@ -481,6 +504,7 @@ func _update_upgrade_buttons() -> void:
 		return
 	_apply_shop_button(btn_prod, "prod_1", "buy_prod")
 	_apply_shop_button(btn_cap, "cap_1", "buy_cap")
+	_apply_shop_button(btn_feed, "feed_storage", "buy_feed")
 	_apply_auto_button()
 	_refresh_prototype_store_sheet()
 	_refresh_prototype_automation_sheet()
@@ -492,17 +516,25 @@ func _update_upgrade_buttons_legacy() -> void:
 	var cap_data: Dictionary = {}
 	if bal.upgrades.has("cap_1"):
 		cap_data = bal.upgrades["cap_1"]
+	var feed_data: Dictionary = {}
+	if bal.upgrades.has("feed_storage"):
+		feed_data = bal.upgrades["feed_storage"]
 	var prod_cost: float = eco.upgrade_cost("prod_1")
 	var cap_cost: float = eco.upgrade_cost("cap_1")
+	var feed_cost: float = eco.upgrade_cost("feed_storage")
 	var auto_cost: float = eco.upgrade_cost("auto_1")
 	var prod_template: String = _strings_get("buy_prod", btn_prod.text)
 	var cap_template: String = _strings_get("buy_cap", btn_cap.text)
+	var feed_template: String = _strings_get("buy_feed", btn_feed.text)
 	var prod_visible: bool = bool(prod_data.get("visible", true))
 	var cap_visible: bool = bool(cap_data.get("visible", true))
+	var feed_visible: bool = bool(feed_data.get("visible", true))
 	btn_prod.visible = prod_visible
 	btn_cap.visible = cap_visible
+	btn_feed.visible = feed_visible
 	var prod_text: String = prod_template.format({"cost": _format_num(prod_cost)})
 	var cap_text: String = cap_template.format({"cost": _format_num(cap_cost)})
+	var feed_text: String = feed_template.format({"cost": _format_num(feed_cost)})
 	if prod_visible:
 		btn_prod.text = prod_text
 	else:
@@ -511,6 +543,10 @@ func _update_upgrade_buttons_legacy() -> void:
 		btn_cap.text = cap_text
 	else:
 		btn_cap.tooltip_text = ""
+	if feed_visible:
+		btn_feed.text = feed_text
+	else:
+		btn_feed.tooltip_text = ""
 	var auto_allowed: bool = eco.can_purchase_upgrade("auto_1")
 	if prod_visible:
 		btn_prod.disabled = (not eco.can_purchase_upgrade("prod_1")) or eco.soft + 1e-6 < prod_cost
@@ -522,6 +558,11 @@ func _update_upgrade_buttons_legacy() -> void:
 		btn_cap.tooltip_text = cap_text
 	else:
 		btn_cap.disabled = true
+	if feed_visible:
+		btn_feed.disabled = (not eco.can_purchase_upgrade("feed_storage")) or eco.soft + 1e-6 < feed_cost
+		btn_feed.tooltip_text = feed_text
+	else:
+		btn_feed.disabled = true
 	var auto_requires: String = String(bal.upgrades.get("auto_1", {}).get("requires", "-"))
 	var requirement_text: String = ""
 	if not auto_allowed and auto_requires.begins_with("factory>="):
@@ -643,8 +684,20 @@ func _update_storage_view(storage_value: float = -1.0, capacity: float = -1.0) -
 	if capacity_label:
 		capacity_label.text = formatted
 		capacity_label.tooltip_text = formatted
-	if capacity_bar:
-		capacity_bar.tooltip_text = formatted
+		if capacity_bar:
+			capacity_bar.tooltip_text = formatted
+		if btn_ship_now:
+			var efficiency_pct: float = eco.manual_ship_efficiency() * 100.0
+			var efficiency_precision: int = 0 if efficiency_pct >= 10.0 else 1
+			var efficiency_formatted: String = _format_num(efficiency_pct, efficiency_precision)
+			var ready_tooltip_template: String = _strings_get("ship_now_tooltip_ready", btn_ship_now.tooltip_text)
+			var ready_tooltip: String = ready_tooltip_template.format({"efficiency": efficiency_formatted})
+			if storage <= 0.5:
+				btn_ship_now.disabled = true
+				btn_ship_now.tooltip_text = _strings_get("ship_now_tooltip_empty", ready_tooltip)
+			else:
+				btn_ship_now.disabled = false
+				btn_ship_now.tooltip_text = ready_tooltip
 	_prototype_metrics["storage"] = formatted
 	_commit_prototype_metrics()
 	_refresh_prototype_home_sheet()
@@ -872,6 +925,11 @@ func _on_conveyor_throughput_updated(rate: float, queue_len: int) -> void:
 func _on_ci_changed(ci: float, bonus: float) -> void:
 	_comfort_index = clamp(ci, 0.0, 1.0)
 	_comfort_bonus = max(bonus, 0.0)
+	if environment_panel:
+		var metrics: Dictionary = {}
+		if sandbox_service:
+			metrics = sandbox_service.last_comfort_components()
+		environment_panel.update_comfort(_comfort_index, _comfort_bonus, metrics)
 	_update_power_label()
 	if _prototype_available():
 		var bonus_text: String = _format_num(_comfort_bonus * 100.0, 1)
@@ -1186,7 +1244,7 @@ func _copy_diagnostics() -> void:
 	var logger := _get_logger()
 	var balance_md5: String = ""
 	if logger:
-		balance_md5 = logger.hash_md5_from_file("res://game/data/balance.tsv")
+		balance_md5 = logger.hash_md5_from_file("res://data/balance.tsv")
 	lines.append("Balance md5: %s" % balance_md5)
 	lines.append("Save hash: %s" % sav.get_current_hash())
 	lines.append("--- Last Log Lines ---")
@@ -1198,6 +1256,44 @@ func _copy_diagnostics() -> void:
 	var summary := "\n".join(lines)
 	DisplayServer.clipboard_set(summary)
 	_log("INFO", "UI", "Diagnostics copied", {"lines": lines.size()})
+
+func _configure_input_actions() -> void:
+	_configure_action_events("ui_accept", [Key.KEY_ENTER, Key.KEY_KP_ENTER], [JOY_BUTTON_A])
+	_configure_action_events("ui_cancel", [Key.KEY_ESCAPE], [JOY_BUTTON_B])
+	_configure_action_events("ui_up", [Key.KEY_UP, Key.KEY_W], [JOY_BUTTON_DPAD_UP])
+	_configure_action_events("ui_down", [Key.KEY_DOWN, Key.KEY_S], [JOY_BUTTON_DPAD_DOWN])
+	_configure_action_events("ui_left", [Key.KEY_LEFT, Key.KEY_A], [JOY_BUTTON_DPAD_LEFT])
+	_configure_action_events("ui_right", [Key.KEY_RIGHT, Key.KEY_D], [JOY_BUTTON_DPAD_RIGHT])
+	_configure_action_events("ui_tab_store", [], [JOY_BUTTON_Y])
+	_configure_action_events("ui_tab_research", [], [JOY_BUTTON_X])
+	_configure_action_events("feed_hold", [], [JOY_BUTTON_RIGHT_SHOULDER])
+
+func _configure_action_events(action: String, keycodes: Array[int], joy_buttons: Array[int]) -> void:
+	if not InputMap.has_action(action):
+		InputMap.add_action(action)
+	for keycode in keycodes:
+		if not _action_has_key(action, keycode):
+			var key_event := InputEventKey.new()
+			key_event.keycode = keycode
+			key_event.physical_keycode = keycode
+			InputMap.action_add_event(action, key_event)
+	for button in joy_buttons:
+		if not _action_has_joypad_button(action, button):
+			var joy_event := InputEventJoypadButton.new()
+			joy_event.button_index = button
+			InputMap.action_add_event(action, joy_event)
+
+func _action_has_key(action: String, keycode: int) -> bool:
+	for event in InputMap.action_get_events(action):
+		if event is InputEventKey and event.keycode == keycode:
+			return true
+	return false
+
+func _action_has_joypad_button(action: String, button_index: int) -> bool:
+	for event in InputMap.action_get_events(action):
+		if event is InputEventJoypadButton and event.button_index == button_index:
+			return true
+	return false
 
 func _hash_from_logger(path: String) -> String:
 	var logger := _get_logger()

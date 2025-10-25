@@ -1,12 +1,12 @@
 # Roadmap Index
 
-> Master reference for RM/PX documents and supporting guides.
+> Master reference for RM/PX documents and supporting guides. See `/docs/design/Fun_Fantasy_Expansion_Canvas.md` for emotional design targets introduced in the Fun & Fantasy sweep.
 
 ## Modules
 | RM | Summary | Key Docs |
 | -- | ------- | -------- |
 | [RM-009](RM-009.md) | Conveyor visuals & throughput | [ADR-0001](../adr/ADR-0001_conveyor-fidelity.md), [Performance Budgets](../quality/Performance_Budgets.md) |
-| [RM-010](RM-010.md) | UI & control architecture | [UI Principles](../ux/UI_Principles.md), [Style Guide](../art/Style_Guide.md), [PX-010.2](../prompts/PX-010.2.md) |
+| [RM-010](RM-010.md) | UI & control architecture | [UI Principles](../ux/UI_Principles.md), [Style Guide](../art/Style_Guide.md), [PX-010.2](../prompts/PX-010.2.md), [PX-010.3](../prompts/PX-010.3.md)–[PX-010.12](../prompts/PX-010.12.md) |
 | [RM-011](RM-011.md) | Early economy loop | [Balance Playbook](../design/Balance_Playbook.md), [Telemetry Replay](../quality/Telemetry_Replay.md) |
 | [RM-012](RM-012.md) | Upgrades & research | [Schemas](../data/Schemas.md), [StatBus Catalog](../architecture/StatBus_Catalog.md) |
 | [RM-013](RM-013.md) | Automation core | [Signals & Events](../architecture/Signals_Events.md) |
@@ -17,7 +17,7 @@
 | [RM-018](RM-018.md) | Power & resource | [Signals & Events](../architecture/Signals_Events.md), [PX-018.1](../prompts/PX-018.1.md) |
 | [RM-019](RM-019.md) | Factory layout | [Architecture Overview](../architecture/Overview.md) |
 | [RM-020](RM-020.md) | Art/audio pipeline | [Style Guide](../art/Style_Guide.md), [PX-020.2](../prompts/PX-020.2.md) |
-| [RM-021](RM-021.md) | Environment simulation | [Environment Playbook](../design/Environment_Playbook.md), [StatBus Catalog](../architecture/StatBus_Catalog.md), [PX-021.2](../prompts/PX-021.2.md) |
+| [RM-021](RM-021.md) | Environment simulation | [Environment Playbook](../design/Environment_Playbook.md), [StatBus Catalog](../architecture/StatBus_Catalog.md), [PX-021.2](../prompts/PX-021.2.md), [PX-021.3](../prompts/PX-021.3.md) |
 
 ## Dependency Graph
 ```mermaid

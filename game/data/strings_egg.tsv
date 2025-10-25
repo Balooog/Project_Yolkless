@@ -7,9 +7,10 @@ farm_stage	Farm Stage: {name}
 prestige_label	Reputation Stars: {prestige} (Next Rebrand: +{next})
 prestige_button_ready	Rebrand & Advance to Next Generation
 prestige_button_locked	Rebrand & Advance
-burst_button	HOLD TO FEED
+burst_button	Feed the Hens! (hold)
 buy_prod	Feeding Efficiency ({cost} 🥚)
 buy_cap	Coop Capacity ({cost} 🥚)
+buy_feed	Feed Silo ({cost} 🥚)
 buy_auto	Auto-Feeder System ({cost} 🥚){requirement}
 buy_auto_requirement	 — Requires {stage}
 promote_disabled	Stage Mastered
@@ -28,6 +29,9 @@ offline_summary_body	Your farm produced {amount} at {pct}% passive efficiency. F
 capacity_bar_label	Storage: {value} / {capacity}
 storage_label	Storage: {storage} / {capacity} ({percent}%)
 storage_dump_message	Shipment sent! +{amount}
+ship_now_button	Ship Now
+ship_now_tooltip_ready	Ship now for {efficiency}% of stored credits (instant payout).
+ship_now_tooltip_empty	Fill crates before shipping.
 feed_bar_label	Feed Supply
 feed_refilling	Refilling silo… {pct}%
 feed_empty	Feed empty
@@ -94,6 +98,8 @@ environment_reputation	Reputation
 environment_feed_modifier	Feed Modifier
 environment_power_modifier	Power Modifier
 environment_prestige_modifier	Prestige Modifier
+environment_comfort_index	Comfort Index
+environment_comfort_bonus	Comfort Bonus
 environment_phase_dawn	Dawn
 environment_phase_day	Day
 environment_phase_dusk	Dusk
@@ -108,3 +114,5 @@ environment_reputation_tooltip	Public sentiment toward the farm this cycle.
 environment_feed_modifier_tooltip	Current multiplier applied to feed-driven PPS gains.
 environment_power_modifier_tooltip	Current multiplier on generators and solar sources.
 environment_prestige_modifier_tooltip	Multiplier affecting rebrand star value.
+environment_comfort_index_tooltip	Sandbox serenity score (0–100) powering the comfort bonus.
+environment_comfort_bonus_tooltip	Live PPS boost granted by the comfort index (capped at +5%).

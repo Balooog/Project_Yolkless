@@ -1,0 +1,44 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://ui/components/BottomTabs.gd" id="1"]
+
+[node name="BottomTabs" type="Control"]
+script = ExtResource("1")
+size_flags_horizontal = 3
+size_flags_vertical = 0
+
+[node name="TabsContainer" type="HBoxContainer" parent="."]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+size_flags_vertical = 0
+theme_override_constants/separation = 8
+
+[node name="HomeTab" type="Button" parent="TabsContainer"]
+unique_name_in_owner = true
+text = "Home"
+clip_text = true
+size_flags_horizontal = 3
+
+[node name="StoreTab" type="Button" parent="TabsContainer"]
+unique_name_in_owner = true
+text = "Store"
+clip_text = true
+size_flags_horizontal = 3
+
+[node name="ResearchTab" type="Button" parent="TabsContainer"]
+unique_name_in_owner = true
+text = "Research"
+clip_text = true
+size_flags_horizontal = 3
+
+[node name="AutomationTab" type="Button" parent="TabsContainer"]
+unique_name_in_owner = true
+text = "Automation"
+clip_text = true
+size_flags_horizontal = 3
+
+[node name="PrestigeTab" type="Button" parent="TabsContainer"]
+unique_name_in_owner = true
+text = "Prestige"
+clip_text = true
+size_flags_horizontal = 3

@@ -44,7 +44,7 @@ Codex should reference this document when tuning balance, UI pacing, and system 
 | **Universal Paperclips** | Narrative shift + satire. | Surprise, philosophy. | Yolkless' anti-capitalist "sell farm" motif parallels this tone. |
 | **Clicker Heroes** | Idle RPG visuals. | Aesthetic satisfaction. | Comparable polish via conveyor, sandbox, and lighting systems. |
 | **A Dark Room / Candybox** | Mystery reveal. | Discovery drive. | Replicated through milestone-based environment growth. |
-| **Egg Inc.** | Touch-based boost + prestige "egg types." | Tactility + months-long content arc. | Core influence: hold-to-feed, research, multiple prestige goals, but framed as calm wisdom cycles. |
+| **Egg Inc.** | Touch-based boost + tiered research + fleet upgrades. | Tactility, escalating shipment fleets, prestige meta with egg types. | Mirrors hold-to-feed, layered research pacing, and shipment prestige; Yolkless reframes them with comfort-first tone. |
 | **Cells** | Evolutionary tech tree. | Endless curiosity & factual grounding. | Late-game research mirrors evolution theme through "ethos of progress" tree and colony expansion. |
 
 ---
@@ -89,6 +89,15 @@ Codex should reference this document when tuning balance, UI pacing, and system 
 
 ---
 
+### Design Aims vs Genre Tropes
+
+| Yolkless Stance | Embraced Tropes | Avoided Tropes | Notes |
+| --------------- | --------------- | -------------- | ----- |
+| Cozy pacing | Gentle exponential curves, generous offline earnings | Mandatory ad multipliers, prestige-only loops | Aligns with [Balance Playbook](../design/Balance_Playbook.md) scaling curves. |
+| Environmental integration | Sandbox CA visuals tied to Comfort Index bonus | Static backgrounds, intrusive monetisation | Comfort bonus substitutes ad boosts; see [Environment Playbook](../design/Environment_Playbook.md). |
+| Player respect | Transparent timers, published formulas | Loot-box gacha, surprise devaluation | Telemetry dashboards expose metrics for QA sign-off. |
+| Narrative continuity | Flavor copy reinforces care-first ethos | Fourth-wall monetisation jokes | Tone guidelines in [Narrative Hooks](../design/Narrative_Hooks.md). |
+
 ## 7. Strategic Takeaways
 
 1. Blend immediacy and depth -- Egg Inc's tactile boost + Kittens Game's layered systems.  
@@ -96,6 +105,13 @@ Codex should reference this document when tuning balance, UI pacing, and system 
 3. Deliver constant movement -- visible motion even when idle (conveyor, weather, sandbox).  
 4. Sustain with serenity, not stress -- no punitive mechanics; rewards come from balance.  
 5. Anchor prestige in meaning -- the act of letting go grants Wisdom and aesthetic change, echoing Paperclips' and Realm Grinder's philosophical arcs.
+
+### Egg Inc Parallels
+
+- **Hold-to-Boost:** Yolkless’ feed bursts evoke Egg Inc’s hold-to-hatch mechanic.
+- **Tiered Research:** Upgrade families and `/docs/design/Research_Tree.md` mimic Egg Inc’s research ladders with calm flavoring.
+- **Fleet Upgrades:** Shipment Tech grades (Crate → Hyperloop) parallel Egg Inc’s vehicle fleets, providing the same anticipation→awe arc.
+- **Prestige Meta:** Wisdom multipliers replicate the “new egg type” feeling with serene framing; see `/docs/design/Wisdom_Multipliers.md`.
 
 ---
 

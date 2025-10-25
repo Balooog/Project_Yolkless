@@ -50,7 +50,7 @@ func _refresh(refresh_tail: bool) -> void:
 	var balance_md5: String = ""
 	var logger_node := get_node_or_null("/root/Logger")
 	if logger_node is YolkLogger:
-		balance_md5 = (logger_node as YolkLogger).hash_md5_from_file("res://game/data/balance.tsv")
+		balance_md5 = (logger_node as YolkLogger).hash_md5_from_file("res://data/balance.tsv")
 	var save_hash: String = _save.get_current_hash() if _save != null else ""
 	var capacity: float = _economy.get_capacity_limit()
 	var storage_value: float = _economy.current_storage()

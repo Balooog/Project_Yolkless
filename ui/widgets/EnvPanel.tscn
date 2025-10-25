@@ -150,3 +150,19 @@ text = "Prestige Modifier"
 [node name="PrestigeValue" type="Label" parent="DetailPanel/DetailMargin/DetailGrid"]
 unique_name_in_owner = true
 text = "1.0×"
+
+[node name="ComfortLabel" type="Label" parent="DetailPanel/DetailMargin/DetailGrid"]
+unique_name_in_owner = true
+text = "Comfort Index"
+
+[node name="ComfortValue" type="Label" parent="DetailPanel/DetailMargin/DetailGrid"]
+unique_name_in_owner = true
+text = "0%"
+
+[node name="ComfortBonusLabel" type="Label" parent="DetailPanel/DetailMargin/DetailGrid"]
+unique_name_in_owner = true
+text = "Comfort Bonus"
+
+[node name="ComfortBonusValue" type="Label" parent="DetailPanel/DetailMargin/DetailGrid"]
+unique_name_in_owner = true
+text = "+0.0%"

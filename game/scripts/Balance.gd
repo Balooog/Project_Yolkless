@@ -12,7 +12,7 @@ var prestige := {}
 var prices := {}
 var hud_flags := {}
 
-@export var balance_path := "res://game/data/balance.tsv"
+@export var balance_path := "res://data/balance.tsv"
 
 func _ready() -> void:
 	load_balance()

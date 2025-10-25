@@ -15,7 +15,7 @@ Understanding when systems tick helps avoid double-counting updates or introduci
 
 ## Headless Simulation
 
-- `Economy.simulate_tick(delta)` mirrors `_process(delta)` for deterministic headless runs from `ci/econ_probe.gd`.
+- `Economy.simulate_tick(delta)` mirrors `_process(delta)` for deterministic headless runs via `tools/replay_headless.gd`.
 - `tools/headless_tick.sh` should call into the headless probe, which advances the economy in fixed steps (e.g., 0.1s).
 
 ## Service Hooks

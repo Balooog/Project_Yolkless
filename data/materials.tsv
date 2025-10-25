@@ -1,0 +1,9 @@
+material_id	hex	usage	contrast_hint
+bg_dawn	#2F3540	Night backdrop and low-light panels	light_text
+bg_day	#3E4A5C	Daytime canvas background	light_text
+accent_warm	#E3B341	Feed highlights and alert copy	dark_text
+accent_cool	#7FC8F8	Comfort overlays and environment highlights	dark_text
+success_soft	#4FB477	Shipment confirmation pulses	dark_text
+warning_soft	#F3A25B	Gentle warnings (power dips)	dark_text
+cb_sky	#1B9AAA	Color-blind friendly highlight	toggle_safe
+cb_coral	#FF7F50	Color-blind friendly accent	toggle_safe

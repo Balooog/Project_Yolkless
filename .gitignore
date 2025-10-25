@@ -4,3 +4,5 @@ logs/
 /assets/**/export/
 *.psd
 *.ai
+# Local Godot CLI binaries
+bin/

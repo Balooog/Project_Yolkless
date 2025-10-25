@@ -6,8 +6,8 @@ const ENV_SERVICE_SCRIPT := preload("res://src/services/EnvironmentService.gd")
 const BALANCE_SCRIPT := preload("res://game/scripts/Balance.gd")
 const RESEARCH_SCRIPT := preload("res://game/scripts/Research.gd")
 const ECONOMY_SCRIPT := preload("res://game/scripts/Economy.gd")
-const SHOP_SERVICE_SCRIPT := preload("res://game/scripts/ShopService.gd")
-const SHOP_DEBUG_SCRIPT := preload("res://game/scripts/ShopDebug.gd")
+const SHOP_SERVICE_SCRIPT := preload("res://src/shop/ShopService.gd")
+const SHOP_DEBUG_SCRIPT := preload("res://src/shop/ShopDebug.gd")
 
 func _initialize() -> void:
 	var root := get_root()

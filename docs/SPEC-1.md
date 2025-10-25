@@ -20,7 +20,7 @@ Design tone, pacing, and system layering follow the comfort-idle benchmarks summ
 
 ## Tech
 - **Engine:** Godot 4.x (GDScript).
-- **Data:** `game/data/balance.tsv` (hot-reload with `R`).
+- **Data:** `data/balance.tsv` (hot-reload with `R`).
 - **Scripts:** `game/scripts/*`; Scenes in `game/scenes/*`.
 - **Run:** `tools/run_dev.sh`; Build: `tools/build_linux.sh` (preset: “Linux”).
 
