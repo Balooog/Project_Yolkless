@@ -27,8 +27,9 @@
 - Add perf counters to `/docs/quality/Telemetry_Replay.md` scenarios.
 - Any module exceeding budgets must file an ADR or PX hotfix referencing this document.
 - StatsProbe exports per-service tick metrics (`sandbox/environment/automation/power/economy/ui`) and renderer telemetry (`sandbox_render_ms_avg`, `sandbox_render_ms_p95`, `sandbox_uploads_per_sec`, `sandbox_dirty_pixels_avg`) so nightly telemetry can flag budget regressions automatically.
+- Renderer smoke tests run through lavapipe (`VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json`) via `./tools/ui_viewport_matrix.sh`; track p95 render cost when comparing Vulkan vs hardware captures.
 - UI visual regression harness (PX-010.9) compares baseline screenshots; >1% diff requires review before merge.
-- **Latest StatsProbe benchmark (2025-10-25):** `sandbox_tick_ms_p95=1.85 ms`, `active_cells_max≈243`, `pps_avg≈0.94`. Budgets are now satisfied after reducing the sandbox grid footprint and pooling conveyor items; keep an eye on these metrics as belts become busier.
+- **Latest StatsProbe benchmark (2025-10-26):** `sandbox_tick_ms_p95=0.756 ms`, `environment_tick_ms_p95=0.02 ms`, `active_cells_max=259`, `pps_avg≈0.424`. Budgets are holding on 4.5.1 after the smoothing tweaks; keep an eye on cell growth as belts become busier.
 
 ## Memory & Draw Call Targets
 

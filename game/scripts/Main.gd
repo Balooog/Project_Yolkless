@@ -10,12 +10,6 @@ const EnvironmentService := preload("res://src/services/EnvironmentService.gd")
 const FactoryConveyor := preload("res://game/scripts/conveyor/FactoryConveyor.gd")
 const UIArchitecturePrototype := preload("res://ui/prototype/UIArchitecturePrototype.gd")
 
-const FEED_FILL_HIGH_DEFAULT := Color(0.2, 0.8, 0.35, 1)
-const FEED_FILL_MED_DEFAULT := Color(0.95, 0.68, 0.2, 1)
-const FEED_FILL_LOW_DEFAULT := Color(0.9, 0.2, 0.2, 1)
-const FEED_FILL_HIGH_CONTRAST := Color(0.0, 0.85, 0.2, 1)
-const FEED_FILL_MED_CONTRAST := Color(0.98, 0.78, 0.1, 1)
-const FEED_FILL_LOW_CONTRAST := Color(1.0, 0.22, 0.22, 1)
 const FEED_FLASH_COLOR := Color(1, 0.7, 0.7, 1)
 const DEFAULT_ENV_STAGE_SIZE := Vector2(640, 360)
 
@@ -76,6 +70,7 @@ var settings_panel: SettingsPanel
 var debug_overlay: CanvasLayer
 var high_contrast_enabled := false
 var visuals_enabled := true
+var color_palette: StringName = ProceduralFactory.PALETTE_DEFAULT
 var environment_service: EnvironmentService
 var power_service: PowerService
 var automation_service: AutomationService
@@ -198,8 +193,12 @@ func _ready() -> void:
 	settings_panel.text_scale_selected.connect(_on_text_scale_selected)
 	settings_panel.diagnostics_requested.connect(_on_diagnostics_requested)
 	settings_panel.high_contrast_toggled.connect(_on_high_contrast_toggled)
+	settings_panel.color_palette_selected.connect(_on_color_palette_selected)
 	settings_panel.visuals_toggled.connect(_on_visuals_toggled)
 	settings_panel.reset_requested.connect(_on_reset_requested)
+	settings_panel.set_color_palette(color_palette)
+	ArtRegistry.set_palette(color_palette)
+	ProceduralFactory.set_palette(color_palette)
 	settings_panel.set_high_contrast(high_contrast_enabled)
 	settings_panel.set_visuals_enabled(visuals_enabled)
 
@@ -737,7 +736,7 @@ func _update_feed_ui() -> void:
 			feed_hint_label.tooltip_text = ""
 	var fill_style: StyleBox = ArtRegistry.get_style("ui_progress_fill", high_contrast_enabled)
 	if fill_style is StyleBoxFlat:
-		(fill_style as StyleBoxFlat).bg_color = _get_feed_fill_color(fraction)
+		(fill_style as StyleBoxFlat).bg_color = ProceduralFactory.feed_fill_color(fraction, high_contrast_enabled)
 	feed_bar.add_theme_stylebox_override("fill", fill_style)
 	if feed_bar.modulate != Color.WHITE:
 		feed_bar.modulate = Color.WHITE
@@ -755,19 +754,6 @@ func _update_feed_ui() -> void:
 		ui_prototype.set_canvas_message(status)
 	_update_power_label()
 	_refresh_prototype_home_sheet()
-
-func _get_feed_fill_color(fraction: float) -> Color:
-	if high_contrast_enabled:
-		if fraction >= 0.66:
-			return FEED_FILL_HIGH_CONTRAST
-		if fraction >= 0.33:
-			return FEED_FILL_MED_CONTRAST
-		return FEED_FILL_LOW_CONTRAST
-	if fraction >= 0.66:
-		return FEED_FILL_HIGH_DEFAULT
-	if fraction >= 0.33:
-		return FEED_FILL_MED_DEFAULT
-	return FEED_FILL_LOW_DEFAULT
 
 func _prototype_available() -> bool:
 	return ui_prototype != null
@@ -915,6 +901,13 @@ func _on_high_contrast_toggled(enabled: bool) -> void:
 	var director := _get_visual_director()
 	if director:
 		director.set_high_contrast(enabled)
+	if environment_panel:
+		environment_panel.set_high_contrast(enabled)
+	if settings_panel:
+		settings_panel.set_high_contrast(high_contrast_enabled)
+
+func _on_color_palette_selected(palette: StringName) -> void:
+	_apply_palette_change(palette)
 
 func _on_feed_state_changed(_active: bool) -> void:
 	_update_feed_ui()
@@ -984,7 +977,20 @@ func _on_environment_preset_changed(preset: StringName) -> void:
 		environment_panel.select_preset(preset)
 	_center_environment_root()
 
+func _apply_palette_change(palette: StringName) -> void:
+	var resolved := ProceduralFactory.ensure_palette(palette)
+	if color_palette == resolved:
+		return
+	color_palette = resolved
+	ArtRegistry.set_palette(color_palette)
+	ProceduralFactory.set_palette(color_palette)
+	if settings_panel:
+		settings_panel.set_color_palette(color_palette)
+	_apply_contrast_theme()
+
 func _apply_contrast_theme() -> void:
+	ArtRegistry.set_palette(color_palette)
+	ProceduralFactory.set_palette(color_palette)
 	var panel_style := ArtRegistry.get_style("ui_panel", high_contrast_enabled)
 	if panel_style:
 		stats_box.add_theme_stylebox_override("panel", panel_style)
@@ -1189,7 +1195,7 @@ func _on_settings_pressed() -> void:
 	settings_panel.populate_strings()
 	settings_panel.set_high_contrast(high_contrast_enabled)
 	settings_panel.set_visuals_enabled(visuals_enabled)
-	settings_panel.show_panel(text_scale, high_contrast_enabled)
+	settings_panel.show_panel(text_scale, high_contrast_enabled, color_palette)
 
 func apply_text_scale(scale: float) -> void:
 	text_scale = scale
@@ -1266,7 +1272,10 @@ func _configure_input_actions() -> void:
 	_configure_action_events("ui_right", [Key.KEY_RIGHT, Key.KEY_D], [JOY_BUTTON_DPAD_RIGHT])
 	_configure_action_events("ui_tab_store", [], [JOY_BUTTON_Y])
 	_configure_action_events("ui_tab_research", [], [JOY_BUTTON_X])
-	_configure_action_events("feed_hold", [], [JOY_BUTTON_RIGHT_SHOULDER])
+	_configure_action_events("ui_tab_prev", [], [JOY_BUTTON_LEFT_SHOULDER])
+	_configure_action_events("ui_tab_next", [], [JOY_BUTTON_RIGHT_SHOULDER])
+	_configure_action_events("feed_hold", [], [])
+	_add_joy_axis_event("feed_hold", JOY_AXIS_TRIGGER_RIGHT, 0.5)
 
 func _configure_action_events(action: String, keycodes: Array[int], joy_buttons: Array[int]) -> void:
 	if not InputMap.has_action(action):
@@ -1288,6 +1297,18 @@ func _action_has_key(action: String, keycode: int) -> bool:
 		if event is InputEventKey and event.keycode == keycode:
 			return true
 	return false
+
+func _add_joy_axis_event(action: String, axis: int, threshold: float) -> void:
+	if not InputMap.has_action(action):
+		InputMap.add_action(action)
+	for event in InputMap.action_get_events(action):
+		if event is InputEventJoypadMotion and event.axis == axis and is_equal_approx(event.axis_value, threshold):
+			return
+	var joy_event := InputEventJoypadMotion.new()
+	joy_event.axis = axis
+	joy_event.axis_value = threshold
+	joy_event.deadzone = 0.5
+	InputMap.action_add_event(action, joy_event)
 
 func _action_has_joypad_button(action: String, button_index: int) -> bool:
 	for event in InputMap.action_get_events(action):

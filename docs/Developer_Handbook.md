@@ -4,13 +4,13 @@
 
 ## Getting Started
 1. Clone the repository and install prerequisites (see [`CONTRIBUTING.md`](../CONTRIBUTING.md)).
-2. Ensure the renderer-enabled Godot binary is installed at `/mnt/c/src/godot/Godot_v4.5.1-stable_win64_console.exe` and load the shared `.env` (`source .env`).
+2. Run `source .env && bash tools/bootstrap_godot.sh` to install the Linux CLI (lavapipe). Windows capture stations may still install the console build at `C:\src\godot\Godot_v4.5.1-stable_win64_console.exe` for hardware screenshots.
 3. Run the smoke flow:
    ```bash
    source .env && ./tools/check_only_ci.sh
    ./tools/ui_viewport_matrix.sh
    ./tools/ui_compare.sh dev/screenshots/ui_baseline dev/screenshots/ui_current
-   $GODOT_BIN --headless --script res://tools/replay_headless.gd --duration=120 --seed=42
+   $(bash tools/godot_resolver.sh) --headless --script res://tools/replay_headless.gd --duration=120 --seed=42
    ```
 4. Review replay JSON for performance metrics and ensure UILint reports zero issues.
 

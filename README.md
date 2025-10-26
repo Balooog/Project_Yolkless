@@ -8,7 +8,8 @@ Idle game prototype built with Godot 4.x. This scaffold provides:
 
 ## Requirements
 
-- Renderer-enabled Godot 4.5.1 console build at `/mnt/c/src/godot/Godot_v4.5.1-stable_win64_console.exe` (via repo `.env`)
+- Linux CLI: run `source .env` and `bash tools/bootstrap_godot.sh` to install **Godot_v4.5.1-stable_linux.x86_64** into `./bin/`; `tools/godot_resolver.sh` uses this path for WSL, native Linux, and CI (lavapipe software Vulkan).
+- Windows capture stations (optional): keep `C:\src\godot\Godot_v4.5.1-stable_win64_console.exe` for hardware screenshots and set `GODOT_BIN` manually when needed.
 
 ## Project Structure
 
@@ -29,7 +30,7 @@ When adding new systems, prefer the `src/`, `ui/`, and `data/` layout and migrat
 - Strings and balance data hot-reload together; editing `strings_egg.tsv` + tapping `R` updates live UI text.
 - Set `Config.seed` in the inspector to a non-zero value to enable deterministic RNG for repeatable PPS/burst timing runs.
 - Early game now starts at 0/50 credits; Feeding Efficiency (`prod_1`, 50 🥚) unlocks after the first shipment, Feed Silo (`feed_storage`, 90 🥚) is reachable within five minutes, and the new **Ship Now** button lets you cash in crates instantly at a reduced payout.
-- CI smoke tests: run `source .env && ./tools/ci_smoke.sh` for a sub-second load check; if the import cache is cold it performs a one-time `--import` warmup first. When a deeper pass is required, use `./tools/check_only.sh`, which wraps `$GODOT_BIN --headless --verbose --check-only project.godot` and streams output to `logs/godot-check.log`; give it up to 600 s on fresh workspaces.
+- CI smoke tests: run `source .env && ./tools/ci_smoke.sh` for a sub-second load check; if the import cache is cold it performs a one-time `--import` warmup first. When a deeper pass is required, use `./tools/check_only.sh`, which resolves the Linux CLI automatically and streams `--check-only` output to `logs/godot-check.log`; give it up to 600 s on fresh workspaces.
 
 ## Ship cycle (WSL quick flow)
 
@@ -112,12 +113,12 @@ code docs/prompts/PX-021.1.md   # paste canvas text
 
 ## Scripts
 
-- `tools/run_dev.sh` — launch the game (set `NO_WINDOW=1` to use headless mode)
-- `tools/ci_smoke.sh` — warm imports if needed, then run the fast CI smoke script
-- `tools/bootstrap_godot.sh` — validates the shared renderer-enabled Windows console build and exports `GODOT_BIN`
-- `tools/check_only.sh` — verbose `$GODOT_BIN --check-only` wrapper that tees logs to `logs/godot-check.log`
-- `tools/check_only_ci.sh` — CI-friendly wrapper that ensures `GODOT_BIN` is populated and emits ✅/❌ around `tools/check_only.sh`
-- `tools/headless_tick.sh <seconds>` — runs the replay harness (`$GODOT_BIN --headless` + `res://tools/replay_headless.gd`) and writes telemetry to `logs/telemetry/`
+- `tools/run_dev.sh` — launch the game (set `NO_WINDOW=1` to use headless mode); resolves the Linux CLI automatically.
+- `tools/ci_smoke.sh` — warm imports if needed, then run the fast CI smoke script with lavapipe defaults.
+- `tools/bootstrap_godot.sh` — downloads/verifies the 4.5.1 Linux CLI tarball into `./bin/`.
+- `tools/check_only.sh` — verbose `--check-only` wrapper that tees logs to `logs/godot-check.log`.
+- `tools/check_only_ci.sh` — CI-friendly wrapper that emits ✅/❌ around `tools/check_only.sh`.
+- `tools/headless_tick.sh <seconds>` — runs the replay harness (`res://tools/replay_headless.gd`) in headless mode and writes telemetry to `logs/telemetry/`.
 - `tools/ui_viewport_matrix.sh` — capture UI across S/M/L viewports (pass `--capture` to emit PNGs via `$GODOT_BIN`)
 - `tools/ui_baseline.sh` — refresh baseline PNGs before committing visual changes
 - `tools/sync_ui_screenshots.sh` — copy captured PNGs from Godot’s user directory into `dev/screenshots/ui_current/`

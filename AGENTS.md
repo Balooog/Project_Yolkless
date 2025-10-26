@@ -1,7 +1,7 @@
 # Project Yolkless Agent Primer
 
 ## Session Kickoff Checklist
-- Confirm `GODOT_BIN` resolves to `/mnt/c/src/godot/Godot_v4.5.1-stable_win64_console.exe` (`Godot_v4.5.1-stable_win64_console.exe` on Windows). Use `source .env` and `$GODOT_BIN --version` as outlined in [Build Cookbook](docs/dev/Build_Cookbook.md); expect `Godot Engine v4.5.1.stable.official`.
+- Confirm `$(bash tools/godot_resolver.sh)` resolves to `./bin/Godot_v4.5.1-stable_linux.x86_64` inside WSL (Windows GPU captures may still point `GODOT_BIN` to `C:\src\godot\Godot_v4.5.1-stable_win64_console.exe`). Use `source .env` and `$GODOT_BIN --version` as outlined in [Build Cookbook](docs/dev/Build_Cookbook.md); expect `Godot Engine v4.5.1.stable.official`.
 - Skim `README.md`, `docs/ROADMAP.md`, `docs/SPEC-1.md`, and the [Glossary](docs/Glossary.md) to refresh gameplay loop, terminology (Egg Credits, Comfort Index), and active roadmap beats.
 - Review `docs/architecture/Overview.md`, `docs/architecture/Signals_Events.md`, and [Data Flow Diagram](docs/architecture/DataFlow_Diagram.md) before touching services/autoloads to stay aligned with the 10 Hz simulation spine and signal contracts.
 - Check `docs/dev/build_gotchas.md` and `docs/dev/Tooling.md` for newly logged Godot pitfalls (typed variables, autoload base classes, ternary syntax changes, version policy).
@@ -34,15 +34,15 @@ Always surface assumptions, blockers, and recommended verifications in the final
   ```bash
   source .env && ./tools/check_only_ci.sh
   ./tools/ui_viewport_matrix.sh && ./tools/ui_compare.sh
-  $GODOT_BIN --headless --script res://tools/replay_headless.gd --duration=300 --seed=42
+  $(bash tools/godot_resolver.sh) --headless --script res://tools/replay_headless.gd --duration=300 --seed=42
   ./tools/ui_baseline.sh   # refresh baseline only after design approval
-  $GODOT_BIN --headless --script res://tools/uilint_scene.gd res://scenes/ui_smoke/MainHUD.tscn
+  $(bash tools/godot_resolver.sh) --headless --script res://tools/uilint_scene.gd res://scenes/ui_smoke/MainHUD.tscn
   ```
 - Use `tools/nightly_replay.sh` or `tools/gen_dashboard.py` to inspect nightly performance (metrics definitions in `docs/quality/Telemetry_Replay.md`).
 - Capture profiler data (avg/p95) when altering core services and compare against `docs/quality/Performance_Budgets.md`.
 - After balance or string edits, launch via `./tools/run_dev.sh`, hot reload with `R`, and monitor the debug overlay (`F3`) plus EnvPanel comfort tooltip.
 - Keep logs (`logs/yolkless.log`, telemetry CSV/JSON, dashboard HTML) as artifacts for PRs per `CONTRIBUTING.md`.
-- Ensure CI pipeline stages (`validate-tables`, `build`, `replay`, `ui-baseline`, `generate-dashboard`, `auto-changelog`) complete successfully before merge.
+- Ensure CI pipeline stages (`validate-tables`, `renderer-setup`, `build`, `replay`, `ui-baseline`, `generate-dashboard`, `auto-changelog`) complete successfully before merge.
 
 ## Reference Docs to Keep Handy
 - `docs/Developer_Handbook.md` — centralized onboarding/workflow summary.

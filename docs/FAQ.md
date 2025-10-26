@@ -3,7 +3,7 @@
 ## Build & Run
 
 **Q:** Why does Codex fail to execute the Godot Snap package?  
-**A:** Snap lacks required permissions for headless capture. Use the shared Windows console build (`/mnt/c/src/godot/Godot_v4.5.1-stable_win64_console.exe`) via the repo `.env` (see [Build Cookbook](dev/Build_Cookbook.md)).
+**A:** Snap lacks required permissions for headless capture. Instead, run `bash tools/bootstrap_godot.sh` (downloads the Linux tarball) and rely on `tools/godot_resolver.sh` + `.env` to supply `GODOT_BIN` (see [Build Cookbook](dev/Build_Cookbook.md)). Windows GPU captures can still point `GODOT_BIN` at the console build when needed.
 
 **Q:** Where are screenshots saved?  
 **A:** Local captures go to `dev/screenshots/`; CI artifacts live under `artifacts/ui_baseline/` in the pipeline.
@@ -12,7 +12,7 @@
 **A:** Run `./tools/validate_tables.py --tables=data/upgrade.tsv,data/research.tsv` before committing.
 
 **Q:** How do I rerun the nightly replay manually?  
-**A:** `$GODOT_BIN --headless --script res://tools/replay_headless.gd --duration=300 --seed=42`.
+**A:** `$(bash tools/godot_resolver.sh) --headless --script res://tools/replay_headless.gd --duration=300 --seed=42`.
 
 ## CI & Automation
 

@@ -2,12 +2,19 @@
 set -euo pipefail
 export PATH="/snap/bin:$PATH"
 
-: "${GODOT_BIN:=/mnt/c/src/godot/Godot_v4.5.1-stable_win64_console.exe}"
+: "${VK_ICD_FILENAMES:=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json}"
+export VK_ICD_FILENAMES
 
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)/.."
-if ! command -v "$GODOT_BIN" >/dev/null 2>&1; then
-  echo "Godot binary not found at $GODOT_BIN. Install the renderer-enabled CLI or update GODOT_BIN." >&2
-  exit 1
+
+if [[ -z "${GODOT_BIN:-}" ]] || [[ ! -x "${GODOT_BIN:-}" ]]; then
+	GODOT_BIN="$(bash "${ROOT_DIR}/tools/godot_resolver.sh")"
+	export GODOT_BIN
+fi
+
+if [[ ! -x "$GODOT_BIN" ]]; then
+	echo "Godot binary not found at $GODOT_BIN. Install the renderer-enabled CLI or update GODOT_BIN." >&2
+	exit 1
 fi
 LOG_DIR="$ROOT_DIR/logs"
 mkdir -p "$LOG_DIR"

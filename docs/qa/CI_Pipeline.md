@@ -4,32 +4,36 @@
 
 ## Stage Overview
 1. `validate-tables` — run schema checks via `tools/validate_tables.py`.
-2. `build` — call `tools/check_only_ci.sh` to ensure warnings-as-errors clean build.
-3. `replay` — execute headless replay (`tools/replay_headless.gd`) and publish JSON/CSV artifacts.
-4. `ui-baseline` — capture viewport matrix, compare against baseline PNGs.
-5. `publish-artifacts` — upload logs, diffs, and telemetry summaries.
-6. `generate-dashboard` — build nightly metrics HTML (see [Metrics Dashboard Spec](Metrics_Dashboard_Spec.md)).
-7. (Release tags) `auto-changelog` — generate changelog via `tools/gen_changelog.py` and attach to release (see [Release Playbook](../ops/Release_Playbook.md)).
+2. `renderer-setup` — install lavapipe dependencies (`mesa-vulkan-drivers`, `vulkan-tools`, `libvulkan1`) and source `.env` for `VK_ICD_FILENAMES`.
+3. `build` — call `tools/check_only_ci.sh` to ensure warnings-as-errors clean build.
+4. `replay` — execute headless replay (`tools/replay_headless.gd`) and publish JSON/CSV artifacts.
+5. `ui-baseline` — capture viewport matrix using Vulkan, compare against baseline PNGs.
+6. `publish-artifacts` — upload logs, diffs, and telemetry summaries.
+7. `generate-dashboard` — build nightly metrics HTML (see [Metrics Dashboard Spec](Metrics_Dashboard_Spec.md)) via `tools/generate_dashboard.sh`.
+8. (Release tags) `auto-changelog` — generate changelog via `tools/gen_changelog.py` and attach to release (see [Release Playbook](../ops/Release_Playbook.md)).
 
 ## Pipeline Diagram
 
 ```mermaid
 graph LR
-    A[validate-tables] --> B[build]
-    B --> C[replay]
-    C --> D[ui-baseline]
-    D --> E[publish-artifacts]
-    E --> F[generate-dashboard]
-    E --> G[auto-changelog (tags)]
+    A[validate-tables] --> B[renderer-setup]
+    B --> C[build]
+    C --> D[replay]
+    D --> E[ui-baseline]
+    E --> F[publish-artifacts]
+    F --> G[generate-dashboard]
+    F --> H[auto-changelog (tags)]
 ```
 
 ## Artifacts
 | Stage | Artifact | Notes |
 | --- | --- | --- |
 | validate-tables | `logs/validation/*.log` | Parser errors/warnings. |
+| renderer-setup | `logs/renderer-setup.txt` | Apt output for lavapipe install + resolver diagnostics. |
 | replay | `reports/nightly/*.json`, `logs/perf/*.csv` | Feed into [Telemetry & Replay](../quality/Telemetry_Replay.md). |
 | ui-baseline | `ui_diff_report.html`, screenshot PNGs | Reviewed against [RM-010 UI checklist](RM-010-ui-checklist.md). |
 | publish-artifacts | `artifacts/*.zip` | Contains UILint.txt, StatsProbe alerts, baseline diff summary.
+| generate-dashboard | `reports/dashboard/index.html` | Produced by `tools/generate_dashboard.sh`; attached for LiveOps review. |
 
 ## Failure Handling
 - Any stage failure blocks merge.

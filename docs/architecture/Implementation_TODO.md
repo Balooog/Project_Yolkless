@@ -44,7 +44,7 @@ Track items required to bring the current codebase in line with the high-level d
 - [ ] File PX for save-schema migration once versioned format is designed.
 
 ## UX / Art
-- [ ] Implement controller navigation and color-blind palettes per `UI_Principles.md`. *(Bundle into forthcoming RM-010 PX.)*
+- [x] Implement controller navigation and color-blind palettes per `UI_Principles.md`. *(FocusMap wiring and palette toggles landed under RM-010.)*
 - [ ] Create palette export script `tools/export_palette.gd` and populate `materials.tsv`. *(Tie to art pipeline PX.)*
 
 ## Reference

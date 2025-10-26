@@ -17,6 +17,7 @@
 ## Input Mapping
 - Keyboard: `1`–`5` change tabs Home→Prestige in order, `F` triggers feed action.
 - Gamepad: verify face buttons map per design — `A` activates, `B` backs to Home, `Y` opens Store, `X` opens Research, RT (`feed_hold`) begins bursts. Confirm D-pad moves focus across dock/bottom-bar buttons.
+- Gamepad shoulder shortcuts: `LB/RB` cycle tabs (Home→Prestige), ensure cycling preserves focus in the new sheet.
 - Focus traversal: cycle forward (`Tab`) and backward (`Shift+Tab`) keeps banner focusable, then tabs, then sheet content.
 - Controller-only pass: navigate all sheets, dismiss with `B/Esc`, ensure feed remains on RT/Space; verify focus highlight meets contrast targets from [UI Principles](../ux/UI_Principles.md).
 
@@ -25,6 +26,7 @@
 - Alert pill retains contrast against banner background (check with Greyscale/Simulate protanopia tools).
 - Canvas placeholder remains interactive (mouse/touch) when sheets are hidden.
 - Tooltips appear on hover/focus/long-press for truncated labels; confirm they avoid covering the banner.
+- Settings palette selector switches between Default, Deuteranopia, and Protanopia friendly palettes; verify progress bars/buttons update immediately.
 
 ## Integration Hooks
 - Validate exported metrics labels (`CreditsValue`, `StorageValue`, `PpsValue`, `ResearchValue`) remain accessible for data-binding scripts.

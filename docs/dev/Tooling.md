@@ -3,7 +3,7 @@
 > Reference for Godot version policy, plugins, and maintenance workflow. Use alongside [Build & Run Cookbook](Build_Cookbook.md) and [Developer Handbook](../Developer_Handbook.md).
 
 ## Godot Version Policy
-- Current standard: **Godot 4.5.1-stable (Windows console build)**.
+- Current standard: **Godot 4.5.1-stable** (Linux CLI via lavapipe for WSL/CI, Windows console build for GPU captures).
 - Upgrade cadence: evaluate new patch releases quarterly; log decision in ADR.
 - Requirements for upgrading:
   1. Run `tools/check_only_ci.sh` on new binary.
@@ -12,12 +12,14 @@
   4. Notify team via release notes.
 
 ### Renderer-Enabled Binary Setup
-- The shared binary lives at `C:\src\godot\Godot_v4.5.1-stable_win64_console.exe` (WSL path `/mnt/c/src/godot/Godot_v4.5.1-stable_win64_console.exe`).
-- `.env` in the repo root pins `GODOT_BIN` to that location; the same file is sourced in CI and by Codex.
-- Every helper script includes `: "${GODOT_BIN:=/mnt/c/src/godot/Godot_v4.5.1-stable_win64_console.exe}"` to fall back automatically.
+- `tools/bootstrap_godot.sh` downloads the Linux tarball into `./bin/Godot_v4.5.1-stable_linux.x86_64`. This path is the default for WSL, native Linux, Codex, and CI.
+- Windows capture stations should retain `C:\src\godot\Godot_v4.5.1-stable_win64_console.exe`; export `GODOT_BIN` manually when you need the hardware renderer.
+- `.env` tracks both `GODOT_BIN` (Linux CLI) and `VK_ICD_FILENAMES` (lavapipe). Source it in interactive shells and CI.
+- `tools/godot_resolver.sh` prefers an explicitly-set `GODOT_BIN`, then the Linux tarball, and bootstraps on demand. All helper scripts call the resolver.
 - Verify the environment with:
   ```bash
   source .env
+  GODOT_BIN="$(bash tools/godot_resolver.sh)"
   echo "[Tooling] GODOT_BIN=$GODOT_BIN"
   "$GODOT_BIN" --version
   ```

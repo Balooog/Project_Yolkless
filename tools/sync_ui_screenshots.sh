@@ -1,14 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-: "${GODOT_BIN:=/mnt/c/src/godot/Godot_v4.5.1-stable_win64_console.exe}"
+: "${VK_ICD_FILENAMES:=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json}"
+export VK_ICD_FILENAMES
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd -- "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 DEST_DIR="${PROJECT_ROOT}/dev/screenshots/ui_current"
 
+RESOLVED_BIN=""
+if RESOLVED_BIN="$(bash "${SCRIPT_DIR}/godot_resolver.sh")"; then
+	GODOT_BIN="$RESOLVED_BIN"
+fi
+
+: "${GODOT_BIN:=./bin/Godot_v4.5.1-stable_linux.x86_64}"
+
 # Resolve Godot user data path (Windows AppData equivalent)
-if command -v "${GODOT_BIN}" >/dev/null 2>&1; then
+if [[ -x "${GODOT_BIN}" ]]; then
 	USERDATA_OUTPUT="$("${GODOT_BIN}" --headless --script - <<'GDOT' 2>/dev/null || true
 extends SceneTree
 

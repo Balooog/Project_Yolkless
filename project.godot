@@ -206,3 +206,11 @@ ui_tab_feed={
 "type": "KEY"
 }]
 }
+ui_tab_prev={
+"deadzone": 0.5,
+"events": []
+}
+ui_tab_next={
+"deadzone": 0.5,
+"events": []
+}

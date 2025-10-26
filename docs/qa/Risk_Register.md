@@ -14,7 +14,7 @@
 
 | Risk | Probability | Impact | Owner | Mitigation |
 | --- | --- | --- | --- | --- |
-| Sandbox render fallback triggers frequently | Medium | High | Graphics engineer | Profiling + renderer optimisation (PX-021.3). |
+| Sandbox render fallback triggers frequently | Low | Medium | Graphics engineer | Latest 2025-10-26 StatsProbe run (`sandbox_tick_ms_p95=0.80 ms`, `environment_tick_ms_p95=0.019 ms`) shows headroom; keep PX-021.3 renderer optimisation on backlog and reprofile after conveyor/content changes. |
 | UI baseline diffs exceed threshold | Medium | Medium | UI lead | Strengthen visual regression pipeline, review tokens usage. |
 | Balance regression post-upgrade | Low | High | Design | Replay-based regression tests; see [Test Strategy](Test_Strategy.md). |
 | Localization string overflow | Medium | Medium | Ops / UX | Pseudo-loc pass (Localization Pipeline) before release. |

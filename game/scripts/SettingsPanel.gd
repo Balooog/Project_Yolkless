@@ -4,6 +4,7 @@ class_name SettingsPanel
 signal text_scale_selected(scale: float)
 signal diagnostics_requested
 signal high_contrast_toggled(enabled: bool)
+signal color_palette_selected(palette: StringName)
 signal visuals_toggled(enabled: bool)
 signal reset_requested
 
@@ -12,6 +13,8 @@ signal reset_requested
 @onready var text_scale_option: OptionButton = %TextScaleOption
 @onready var high_contrast_label: Label = %HighContrastLabel
 @onready var high_contrast_toggle: CheckButton = %HighContrastToggle
+@onready var color_palette_label: Label = %ColorPaletteLabel
+@onready var color_palette_option: OptionButton = %ColorPaletteOption
 @onready var visuals_label: Label = %VisualsLabel
 @onready var visuals_toggle: CheckButton = %VisualsToggle
 @onready var copy_button: Button = %CopyDiagnosticsButton
@@ -22,12 +25,14 @@ signal reset_requested
 var _suppress_signal := false
 var _current_high_contrast := false
 var _current_visuals_enabled := true
+var _current_palette: StringName = ProceduralFactory.PALETTE_DEFAULT
 
 func _ready() -> void:
 	hide()
 	text_scale_option.clear()
 	text_scale_option.item_selected.connect(_on_text_scale_option_selected)
 	high_contrast_toggle.toggled.connect(_on_high_contrast_toggled)
+	color_palette_option.item_selected.connect(_on_color_palette_option_selected)
 	visuals_toggle.toggled.connect(_on_visuals_toggled)
 	copy_button.pressed.connect(func(): diagnostics_requested.emit())
 	reset_button.pressed.connect(_on_reset_pressed)
@@ -36,13 +41,15 @@ func _ready() -> void:
 	reset_dialog.confirmed.connect(func(): reset_requested.emit())
 	populate_strings()
 	populate_text_scale_options(1.0)
+	populate_color_palette_options(_current_palette)
 	_set_high_contrast_internal(false)
 	_set_visuals_internal(true)
 	_apply_styles()
 
-func show_panel(current_scale: float, high_contrast: bool) -> void:
+func show_panel(current_scale: float, high_contrast: bool, palette: StringName) -> void:
 	populate_text_scale_options(current_scale)
 	set_high_contrast(high_contrast)
+	set_color_palette(palette)
 	set_visuals_enabled(_current_visuals_enabled)
 	popup_centered()
 	grab_focus()
@@ -66,6 +73,9 @@ func populate_strings() -> void:
 	close_button.text = _strings("close_button", close_button.text)
 	high_contrast_label.text = _strings("high_contrast_label", high_contrast_label.text)
 	high_contrast_toggle.tooltip_text = _strings("high_contrast_tooltip", high_contrast_toggle.tooltip_text)
+	color_palette_label.text = _strings("color_palette_label", color_palette_label.text)
+	color_palette_option.tooltip_text = _strings("color_palette_tooltip", color_palette_option.tooltip_text)
+	_refresh_color_palette_option_labels()
 	visuals_label.text = _strings("visuals_label", visuals_label.text)
 	visuals_toggle.text = _strings("settings_visuals", visuals_toggle.text)
 	visuals_toggle.tooltip_text = _strings("visuals_feed_particles", visuals_toggle.tooltip_text)
@@ -145,15 +155,56 @@ func _set_visuals_internal(enabled: bool) -> void:
 func on_strings_reloaded() -> void:
 	populate_strings()
 
+func set_color_palette(palette: StringName) -> void:
+	populate_color_palette_options(palette)
+
+func populate_color_palette_options(current_palette: StringName) -> void:
+	_suppress_signal = true
+	color_palette_option.clear()
+	_current_palette = ProceduralFactory.ensure_palette(current_palette)
+	var palettes: Array[StringName] = ProceduralFactory.supported_palettes()
+	var selected_index := 0
+	for palette_id in palettes:
+		var label_key := ProceduralFactory.palette_label_key(palette_id)
+		var label_text := _strings(label_key, String(palette_id).capitalize())
+		color_palette_option.add_item(label_text)
+		var item_index := color_palette_option.get_item_count() - 1
+		color_palette_option.set_item_metadata(item_index, palette_id)
+		if palette_id == _current_palette:
+			selected_index = item_index
+	color_palette_option.select(selected_index)
+	_suppress_signal = false
+	_refresh_color_palette_option_labels()
+
+func _refresh_color_palette_option_labels() -> void:
+	if color_palette_option == null:
+		return
+	for i in range(color_palette_option.get_item_count()):
+		var meta: Variant = color_palette_option.get_item_metadata(i)
+		if meta is StringName:
+			var palette_id: StringName = meta
+			var label_key := ProceduralFactory.palette_label_key(palette_id)
+			var label_text := _strings(label_key, color_palette_option.get_item_text(i))
+			color_palette_option.set_item_text(i, label_text)
+
+func _on_color_palette_option_selected(index: int) -> void:
+	if _suppress_signal:
+		return
+	var meta: Variant = color_palette_option.get_item_metadata(index)
+	if meta is StringName:
+		var palette_id: StringName = ProceduralFactory.ensure_palette(meta)
+		_current_palette = palette_id
+		color_palette_selected.emit(palette_id)
+
 func _apply_styles() -> void:
 	var panel := get_node_or_null("Panel")
 	if panel is PanelContainer:
 		(panel as PanelContainer).add_theme_stylebox_override("panel", ArtRegistry.get_style("ui_panel", _current_high_contrast))
 	var text_color := ProceduralFactory.COLOR_TEXT
-	for label in [title_label, text_scale_label, high_contrast_label, visuals_label]:
+	for label in [title_label, text_scale_label, high_contrast_label, color_palette_label, visuals_label]:
 		if label:
 			label.add_theme_color_override("font_color", text_color)
-	var buttons := [copy_button, reset_button, close_button]
+	var buttons := [copy_button, reset_button, close_button, color_palette_option]
 	for button in buttons:
 		if button:
 			button.add_theme_stylebox_override("normal", ArtRegistry.get_style("ui_button", _current_high_contrast))
