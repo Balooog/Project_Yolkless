@@ -44,7 +44,8 @@ func _check_size_flags(control: Control) -> void:
 func _check_overflow(control: Control) -> void:
 	if control is Label:
 		var label := control as Label
-		if not label.clip_text and not label.autowrap:
+		var autowrap_enabled := label.autowrap_mode != TextServer.AUTOWRAP_OFF
+		if not label.clip_text and not autowrap_enabled:
 			(_issues["overflow"] as Array).append(label.get_path())
 
 func _check_button_label(control: Control) -> void:

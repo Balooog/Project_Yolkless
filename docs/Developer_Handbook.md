@@ -4,10 +4,10 @@
 
 ## Getting Started
 1. Clone the repository and install prerequisites (see [`CONTRIBUTING.md`](../CONTRIBUTING.md)).
-2. Download the Godot 4.2.x CLI binary and export `GODOT_BIN` (see [Build & Run Cookbook](dev/Build_Cookbook.md)).
+2. Ensure the renderer-enabled Godot binary is installed at `/mnt/c/src/godot/Godot_v4.5.1-stable_win64_console.exe` and load the shared `.env` (`source .env`).
 3. Run the smoke flow:
    ```bash
-   GODOT_BIN=./bin/Godot_v4.2.2-stable_linux.x86_64 ./tools/check_only_ci.sh
+   source .env && ./tools/check_only_ci.sh
    ./tools/ui_viewport_matrix.sh
    ./tools/ui_compare.sh dev/screenshots/ui_baseline dev/screenshots/ui_current
    $GODOT_BIN --headless --script res://tools/replay_headless.gd --duration=120 --seed=42

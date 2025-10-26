@@ -28,7 +28,7 @@ When you create a new feature, prefer the `src/`, `ui/`, and `data/` folders and
    - Search for `preload("res://game/...")` or `load("res://game/...")` and update to the new path (`res://src/...`, `res://ui/...`, `res://data/...`).
 
 4. **Run `--check-only`**  
-   - Execute `./tools/check_only.sh` (or `godot4 --headless --check-only project.godot`) to ensure paths resolve and scripts compile.
+   - Execute `./tools/check_only.sh` (or `$GODOT_BIN --headless --check-only project.godot`) to ensure paths resolve and scripts compile.
 
 5. **Update documentation**  
    - Adjust roadmap prompts, README sections, and any developer notes that reference the old path.

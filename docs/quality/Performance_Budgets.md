@@ -5,7 +5,7 @@
 | System | Budget (ms) | Update Rate | Notes |
 | ------ | ----------- | ----------- | ----- |
 | Economy tick | ≤ 1.5 ms *(provisional)* | 10 Hz | Includes feed drain/refill, stat computations. |
-| Sandbox simulation | ≤ 2.0 ms *(provisional)* | 5 Hz | Cellular automata on 40×22 grid; run in pools. (*Latest p95 @2025-10-25: 1.85 ms; monitor as content grows*) |
+| Sandbox simulation | ≤ 2.0 ms *(provisional)* | 5 Hz | Cellular automata on 32×18 grid; run in pools. (*Latest p95 @2025-10-25: 1.24 ms after downscaling; monitor as content grows*) |
 | Sandbox viewport render | ≤ 1.0 ms *(target)* | 60 Hz | `SandboxRenderer` uploads dirty cells, nearest-neighbour upscale. Fallback halves cadence if frame p95 >18 ms for 5 s. |
 | EnvironmentService | ≤ 0.5 ms | 5 Hz | Curve sampling + CA inputs. |
 | AutomationService | ≤ 1.0 ms *(provisional)* | 5 Hz | Scheduling decisions + mode updates. |

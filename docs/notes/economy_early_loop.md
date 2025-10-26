@@ -17,9 +17,9 @@ Compare each revision against the pacing targets described in `docs/analysis/Idl
 ## Reproducing
 
 1. Set `Config.seed` to `12345` (Inspector or via the Config autoload).
-2. Run `./tools/headless_tick.sh 300` to launch the headless replay harness (`godot4 --headless res://tools/replay_headless.gd`). The script uses the seeded run (`--seed` default 12345) so the numbers above should reproduce within rounding error.
-3. To sanity-check shop gating, run `godot4 --headless --path . --script res://dev/inspect_shop.gd`. With the updated `balance.tsv`, `prod_1` unlocks at 50 credits while `cap_1` stays locked until 140, matching PX-011.2 targets.
-4. Tail `~/snap/godot4/10/.local/share/godot/app_userdata/Project\ Yolkless/logs/yolkless.log` while running the probe to confirm each auto shipment produces paired entries: `Storage full ...` followed by `Auto shipment processed ...`.
+2. Run `./tools/headless_tick.sh 300` to launch the headless replay harness (`$GODOT_BIN --headless res://tools/replay_headless.gd`). The script uses the seeded run (`--seed` default 12345) so the numbers above should reproduce within rounding error.
+3. To sanity-check shop gating, run `source .env && $GODOT_BIN --headless --path . --script res://dev/inspect_shop.gd`. With the updated `balance.tsv`, `prod_1` unlocks at 50 credits while `cap_1` stays locked until 140, matching PX-011.2 targets.
+4. Tail `%APPDATA%\Godot\app_userdata\Project Yolkless\logs\yolkless.log` (or the WSL mirror under `~/.local/share/godot/app_userdata/Project\ Yolkless/logs/yolkless.log`) while running the probe to confirm each auto shipment produces paired entries: `Storage full ...` followed by `Auto shipment processed ...`.
 5. Inspect `logs/yolkless.log` for `ECON_PROBE` entries; each scenario logs shipment timestamps plus a summary (wallet, storage, average PPS).
 6. Runtime sessions now emit an `ECONOMY snapshot` log roughly every 20 s with live `pps`, storage, wallet, and environment modifiers, so you can compare live play against the headless probe output.
 7. Test the **Ship Now** button once storage passes 50 %; confirm the manual shipment log shows a 25 % reduction (payout = stored × 0.75) and the tooltip communicates the efficiency.

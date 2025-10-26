@@ -26,6 +26,6 @@ Qualitative checks that ensure the economy feels fun, comprehensible, and emotio
 - Cross-reference telemetry (snapshot logs) to validate whether feelings map to numbers (e.g., shipment burst duration).
 - After each session, run a short telemetry capture to ground observations:
   ```bash
-  godot4 --headless --path . --script res://tools/replay_headless.gd --duration=60 --seed=42 --strategy=normal
+  source .env && $GODOT_BIN --headless --path . --script res://tools/replay_headless.gd --duration=60 --seed=42 --strategy=normal
   ```
   Note the resulting `sandbox_tick_ms_p95`, `ci_delta_abs_max`, and `active_cells_max` (from the JSON summary) and attach highlights to playtest notes. Large `ci_delta` spikes or repeated StatsProbe alerts should be flagged alongside qualitative comments.

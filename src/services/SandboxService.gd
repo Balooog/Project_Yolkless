@@ -56,6 +56,7 @@ var _metrics_release_interval: int = 1
 var _metrics_release_counter: int = 0
 var _metrics_front: Dictionary = {}
 var _metrics_back: Dictionary = {}
+var _grid_cell_count: float = 0.0
 
 func _ready() -> void:
 	_load_config()
@@ -67,6 +68,7 @@ func _ready() -> void:
 	_register_statbus_keys()
 	_stats_probe = _get_stats_probe()
 	_grid = SandboxGrid.new()
+	_grid_cell_count = float(SandboxGrid.get_cell_count())
 	_grid.seed_grid()
 	set_process(true)
 	_tick(0.0)
@@ -85,16 +87,22 @@ func get_ci_bonus() -> float:
 
 func _on_environment_updated(state: Dictionary) -> void:
 	var previous_preset: StringName = _latest_state.get("preset", StringName())
-	_latest_state = state.duplicate(true)
-	var preset_changed: bool = state.get("preset", StringName()) != previous_preset
+	var current_preset: StringName = state.get("preset", StringName())
+	if _latest_state.is_empty():
+		_latest_state = {}
+	else:
+		_latest_state.clear()
+	_latest_state["preset"] = current_preset
+	_latest_state["phase"] = state.get("phase", StringName())
+	var preset_changed: bool = current_preset != previous_preset
 	_apply_environment_targets(state, preset_changed)
 	if preset_changed:
 		_smoothed_ci = 0.0
 		if _grid:
 			_grid.seed_grid()
 			set_inputs(_breeze_target, _moisture_target, _heat_target, true)
-	# Update immediately so UI reflects changes without waiting for next tick.
-	_tick(0.0)
+	# Update on next idle frame so environment tick timing excludes sandbox work.
+	call_deferred("_tick", 0.0)
 	_accumulator = 0.0
 
 func _process(delta: float) -> void:
@@ -290,7 +298,9 @@ func _record_stats_probe(tick_ms: float, smoothed_ci: float, active_fraction: fl
 		_stats_probe = _get_stats_probe()
 	if _stats_probe == null:
 		return
-	var active_cells: float = active_fraction * float(SandboxGrid.WIDTH * SandboxGrid.HEIGHT)
+	if _grid_cell_count <= 0.0:
+		_grid_cell_count = float(SandboxGrid.get_cell_count())
+	var active_cells: float = active_fraction * _grid_cell_count
 	var pps: float = 0.0
 	var power_ratio: float = 1.0
 	if _statbus == null or not is_instance_valid(_statbus):

@@ -197,29 +197,27 @@ func _advance_time(delta: float) -> void:
 
 func _emit_state(force_emit: bool = false) -> void:
 	var state := _calculate_state()
-	_current_state = state.duplicate(true)
-	var modifiers_variant: Variant = _current_state.get("modifiers", {})
+	_current_state = state
+	var modifiers_variant: Variant = state.get("modifiers", {})
 	if modifiers_variant is Dictionary:
-		_current_modifiers = (modifiers_variant as Dictionary).duplicate(true)
+		_current_modifiers = modifiers_variant as Dictionary
 	else:
 		_current_modifiers = {}
-	var phase := StringName(_current_state.get("phase", ""))
+	var phase := StringName(state.get("phase", ""))
 	if phase != _last_phase:
 		_last_phase = phase
 		day_phase_changed.emit(phase)
 	var should_emit := force_emit
 	if not should_emit and not _last_emitted_state.is_empty():
-		should_emit = _differs_from_last(_current_state)
+		should_emit = _differs_from_last(state)
 	if should_emit:
-		_apply_state_to_stage(_current_state)
-		_last_emitted_state = _current_state.duplicate(true)
-		environment_updated.emit(_current_state.duplicate(true))
+		_apply_state_to_stage(state)
+		_last_emitted_state = state
+		environment_updated.emit(state)
 	_log_timer += get_process_delta_time()
 	if _log_timer >= LOG_INTERVAL:
 		_log_timer = 0.0
-		var state_copy := _current_state.duplicate(true)
-		var modifiers_copy := _current_modifiers.duplicate(true)
-		call_deferred("_log_snapshot_deferred", state_copy, modifiers_copy)
+		call_deferred("_log_snapshot_deferred", state, _current_modifiers)
 
 func _calculate_state() -> Dictionary:
 	var preset := _current_preset()

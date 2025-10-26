@@ -1,0 +1,17 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://m6kn046kvc5x"
+
+[deps]
+
+files=["res://reports/nightly/20251025-171853/tick_2025-10-25 211853.tick.translation", "res://reports/nightly/20251025-171853/tick_2025-10-25 211853.pps.translation", "res://reports/nightly/20251025-171853/tick_2025-10-25 211853.ci.translation", "res://reports/nightly/20251025-171853/tick_2025-10-25 211853.active.translation", "res://reports/nightly/20251025-171853/tick_2025-10-25 211853.power.translation", "res://reports/nightly/20251025-171853/tick_2025-10-25 211853.ci.translation", "res://reports/nightly/20251025-171853/tick_2025-10-25 211853.storage.translation", "res://reports/nightly/20251025-171853/tick_2025-10-25 211853.feed.translation", "res://reports/nightly/20251025-171853/tick_2025-10-25 211853.power.translation", "res://reports/nightly/20251025-171853/tick_2025-10-25 211853.auto.translation"]
+
+source_file="res://reports/nightly/20251025-171853/tick_2025-10-25 211853.csv"
+dest_files=["res://reports/nightly/20251025-171853/tick_2025-10-25 211853.tick.translation", "res://reports/nightly/20251025-171853/tick_2025-10-25 211853.pps.translation", "res://reports/nightly/20251025-171853/tick_2025-10-25 211853.ci.translation", "res://reports/nightly/20251025-171853/tick_2025-10-25 211853.active.translation", "res://reports/nightly/20251025-171853/tick_2025-10-25 211853.power.translation", "res://reports/nightly/20251025-171853/tick_2025-10-25 211853.ci.translation", "res://reports/nightly/20251025-171853/tick_2025-10-25 211853.storage.translation", "res://reports/nightly/20251025-171853/tick_2025-10-25 211853.feed.translation", "res://reports/nightly/20251025-171853/tick_2025-10-25 211853.power.translation", "res://reports/nightly/20251025-171853/tick_2025-10-25 211853.auto.translation"]
+
+[params]
+
+compress=true
+delimiter=0

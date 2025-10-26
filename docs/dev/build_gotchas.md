@@ -39,7 +39,13 @@ Quick reference for the recurring issues we've tripped over while bringing Yolkl
 
 ## Prototype resolution sweep
 - Use `tools/run_resolutions.sh` to open the project at 480×960, 600×360, 800×600, 1024×768, 1280×720, 1600×900, and 1920×1080 in sequence; close each window to advance.
-- Override the binary with `GODOT_BIN=godot` (or alias) and pass extra flags via `GODOT_ARGS` when needed.
+- The script falls back to `/mnt/c/src/godot/Godot_v4.5.1-stable_win64_console.exe`. Override with `GODOT_BIN` if you temporarily test another build; pass extra flags via `GODOT_ARGS` when needed.
 - Breakpoint logic must read the actual window size via `DisplayServer.window_get_size()`. The project stretches with `keep_width`, so `Control.size.x` stays at the design width (1280) even when the window is narrower—leading to tablets/phones being misdetected. The desktop breakpoint is tuned at 1150 px with ±40 px tolerance so the default 1280×720 window (after decorations) still registers as desktop.
+
+## UI smoke scenes & lint harness
+- `tools/uilint_scene.gd` expects UI smoke entries under `scenes/ui_smoke/` (e.g. `MainHUD.tscn`, `StoreHUD.tscn`). Keep these lightweight scenes in sync with the prototype or the lint pass will load the wrong layout.
+- Invoke the lint runner with the shared binary:  
+  `source .env && $GODOT_BIN --headless --script res://tools/uilint_scene.gd -- res://scenes/ui_smoke/MainHUD.tscn`
+- Godot 4 deprecates `Label.ellipsis`/`Label.autowrap`—use `text_overrun_behavior` and `autowrap_mode` instead.
 
 Keep this list updated whenever a CI failure exposes another “gotcha”. A short note now saves everyone a debugging session later.

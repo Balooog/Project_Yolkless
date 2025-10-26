@@ -23,10 +23,10 @@ graph TD
 - Runs as an autoload, with CA-free logic for minimal frame cost.
 
 ## Sandbox Service
-- Consumes environment factors and runs the 40×22 comfort simulation.
+- Consumes environment factors and runs the 32×18 comfort simulation.
 - Outputs Comfort Index and `ci_bonus` to StatBus and Economy.
 - Update cadence 2–5 Hz with double buffering to prevent hitches.
-- Current implementation runs a 40×22 CA grid and outputs stability/diversity metrics; further tuning tracked in `Implementation_TODO.md`.
+- Current implementation runs a 32×18 CA grid (downscaled from the original 40×22 footprint to stay within the 2 ms budget) and outputs stability/diversity metrics; further tuning tracked in `Implementation_TODO.md`.
 - `SandboxGrid` is a `RefCounted` helper with typed `Array[Array]` buffers so it can be preloaded headless; when extending it, keep the typed buffers and Godot 4 conditional syntax (`value_if_true if condition else value_if_false`) to avoid parser regressions.
 - Visual output flows through `src/sandbox/SandboxRenderer.gd`, mounted by `scenes/sandbox/SandboxCanvas.tscn` so `Main.gd` can replace the legacy environment root with the sandbox viewport when enabled.
 

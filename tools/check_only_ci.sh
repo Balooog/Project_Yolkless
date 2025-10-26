@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+: "${GODOT_BIN:=/mnt/c/src/godot/Godot_v4.5.1-stable_win64_console.exe}"
+
 if output="$(/usr/bin/env bash tools/bootstrap_godot.sh)"; then
     eval "$output"
 else

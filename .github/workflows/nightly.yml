@@ -9,17 +9,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Godot
+      - name: Load Godot binary path
         run: |
-          sudo apt-get update
-          sudo apt-get install -y godot4
+          source .env
+          echo "[nightly] GODOT_BIN=$GODOT_BIN"
+          "$GODOT_BIN" --version
+          echo "GODOT_BIN=$GODOT_BIN" >> "$GITHUB_ENV"
       - name: Validate data tables
         run: |
           python3 tools/validate_tables.py --tables=data/upgrade.tsv,data/research.tsv,data/environment_profiles.tsv,data/materials.tsv --schema=docs/data/Schemas.md
       - name: Run headless replay
         run: |
           mkdir -p reports/nightly/${{ github.run_id }}
-          godot4 --headless --path . --script res://tools/replay_headless.gd --duration=300 --seed=42 --strategy=normal > reports/nightly/${{ github.run_id }}/replay_stdout.log
+          "$GODOT_BIN" --headless --path . --script res://tools/replay_headless.gd --duration=300 --seed=42 --strategy=normal > reports/nightly/${{ github.run_id }}/replay_stdout.log
       - name: Archive telemetry
         if: always()
         uses: actions/upload-artifact@v4

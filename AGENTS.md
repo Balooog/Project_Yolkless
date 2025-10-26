@@ -1,7 +1,7 @@
 # Project Yolkless Agent Primer
 
 ## Session Kickoff Checklist
-- Confirm `GODOT_BIN` points to the tarball CLI binary (Snapshot in [Build Cookbook](docs/dev/Build_Cookbook.md)); Snap installs are unsupported in CI.
+- Confirm `GODOT_BIN` resolves to `/mnt/c/src/godot/Godot_v4.5.1-stable_win64_console.exe` (`Godot_v4.5.1-stable_win64_console.exe` on Windows). Use `source .env` and `$GODOT_BIN --version` as outlined in [Build Cookbook](docs/dev/Build_Cookbook.md); expect `Godot Engine v4.5.1.stable.official`.
 - Skim `README.md`, `docs/ROADMAP.md`, `docs/SPEC-1.md`, and the [Glossary](docs/Glossary.md) to refresh gameplay loop, terminology (Egg Credits, Comfort Index), and active roadmap beats.
 - Review `docs/architecture/Overview.md`, `docs/architecture/Signals_Events.md`, and [Data Flow Diagram](docs/architecture/DataFlow_Diagram.md) before touching services/autoloads to stay aligned with the 10 Hz simulation spine and signal contracts.
 - Check `docs/dev/build_gotchas.md` and `docs/dev/Tooling.md` for newly logged Godot pitfalls (typed variables, autoload base classes, ternary syntax changes, version policy).
@@ -32,7 +32,7 @@ Always surface assumptions, blockers, and recommended verifications in the final
 ## Testing & Validation
 - Default smoke flow:
   ```bash
-  GODOT_BIN=./bin/Godot_v4.2.2-stable_linux.x86_64 ./tools/check_only_ci.sh
+  source .env && ./tools/check_only_ci.sh
   ./tools/ui_viewport_matrix.sh && ./tools/ui_compare.sh
   $GODOT_BIN --headless --script res://tools/replay_headless.gd --duration=300 --seed=42
   ./tools/ui_baseline.sh   # refresh baseline only after design approval

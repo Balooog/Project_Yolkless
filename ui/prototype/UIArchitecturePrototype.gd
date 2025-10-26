@@ -21,6 +21,7 @@ const BREAKPOINT_FUZZ := 40.0
 const SHEET_HEIGHT_DESKTOP := 420.0
 const SHEET_HEIGHT_TABLET := 320.0
 const SHEET_HEIGHT_MOBILE := 360.0
+const UI_TOKENS_RESOURCE := preload("res://ui/theme/Tokens.tres")
 
 var _current_tab := "home"
 var _feed_queue_count := 0
@@ -37,7 +38,8 @@ var _home_feed_default_text := "Hold to Feed"
 var _is_desktop_layout := false
 
 @onready var _root_margin_container: MarginContainer = $RootMargin
-@onready var _bottom_bar: Control = $RootMargin/RootStack/BottomBar
+@onready var _bottom_bar: MarginContainer = $RootMargin/RootStack/BottomBar
+@onready var _bottom_tab_container: HBoxContainer = $RootMargin/RootStack/BottomBar/TabBar
 @onready var _main_stack: HBoxContainer = $RootMargin/RootStack/MainStack
 @onready var _side_dock: Control = $RootMargin/RootStack/MainStack/SideDock
 @onready var _sheet_overlay: Control = $RootMargin/RootStack/MainStack/CanvasWrapper/MobileSheetAnchor/SheetOverlay
@@ -47,7 +49,6 @@ var _is_desktop_layout := false
 @onready var _canvas_message: Label = $RootMargin/RootStack/MainStack/CanvasWrapper/CanvasPanel/CanvasMessage
 @onready var _canvas_placeholder: ColorRect = $RootMargin/RootStack/MainStack/CanvasWrapper/CanvasPanel/CanvasPlaceholder
 @onready var _feed_button: Button = $RootMargin/RootStack/BottomBar/TabBar/FeedButton
-@onready var _alert_pill: Label = $RootMargin/RootStack/TopBanner/BannerContent/AlertPill
 @onready var _environment_wrapper: Control = $RootMargin/RootStack/MainStack/EnvironmentWrapper
 @onready var _environment_panel: Control = $RootMargin/RootStack/MainStack/EnvironmentWrapper/EnvironmentPanel
 @onready var _mobile_sheet_anchor: Control = $RootMargin/RootStack/MainStack/CanvasWrapper/MobileSheetAnchor
@@ -69,6 +70,17 @@ var _is_desktop_layout := false
 @onready var _factory_viewport_container: Control = $RootMargin/RootStack/MainStack/CanvasWrapper/CanvasPanel/FactoryViewportContainer
 @onready var _factory_viewport: SubViewport = $RootMargin/RootStack/MainStack/CanvasWrapper/CanvasPanel/FactoryViewportContainer/FactoryViewport
 
+@onready var _tokens = UI_TOKENS_RESOURCE
+@onready var _top_banner_panel: PanelContainer = $RootMargin/RootStack/TopBanner
+@onready var _top_banner_component: TopBanner = $RootMargin/RootStack/TopBanner/TopBanner as TopBanner
+@onready var _bottom_tab_buttons_by_id: Dictionary = {
+	&"home": $RootMargin/RootStack/BottomBar/TabBar/HomeButton as Button,
+	&"store": $RootMargin/RootStack/BottomBar/TabBar/StoreButton as Button,
+	&"research": $RootMargin/RootStack/BottomBar/TabBar/ResearchButton as Button,
+	&"automation": $RootMargin/RootStack/BottomBar/TabBar/AutomationButton as Button,
+	&"prestige": $RootMargin/RootStack/BottomBar/TabBar/PrestigeButton as Button
+}
+
 @onready var _store_buttons: Dictionary = {
 	"prod_1": $RootMargin/RootStack/MainStack/CanvasWrapper/MobileSheetAnchor/SheetOverlay/StoreSheet/StoreMargin/StoreColumn/StoreProdButton,
 	"cap_1": $RootMargin/RootStack/MainStack/CanvasWrapper/MobileSheetAnchor/SheetOverlay/StoreSheet/StoreMargin/StoreColumn/StoreCapButton,
@@ -88,7 +100,11 @@ var _is_desktop_layout := false
 @onready var _prestige_status_label: Label = $RootMargin/RootStack/MainStack/CanvasWrapper/MobileSheetAnchor/SheetOverlay/PrestigeSheet/PrestigeMargin/PrestigeColumn/PrestigeStatusLabel
 @onready var _prestige_button: Button = $RootMargin/RootStack/MainStack/CanvasWrapper/MobileSheetAnchor/SheetOverlay/PrestigeSheet/PrestigeMargin/PrestigeColumn/PrestigeButton
 
-var _metric_labels: Dictionary
+var _banner_content: HBoxContainer
+var _banner_metric_title_labels: Array[Label] = []
+var _banner_metric_columns: Array[VBoxContainer] = []
+var _alert_pill: Label
+var _metric_labels: Dictionary = {}
 var _tab_buttons: Array[BaseButton] = []
 var _dock_buttons: Array[BaseButton] = []
 var _sheets: Array[Control] = []
@@ -128,12 +144,8 @@ func _ready() -> void:
 			a_button.pressed.connect(_on_upgrade_button_pressed.bind(id))
 	_prestige_button.pressed.connect(func(): prestige_requested.emit())
 	resized.connect(_update_layout)
-	_metric_labels = {
-		"credits": $RootMargin/RootStack/TopBanner/BannerContent/CreditsBox/CreditsValue,
-		"storage": $RootMargin/RootStack/TopBanner/BannerContent/StorageBox/StorageValue,
-		"pps": $RootMargin/RootStack/TopBanner/BannerContent/PpsBox/PpsValue,
-		"research": $RootMargin/RootStack/TopBanner/BannerContent/ResearchBox/ResearchValue
-	}
+	_initialize_banner_references()
+	_apply_ui_tokens()
 	if _canvas_panel and not _canvas_panel.resized.is_connected(_sync_factory_viewport_size):
 		_canvas_panel.resized.connect(_sync_factory_viewport_size)
 	_home_feed_default_text = _home_feed_button.text
@@ -143,17 +155,79 @@ func _ready() -> void:
 	_setup_focus_modes()
 	_show_tab(_current_tab)
 
+func _initialize_banner_references() -> void:
+	_banner_content = null
+	_alert_pill = null
+	_banner_metric_title_labels.clear()
+	_banner_metric_columns.clear()
+	_metric_labels.clear()
+	if _top_banner_component:
+		_banner_content = _top_banner_component.content_container()
+		_banner_metric_columns = _top_banner_component.metric_columns()
+		_banner_metric_title_labels = _top_banner_component.metric_title_labels()
+		_metric_labels = _top_banner_component.metric_labels()
+		_alert_pill = _top_banner_component.get_alert_label()
+	else:
+		var legacy_content := _top_banner_panel.get_node_or_null("BannerContent") as HBoxContainer
+		if legacy_content:
+			_banner_content = legacy_content
+			var legacy_columns: Array[VBoxContainer] = []
+			for segment in ["CreditsBox", "StorageBox", "PpsBox", "ResearchBox"]:
+				var column := legacy_content.get_node_or_null(segment) as VBoxContainer
+				if column:
+					legacy_columns.append(column)
+			_banner_metric_columns = legacy_columns
+			var title_labels: Array[Label] = []
+			var metric_map: Dictionary = {}
+			var mappings := {
+				&"credits": "CreditsBox/CreditsValue",
+				&"storage": "StorageBox/StorageValue",
+				&"pps": "PpsBox/PpsValue",
+				&"research": "ResearchBox/ResearchValue"
+			}
+			for key in mappings.keys():
+				var label_path := String(mappings[key])
+				var value_label := legacy_content.get_node_or_null(label_path) as Label
+				if value_label:
+					metric_map[key] = value_label
+					var title_path := label_path.replace("Value", "Label")
+					var title_label := legacy_content.get_node_or_null(title_path) as Label
+					if title_label and not title_labels.has(title_label):
+						title_labels.append(title_label)
+			_banner_metric_title_labels = title_labels
+			_metric_labels = metric_map
+			_alert_pill = legacy_content.get_node_or_null("AlertPill") as Label
+	if _banner_metric_columns.is_empty() and _top_banner_component:
+		_banner_metric_columns = _top_banner_component.metric_columns()
+	if _banner_metric_title_labels.is_empty() and _top_banner_component:
+		_banner_metric_title_labels = _top_banner_component.metric_title_labels()
+	if _metric_labels.is_empty() and _top_banner_component:
+		_metric_labels = _top_banner_component.metric_labels()
+	if _alert_pill == null and _top_banner_component:
+		_alert_pill = _top_banner_component.get_alert_label()
+	if _banner_content == null and _top_banner_component:
+		_banner_content = _top_banner_component.content_container()
+
 func set_metrics(metrics: Dictionary) -> void:
 	for key in _metrics.keys():
 		if metrics.has(key):
-			_metrics[key] = String(metrics[key])
-			var label := _metric_labels.get(key, null) as Label
-			if label:
-				label.text = _metrics[key]
+			var value := String(metrics[key])
+			_metrics[key] = value
+			var metric_key := StringName(key)
+			if _top_banner_component:
+				_top_banner_component.set_metric(metric_key, value)
+			else:
+				var label := _metric_labels.get(metric_key, null) as Label
+				if label:
+					label.text = value
+					label.tooltip_text = value
 
 func set_alert_message(message: String) -> void:
-	_alert_pill.text = message
-	_alert_pill.tooltip_text = message
+	if _top_banner_component:
+		_top_banner_component.set_alert(message)
+	elif _alert_pill:
+		_alert_pill.text = message
+		_alert_pill.tooltip_text = message
 
 func set_canvas_hint(hint: String) -> void:
 	_custom_canvas_hint = hint
@@ -171,6 +245,189 @@ func set_canvas_message(message: String) -> void:
 		_canvas_message.text = _custom_canvas_message
 		_canvas_message.tooltip_text = _custom_canvas_message
 	_refresh_canvas_message_visibility()
+
+func _apply_ui_tokens() -> void:
+	if _tokens == null:
+		return
+	_apply_banner_tokens()
+	_apply_bottom_bar_tokens()
+	_apply_label_overflow_defaults()
+
+
+func _apply_banner_tokens() -> void:
+	if _tokens == null:
+		return
+	if _top_banner_panel:
+		var banner_style := StyleBoxFlat.new()
+		banner_style.bg_color = _token_colour(&"banner_bg")
+		var corner_radius := int(round(_token_radius(&"corner_md")))
+		banner_style.corner_radius_top_left = corner_radius
+		banner_style.corner_radius_top_right = corner_radius
+		banner_style.corner_radius_bottom_left = corner_radius
+		banner_style.corner_radius_bottom_right = corner_radius
+		banner_style.content_margin_left = int(round(_token_spacing(&"space_lg")))
+		banner_style.content_margin_right = int(round(_token_spacing(&"space_lg")))
+		banner_style.content_margin_top = int(round(_token_spacing(&"space_md")))
+		banner_style.content_margin_bottom = int(round(_token_spacing(&"space_md")))
+		_top_banner_panel.add_theme_stylebox_override("panel", banner_style)
+	if _banner_content:
+		_banner_content.add_theme_constant_override("separation", int(round(_token_spacing(&"space_lg"))))
+	for column in _banner_metric_columns:
+		if column:
+			column.add_theme_constant_override("separation", int(round(_token_spacing(&"space_xs"))))
+	for title_label in _banner_metric_title_labels:
+		if title_label:
+			_apply_label_tokens(title_label, &"font_s", &"text_muted")
+			_ensure_label_overflow(title_label, false)
+	for metric_label_value in _metric_labels.values():
+		var metric_label: Label = metric_label_value
+		if metric_label:
+			_apply_label_tokens(metric_label, &"font_l", &"banner_text")
+			_ensure_label_overflow(metric_label, false)
+	if _alert_pill:
+		_apply_label_tokens(_alert_pill, &"font_m", &"banner_alert")
+		_ensure_label_overflow(_alert_pill, false)
+
+func _apply_bottom_bar_tokens() -> void:
+	if _tokens == null:
+		return
+	if _bottom_bar:
+		var horizontal: float = _token_spacing(&"space_md")
+		var top_margin: float = _token_spacing(&"space_md")
+		_set_margin(_bottom_bar, horizontal, top_margin, horizontal, 0.0)
+	if _bottom_tab_container:
+		_bottom_tab_container.add_theme_constant_override("separation", int(round(_token_spacing(&"space_md"))))
+	for button_value in _bottom_tab_buttons_by_id.values():
+		var tab_button: Button = button_value
+		if tab_button:
+			_style_tab_button(tab_button, false)
+	if _feed_button:
+		_style_tab_button(_feed_button, true)
+
+func _style_tab_button(button: Button, is_primary: bool) -> void:
+	if button == null or _tokens == null:
+		return
+	var background_token := &"button_primary" if is_primary else &"button_secondary"
+	var text_token := &"button_primary_text" if is_primary else &"button_secondary_text"
+	var base_color: Color = _token_colour(background_token)
+	var text_color: Color = _token_colour(text_token)
+	var hover_color: Color = base_color.lightened(0.08)
+	var pressed_color: Color = base_color.darkened(0.12)
+	var disabled_color: Color = base_color.darkened(0.35)
+	var focus_border: Color = _token_colour(&"focus_outline")
+	_set_fill_expand(button, true, false)
+	button.focus_mode = Control.FOCUS_ALL
+	button.clip_text = true
+	button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	var font_size: int = _token_font_size(&"font_m")
+	button.add_theme_font_size_override("font_size", font_size)
+	button.add_theme_color_override("font_color", text_color)
+	button.add_theme_color_override("font_hover_color", text_color)
+	button.add_theme_color_override("font_pressed_color", text_color)
+	button.add_theme_color_override("font_focus_color", text_color)
+	button.add_theme_color_override("font_disabled_color", text_color.darkened(0.25))
+	button.add_theme_stylebox_override("normal", _create_button_stylebox(base_color))
+	button.add_theme_stylebox_override("hover", _create_button_stylebox(hover_color))
+	button.add_theme_stylebox_override("pressed", _create_button_stylebox(pressed_color))
+	button.add_theme_stylebox_override("disabled", _create_button_stylebox(disabled_color))
+	button.add_theme_stylebox_override("focus", _create_button_stylebox(base_color, focus_border, 2))
+
+func _create_button_stylebox(base_color: Color, border_color: Color = Color.TRANSPARENT, border_width: int = 0) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = base_color
+	style.border_color = border_color
+	style.border_width_left = border_width
+	style.border_width_top = border_width
+	style.border_width_right = border_width
+	style.border_width_bottom = border_width
+	var corner_radius := int(round(_token_radius(&"corner_md")))
+	style.corner_radius_top_left = corner_radius
+	style.corner_radius_top_right = corner_radius
+	style.corner_radius_bottom_left = corner_radius
+	style.corner_radius_bottom_right = corner_radius
+	var horizontal_margin := int(round(_token_spacing(&"space_md")))
+	var vertical_margin := int(round(_token_spacing(&"space_sm")))
+	style.content_margin_left = horizontal_margin
+	style.content_margin_right = horizontal_margin
+	style.content_margin_top = vertical_margin
+	style.content_margin_bottom = vertical_margin
+	return style
+
+func _apply_label_tokens(label: Label, size_token: StringName, colour_token: StringName) -> void:
+	if label == null or _tokens == null:
+		return
+	label.add_theme_color_override("font_color", _token_colour(colour_token))
+	label.add_theme_font_size_override("font_size", _token_font_size(size_token))
+
+func _ensure_label_overflow(label: Label, allow_wrap: bool, max_lines: int = 1) -> void:
+	if label == null:
+		return
+	if allow_wrap:
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.max_lines_visible = max_lines
+		label.visible_characters = -1
+		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	else:
+		label.clip_text = true
+		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+
+func _set_fill_expand(control: Control, horizontal: bool = true, vertical: bool = false) -> void:
+	if control == null:
+		return
+	var horizontal_flag: int = Control.SIZE_FILL | Control.SIZE_EXPAND if horizontal else Control.SIZE_FILL
+	var vertical_flag: int = Control.SIZE_FILL | Control.SIZE_EXPAND if vertical else Control.SIZE_FILL
+	control.size_flags_horizontal = horizontal_flag
+	control.size_flags_vertical = vertical_flag
+
+func _apply_label_overflow_defaults() -> void:
+	var queue: Array[Node] = []
+	queue.append(self)
+	while not queue.is_empty():
+		var node: Node = queue.pop_back()
+		if node is Label:
+			var label: Label = node
+			var allow_wrap: bool = label.autowrap_mode != TextServer.AUTOWRAP_OFF
+			_ensure_label_overflow(label, allow_wrap)
+		for child in node.get_children():
+			queue.append(child)
+
+func _token_colour(token: StringName) -> Color:
+	var colour_value: Color = Color.WHITE
+	if _tokens != null and _tokens.has_method("colour"):
+		var result: Variant = _tokens.call("colour", token)
+		if result is Color:
+			colour_value = result
+	return colour_value
+
+func _token_font_size(token: StringName) -> int:
+	var size_value: int = 15
+	if _tokens != null and _tokens.has_method("font_size"):
+		var result: Variant = _tokens.call("font_size", token)
+		if result is int:
+			size_value = result
+		elif result is float:
+			size_value = int(round(result))
+	return size_value
+
+func _token_spacing(token: StringName) -> float:
+	var spacing_value: float = 12.0
+	if _tokens != null and _tokens.has_method("spacing_value"):
+		var result: Variant = _tokens.call("spacing_value", token)
+		if result is float:
+			spacing_value = result
+		elif result is int:
+			spacing_value = float(result)
+	return spacing_value
+
+func _token_radius(token: StringName) -> float:
+	var radius_value: float = 6.0
+	if _tokens != null and _tokens.has_method("radius"):
+		var result: Variant = _tokens.call("radius", token)
+		if result is float:
+			radius_value = result
+		elif result is int:
+			radius_value = float(result)
+	return radius_value
 
 func update_home(data: Dictionary) -> void:
 	if data.has("soft"):
@@ -663,9 +920,6 @@ func _update_root_margins(viewport_width: float) -> void:
 func _apply_bottom_bar_spacing(viewport_width: float, is_desktop: bool) -> void:
 	if _bottom_bar == null:
 		return
-	var margin_container := _bottom_bar as MarginContainer
-	if margin_container == null:
-		return
 	var horizontal := 12.0
 	var top := 16.0
 	if viewport_width < TABLET_BREAKPOINT:
@@ -676,7 +930,7 @@ func _apply_bottom_bar_spacing(viewport_width: float, is_desktop: bool) -> void:
 		top = 12.0
 	if is_desktop:
 		top = 0.0
-	_set_margin(margin_container, horizontal, top, horizontal, 0.0)
+	_set_margin(_bottom_bar, horizontal, top, horizontal, 0.0)
 
 func _set_margin(container: MarginContainer, left: float, top: float, right: float, bottom: float) -> void:
 	container.add_theme_constant_override("margin_left", int(round(left)))

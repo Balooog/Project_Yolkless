@@ -5,29 +5,26 @@
 Supported platforms: **WSL/Ubuntu**, **desktop Linux**, and **Windows** (via PowerShell/WSL). macOS is unofficial—use the same commands with the macOS Godot binary.
 
 ## Prerequisites
-- Download the Godot 4.2.x CLI binary (tarball/zip). Recommended layout:
-  ```
-  bin/
-    Godot_v4.2.2-stable_linux.x86_64
-  ```
-- Export `GODOT_BIN` when running scripts:
-  ```bash
-  export GODOT_BIN=./bin/Godot_v4.2.2-stable_linux.x86_64
-  ```
+- Install the renderer-enabled **Godot 4.5.1 Windows console build** at `C:\src\godot\Godot_v4.5.1-stable_win64_console.exe` (visible inside WSL as `/mnt/c/src/godot/Godot_v4.5.1-stable_win64_console.exe`).
+- Update the repo’s `.env` file (tracked in git) if the binary location changes. Codex/CI source this file automatically.
+- Optional: add `export GODOT_BIN="/mnt/c/src/godot/Godot_v4.5.1-stable_win64_console.exe"` to your shell profile for manual sessions.
 - **Do not** rely on Snap packages for CI; they lack required capabilities for headless capture.
 - Install dependencies listed in `CONTRIBUTING.md` (Python, git-lfs, etc.).
 
 ## Common Commands
 ```bash
+# Load shared env once per shell
+source .env
+
 # Headless sanity (warnings as errors)
-GODOT_BIN=./bin/Godot_v4.2.2-stable_linux.x86_64 ./tools/check_only.sh
+./tools/check_only.sh
 
 # Launch editor / project
 $GODOT_BIN --path . --editor
 $GODOT_BIN --path . --headless --quit
 
 # CI wrapper (prints ✅/❌ summary)
-GODOT_BIN=./bin/Godot_v4.2.2-stable_linux.x86_64 ./tools/check_only_ci.sh
+./tools/check_only_ci.sh
 ```
 
 ## UI Harness
@@ -37,7 +34,11 @@ Baseline capture + compare for the PX-010 UI program.
 ./tools/ui_baseline.sh
 
 # Sweep S/M/L viewports and capture screenshots
-./tools/ui_viewport_matrix.sh
+# Capture using renderer-enabled binary (writes to Godot user:// then syncs below)
+source .env && ./tools/ui_viewport_matrix.sh --capture
+
+# Sync captured PNGs into dev/screenshots/ui_current/
+source .env && ./tools/sync_ui_screenshots.sh
 
 # Compare current captures vs baseline; fails on any pixel diff (threshold TBD)
 ./tools/ui_compare.sh dev/screenshots/ui_baseline dev/screenshots/ui_current
@@ -66,7 +67,7 @@ $GODOT_BIN --headless --path . --script res://tools/replay_headless.gd --duratio
 - Compare against [Performance Budgets](../quality/Performance_Budgets.md).
 
 ## Smoke Flow (local PR checklist)
-1. `GODOT_BIN=... ./tools/check_only_ci.sh` → ensure ✅ output.
+1. `source .env && ./tools/check_only_ci.sh` → ensure ✅ output.
 2. `./tools/ui_viewport_matrix.sh` then `./tools/ui_compare.sh` → expect zero diffs (or review intentional deltas).
 3. `$GODOT_BIN --headless --script res://tools/replay_headless.gd --duration=300 --seed=42` → inspect JSON/CSV p95 metrics.
 4. Optional: run `./tools/ui_baseline.sh` to refresh baseline after approved UI changes (commit PNG updates).

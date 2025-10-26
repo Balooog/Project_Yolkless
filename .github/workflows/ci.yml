@@ -21,14 +21,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Godot
+      - name: Load Godot binary path
         run: |
-          sudo apt-get update
-          sudo apt-get install -y godot4
+          source .env
+          echo "[CI] GODOT_BIN=$GODOT_BIN"
+          "$GODOT_BIN" --version
+          echo "GODOT_BIN=$GODOT_BIN" >> "$GITHUB_ENV"
       - name: Run nightly replay
         run: |
           mkdir -p reports/nightly/${{ github.run_id }}
-          godot4 --headless --path . --script res://tools/replay_headless.gd --duration=300 --seed=42
+          "$GODOT_BIN" --headless --path . --script res://tools/replay_headless.gd --duration=300 --seed=42
       - name: Archive reports
         if: always()
         uses: actions/upload-artifact@v4

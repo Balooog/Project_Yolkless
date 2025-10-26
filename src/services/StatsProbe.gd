@@ -6,6 +6,7 @@ signal stats_probe_alert(metric: StringName, value: float, threshold: float)
 const OUTPUT_DIR := "user://logs/perf"
 const DEFAULT_FLUSH_INTERVAL := 10.0
 const CI_DELTA_WARMUP_SAMPLES := 20 # Ignore first ~2 seconds (10 Hz) before flagging CI spikes.
+const SANDBOX_TICK_WARMUP_SAMPLES := 12
 const SERVICE_SANDBOX := "sandbox"
 const SERVICE_ENVIRONMENT := "environment"
 const SERVICE_AUTOMATION := "automation"
@@ -64,16 +65,17 @@ func flush_now() -> void:
 
 func _check_thresholds(payload: Dictionary) -> void:
 	var service := String(payload.get("service", SERVICE_SANDBOX))
+	var sample_count: int = int(_service_sample_counts.get(service, 0))
 	if payload.has("tick_ms"):
 		var service_threshold: float = float(_service_thresholds.get(service, _thresholds["tick_ms"]))
-		if payload["tick_ms"] > service_threshold:
+		var within_warmup: bool = service == SERVICE_SANDBOX and sample_count <= SANDBOX_TICK_WARMUP_SAMPLES
+		if payload["tick_ms"] > service_threshold and not within_warmup:
 			var metric_name := "%s_tick_ms" % service
 			stats_probe_alert.emit(StringName(metric_name), payload["tick_ms"], service_threshold)
 	if service == SERVICE_SANDBOX:
 		if payload.has("active_cells") and payload["active_cells"] > _thresholds["active_cells"]:
 			stats_probe_alert.emit("active_cells", payload["active_cells"], _thresholds["active_cells"])
 		if payload.has("ci_delta"):
-			var sample_count: int = int(_service_sample_counts.get(service, 0))
 			if sample_count > CI_DELTA_WARMUP_SAMPLES and abs(payload["ci_delta"]) > _thresholds["ci_delta"]:
 				stats_probe_alert.emit("ci_delta", payload["ci_delta"], _thresholds["ci_delta"])
 

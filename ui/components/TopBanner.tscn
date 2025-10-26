@@ -5,35 +5,77 @@
 [node name="TopBanner" type="Control"]
 script = ExtResource("1")
 size_flags_horizontal = 3
-size_flags_vertical = 0
+size_flags_vertical = 3
 
 [node name="BannerContainer" type="HBoxContainer" parent="."]
 unique_name_in_owner = true
 size_flags_horizontal = 3
-size_flags_vertical = 0
-theme_override_constants/separation = 12
+size_flags_vertical = 3
+theme_override_constants/separation = 24
 
-[node name="CreditsValue" type="Label" parent="BannerContainer"]
+[node name="CreditsBox" type="VBoxContainer" parent="BannerContainer"]
 unique_name_in_owner = true
-clip_text = true
+size_flags_horizontal = 1
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+
+[node name="CreditsLabel" type="Label" parent="BannerContainer/CreditsBox"]
+unique_name_in_owner = true
+text = "Credits"
+
+[node name="CreditsValue" type="Label" parent="BannerContainer/CreditsBox"]
+unique_name_in_owner = true
 text = "₡ 0"
 
-[node name="StorageValue" type="Label" parent="BannerContainer"]
+[node name="StorageBox" type="VBoxContainer" parent="BannerContainer"]
 unique_name_in_owner = true
-clip_text = true
-text = "Storage 0 / 0"
+size_flags_horizontal = 1
+size_flags_vertical = 3
+theme_override_constants/separation = 4
 
-[node name="PpsValue" type="Label" parent="BannerContainer"]
+[node name="StorageLabel" type="Label" parent="BannerContainer/StorageBox"]
 unique_name_in_owner = true
-clip_text = true
+text = "Storage"
+
+[node name="StorageValue" type="Label" parent="BannerContainer/StorageBox"]
+unique_name_in_owner = true
+text = "0 / 0"
+
+[node name="PpsBox" type="VBoxContainer" parent="BannerContainer"]
+unique_name_in_owner = true
+size_flags_horizontal = 1
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+
+[node name="PpsLabel" type="Label" parent="BannerContainer/PpsBox"]
+unique_name_in_owner = true
+text = "PPS"
+
+[node name="PpsValue" type="Label" parent="BannerContainer/PpsBox"]
+unique_name_in_owner = true
 text = "0 PPS"
 
-[node name="ResearchValue" type="Label" parent="BannerContainer"]
+[node name="ResearchBox" type="VBoxContainer" parent="BannerContainer"]
 unique_name_in_owner = true
-clip_text = true
+size_flags_horizontal = 1
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+
+[node name="ResearchLabel" type="Label" parent="BannerContainer/ResearchBox"]
+unique_name_in_owner = true
+text = "Research"
+
+[node name="ResearchValue" type="Label" parent="BannerContainer/ResearchBox"]
+unique_name_in_owner = true
 text = "0 RP"
+
+[node name="AlertSpacer" type="Control" parent="BannerContainer"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
 
 [node name="AlertPill" type="Label" parent="BannerContainer"]
 unique_name_in_owner = true
-clip_text = true
+size_flags_vertical = 1
 text = "All Clear"
+horizontal_alignment = 1
+vertical_alignment = 1

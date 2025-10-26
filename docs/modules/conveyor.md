@@ -62,7 +62,7 @@ The manager tracks live throughput and exposes `average_travel_time` for dashboa
 
 ## 2025-10-25 Benchmark Snapshot
 
-Automated telemetry (`godot4 --headless --script res://tools/replay_headless.gd --duration=20 --seed=42 --strategy=normal`) surfaced the following:
+Automated telemetry (`$GODOT_BIN --headless --script res://tools/replay_headless.gd --duration=20 --seed=42 --strategy=normal`) surfaced the following:
 
 - `sandbox_tick_ms_p95`: **10.6 ms** (budget ≤2.0 ms). Most of the time is spent in the sandbox/conveyor co-simulation. Profile the CA step and conveyor update loop to identify hotspots.
 - `active_cells_max`: **≈243** conveyor/sandbox cells (target ≤500 pooled tokens). Current pooling keeps the population in check; re-validate after adding new belt content.
