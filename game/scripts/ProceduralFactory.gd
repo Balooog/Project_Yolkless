@@ -1,12 +1,134 @@
 extends Node
 
-const COLOR_BG := Color("2e2e2e")
-const COLOR_PANEL := Color("3a3a3a")
-const COLOR_TEXT := Color("f2f2f2")
-const COLOR_ACCENT := Color("e3b341")
+const PALETTE_DEFAULT := StringName("default")
+const PALETTE_DEUTERANOPIA := StringName("deuteranopia")
+const PALETTE_PROTANOPIA := StringName("protanopia")
+
+const PALETTE_LABEL_KEYS := {
+	PALETTE_DEFAULT: "color_palette_default",
+	PALETTE_DEUTERANOPIA: "color_palette_deuteranopia",
+	PALETTE_PROTANOPIA: "color_palette_protanopia"
+}
+
+const _PALETTES := {
+	PALETTE_DEFAULT: {
+		"bg": Color("2e2e2e"),
+		"panel": Color("3a3a3a"),
+		"text": Color("f2f2f2"),
+		"accent": Color("e3b341"),
+		"feed": {
+			"normal": {
+				"high": Color(0.2, 0.8, 0.35, 1.0),
+				"medium": Color(0.95, 0.68, 0.2, 1.0),
+				"low": Color(0.9, 0.2, 0.2, 1.0)
+			},
+			"high": {
+				"high": Color(0.0, 0.85, 0.2, 1.0),
+				"medium": Color(0.98, 0.78, 0.1, 1.0),
+				"low": Color(1.0, 0.22, 0.22, 1.0)
+			}
+		}
+	},
+	PALETTE_DEUTERANOPIA: {
+		"bg": Color("2e2e2e"),
+		"panel": Color("3a3a3a"),
+		"text": Color("f2f2f2"),
+		"accent": Color(0.43, 0.68, 0.94, 1.0),
+		"feed": {
+			"normal": {
+				"high": Color(0.12, 0.62, 0.78, 1.0),
+				"medium": Color(0.95, 0.71, 0.26, 1.0),
+				"low": Color(0.56, 0.37, 0.74, 1.0)
+			},
+			"high": {
+				"high": Color(0.0, 0.72, 0.86, 1.0),
+				"medium": Color(0.99, 0.83, 0.4, 1.0),
+				"low": Color(0.68, 0.43, 0.82, 1.0)
+			}
+		}
+	},
+	PALETTE_PROTANOPIA: {
+		"bg": Color("2e2e2e"),
+		"panel": Color("3a3a3a"),
+		"text": Color("f2f2f2"),
+		"accent": Color(0.64, 0.54, 0.92, 1.0),
+		"feed": {
+			"normal": {
+				"high": Color(0.18, 0.65, 0.74, 1.0),
+				"medium": Color(0.97, 0.74, 0.28, 1.0),
+				"low": Color(0.58, 0.43, 0.74, 1.0)
+			},
+			"high": {
+				"high": Color(0.0, 0.74, 0.78, 1.0),
+				"medium": Color(0.99, 0.84, 0.43, 1.0),
+				"low": Color(0.69, 0.48, 0.82, 1.0)
+			}
+		}
+	}
+}
+
+static var _palette: StringName = PALETTE_DEFAULT
+static var COLOR_BG: Color = _PALETTES[PALETTE_DEFAULT]["bg"]
+static var COLOR_PANEL: Color = _PALETTES[PALETTE_DEFAULT]["panel"]
+static var COLOR_TEXT: Color = _PALETTES[PALETTE_DEFAULT]["text"]
+static var COLOR_ACCENT: Color = _PALETTES[PALETTE_DEFAULT]["accent"]
 
 static func color_with_alpha(color: Color, alpha: float) -> Color:
 	return Color(color.r, color.g, color.b, clamp(alpha, 0.0, 1.0))
+
+static func supported_palettes() -> Array[StringName]:
+	return [
+		PALETTE_DEFAULT,
+		PALETTE_DEUTERANOPIA,
+		PALETTE_PROTANOPIA
+	]
+
+static func ensure_palette(palette: StringName) -> StringName:
+	return palette if _PALETTES.has(palette) else PALETTE_DEFAULT
+
+static func set_palette(palette: StringName) -> void:
+	var resolved := ensure_palette(palette)
+	if _palette == resolved:
+		return
+	_palette = resolved
+	var data: Dictionary = _PALETTES[_palette]
+	COLOR_BG = data["bg"]
+	COLOR_PANEL = data["panel"]
+	COLOR_TEXT = data["text"]
+	COLOR_ACCENT = data["accent"]
+
+static func current_palette() -> StringName:
+	return _palette
+
+static func palette_label_key(palette: StringName) -> String:
+	var resolved := ensure_palette(palette)
+	return PALETTE_LABEL_KEYS.get(resolved, "color_palette_default")
+
+static func feed_fill_color(fraction: float, high_contrast: bool) -> Color:
+	var palette_data_variant: Variant = _PALETTES.get(_palette, _PALETTES[PALETTE_DEFAULT])
+	var palette_data: Dictionary = palette_data_variant if palette_data_variant is Dictionary else _PALETTES[PALETTE_DEFAULT]
+	var feed_data_variant: Variant = palette_data.get("feed", {})
+	var feed_data: Dictionary = feed_data_variant if feed_data_variant is Dictionary else {}
+	var variant_key := "high" if high_contrast else "normal"
+	var variant_variant: Variant = feed_data.get(variant_key, {})
+	var variant: Dictionary = variant_variant if variant_variant is Dictionary else {}
+	if variant.is_empty():
+		var fallback_feed_variant: Variant = _PALETTES[PALETTE_DEFAULT].get("feed", {})
+		var fallback_feed: Dictionary = fallback_feed_variant if fallback_feed_variant is Dictionary else {}
+		var fallback_variant_variant: Variant = fallback_feed.get(variant_key, {})
+		var fallback_variant: Dictionary = fallback_variant_variant if fallback_variant_variant is Dictionary else {}
+		variant = fallback_variant
+	var level_key := "low"
+	if fraction >= 0.66:
+		level_key = "high"
+	elif fraction >= 0.33:
+		level_key = "medium"
+	if variant.has(level_key):
+		var color_value: Variant = variant[level_key]
+		if color_value is Color:
+			return color_value
+	# Fall back to accent for safety.
+	return COLOR_ACCENT
 
 static func make_grain_texture() -> Texture2D:
 	var gradient := Gradient.new()

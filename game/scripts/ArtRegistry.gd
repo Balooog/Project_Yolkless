@@ -6,14 +6,17 @@ const PLACEHOLDER_TOKEN := "/placeholder/"
 var _asset_map: Dictionary = {}
 var _texture_cache: Dictionary = {}
 var _style_cache: Dictionary = {}
+var _palette: StringName = ProceduralFactory.PALETTE_DEFAULT
 
 func _ready() -> void:
 	_reload_asset_map()
+	ProceduralFactory.set_palette(_palette)
 
 func reload() -> void:
 	_reload_asset_map()
 	_texture_cache.clear()
 	_style_cache.clear()
+	ProceduralFactory.set_palette(_palette)
 
 func get_texture(key: String) -> Texture2D:
 	if _texture_cache.has(key) and _texture_cache[key] is Texture2D:
@@ -30,9 +33,10 @@ func get_texture(key: String) -> Texture2D:
 	return texture
 
 func get_style(key: String, high_contrast: bool = false) -> StyleBox:
-	var cache_key: String = "%s|%s" % [key, high_contrast]
+	var cache_key: String = "%s|%s|%s" % [key, high_contrast, String(_palette)]
 	if _style_cache.has(cache_key) and _style_cache[cache_key] is StyleBox:
 		return (_style_cache[cache_key] as StyleBox).duplicate(true)
+	ProceduralFactory.set_palette(_palette)
 	var path: String = _resolve_path_for_key(key)
 	var style: StyleBox = null
 	if path != "" and ResourceLoader.exists(path):
@@ -45,6 +49,18 @@ func get_style(key: String, high_contrast: bool = false) -> StyleBox:
 		_style_cache[cache_key] = style.duplicate(true)
 		return style.duplicate(true)
 	return null
+
+func set_palette(palette: StringName) -> void:
+	var resolved := ProceduralFactory.ensure_palette(palette)
+	if _palette == resolved:
+		return
+	_palette = resolved
+	_texture_cache.clear()
+	_style_cache.clear()
+	ProceduralFactory.set_palette(_palette)
+
+func get_palette() -> StringName:
+	return _palette
 
 func _reload_asset_map() -> void:
 	_asset_map.clear()

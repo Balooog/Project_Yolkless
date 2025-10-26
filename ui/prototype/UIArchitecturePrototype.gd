@@ -22,6 +22,11 @@ const SHEET_HEIGHT_DESKTOP := 420.0
 const SHEET_HEIGHT_TABLET := 320.0
 const SHEET_HEIGHT_MOBILE := 360.0
 const UI_TOKENS_RESOURCE := preload("res://ui/theme/Tokens.tres")
+const TAB_SEQUENCE: Array[String] = ["home", "store", "research", "automation", "prestige"]
+const FOCUS_LEFT := StringName("left")
+const FOCUS_RIGHT := StringName("right")
+const FOCUS_UP := StringName("up")
+const FOCUS_DOWN := StringName("down")
 
 var _current_tab := "home"
 var _feed_queue_count := 0
@@ -112,6 +117,11 @@ var _current_root_margin: float = 24.0
 var _current_column_separation: float = 12.0
 var _factory_design_width: float = 960.0
 var _factory_design_height: float = 720.0
+var _focus_map: FocusMap
+var _focus_nodes: Dictionary = {}
+var _current_sheet_focus_ids: Array[StringName] = []
+var _current_sheet_primary_id: StringName = StringName()
+var _focus_current_id: StringName = StringName()
 
 func _ready() -> void:
 	_register_tab_buttons()
@@ -153,6 +163,7 @@ func _ready() -> void:
 	_sync_factory_viewport_size()
 	_update_layout()
 	_setup_focus_modes()
+	_initialize_focus_map()
 	_show_tab(_current_tab)
 
 func _initialize_banner_references() -> void:
@@ -639,38 +650,384 @@ func _setup_focus_modes() -> void:
 		button.focus_mode = Control.FOCUS_ALL
 	if _feed_button:
 		_feed_button.focus_mode = Control.FOCUS_ALL
+	if _canvas_panel:
+		_canvas_panel.focus_mode = Control.FOCUS_ALL
+
+func _initialize_focus_map() -> void:
+	if _focus_map == null:
+		_focus_map = FocusMap.new()
+		_focus_map.name = "FocusMap"
+		add_child(_focus_map)
+	if not layout_changed.is_connected(_on_layout_changed_for_focus):
+		layout_changed.connect(_on_layout_changed_for_focus)
+
+func _register_focus_node(id: StringName, control: Control) -> StringName:
+	if _focus_map == null or control == null:
+		return StringName()
+	if not control.is_inside_tree() or not control.is_visible_in_tree():
+		return StringName()
+	if control is BaseButton and (control as BaseButton).disabled:
+		return StringName()
+	control.focus_mode = Control.FOCUS_ALL
+	control.set_meta("focus_id", id)
+	if not control.focus_entered.is_connected(_on_focus_target_focused):
+		control.focus_entered.connect(_on_focus_target_focused.bind(id))
+	_focus_nodes[id] = control
+	_focus_map.register_node(id, control)
+	return id
+
+func _focus_id_for_control(control: Control) -> StringName:
+	if control == null:
+		return StringName()
+	if not control.has_meta("focus_id"):
+		return StringName()
+	var meta: Variant = control.get_meta("focus_id")
+	return meta if meta is StringName else StringName()
+
+func _owns_control(control: Control) -> bool:
+	return control != null and control.is_inside_tree() and is_ancestor_of(control)
+
+func _on_focus_target_focused(id: StringName) -> void:
+	_focus_current_id = id
+
+func _on_layout_changed_for_focus() -> void:
+	_rebuild_focus_graph()
+	if _focus_current_id == StringName():
+		_focus_default_for_tab(_current_tab)
+
+func _rebuild_focus_graph(preserve_focus: bool = true) -> void:
+	if _focus_map == null:
+		return
+	var previous_id: StringName = _focus_current_id if preserve_focus else StringName()
+	_focus_map.clear()
+	_focus_nodes.clear()
+	_current_sheet_focus_ids.clear()
+	_current_sheet_primary_id = StringName()
+	var tab_focus_ids: Dictionary = {}
+	var tab_order: Array[StringName] = []
+	if _is_desktop_layout:
+		tab_order = _register_dock_focus(tab_focus_ids)
+	else:
+		tab_order = _register_bottom_focus(tab_focus_ids)
+	var sheet_ids: Array[StringName] = _register_sheet_focus(tab_focus_ids)
+	var canvas_id: StringName = _register_canvas_focus(sheet_ids)
+	if _is_desktop_layout:
+		_link_vertical(tab_order)
+	else:
+		_link_horizontal(tab_order, true)
+	_link_vertical(sheet_ids)
+	_current_sheet_focus_ids = sheet_ids
+	if preserve_focus and previous_id != StringName() and _focus_nodes.has(previous_id):
+		_focus_map.focus(previous_id)
+		return
+	if not preserve_focus:
+		_focus_current_id = StringName()
+
+func _register_bottom_focus(tab_focus_ids: Dictionary) -> Array[StringName]:
+	var order: Array[StringName] = []
+	var home_button_variant: Variant = _bottom_tab_buttons_by_id.get(&"home")
+	var home_id: StringName = _register_tab_focus_button("home", home_button_variant)
+	if home_id != StringName():
+		tab_focus_ids[StringName("home")] = home_id
+		order.append(home_id)
+	var store_button_variant: Variant = _bottom_tab_buttons_by_id.get(&"store")
+	var store_id: StringName = _register_tab_focus_button("store", store_button_variant)
+	if store_id != StringName():
+		tab_focus_ids[StringName("store")] = store_id
+		order.append(store_id)
+	var feed_id: StringName = _register_focus_node(StringName("tab_feed"), _feed_button)
+	if feed_id != StringName():
+		order.append(feed_id)
+	var research_button_variant: Variant = _bottom_tab_buttons_by_id.get(&"research")
+	var research_id: StringName = _register_tab_focus_button("research", research_button_variant)
+	if research_id != StringName():
+		tab_focus_ids[StringName("research")] = research_id
+		order.append(research_id)
+	var automation_button_variant: Variant = _bottom_tab_buttons_by_id.get(&"automation")
+	var automation_id: StringName = _register_tab_focus_button("automation", automation_button_variant)
+	if automation_id != StringName():
+		tab_focus_ids[StringName("automation")] = automation_id
+		order.append(automation_id)
+	var prestige_button_variant: Variant = _bottom_tab_buttons_by_id.get(&"prestige")
+	var prestige_id: StringName = _register_tab_focus_button("prestige", prestige_button_variant)
+	if prestige_id != StringName():
+		tab_focus_ids[StringName("prestige")] = prestige_id
+		order.append(prestige_id)
+	return order
+
+func _register_tab_focus_button(tab_id: String, button_variant: Variant) -> StringName:
+	if button_variant is BaseButton:
+		return _register_focus_node(StringName("tab_%s" % tab_id), button_variant as BaseButton)
+	return StringName()
+
+func _register_dock_focus(tab_focus_ids: Dictionary) -> Array[StringName]:
+	var order: Array[StringName] = []
+	for button in _dock_buttons:
+		if button == null or not button.visible:
+			continue
+		var tab_id: String = _button_tab_id(button)
+		var focus_id: StringName = _register_focus_node(StringName("tab_%s" % tab_id), button)
+		if focus_id != StringName():
+			tab_focus_ids[StringName(tab_id)] = focus_id
+			order.append(focus_id)
+	return order
+
+func _register_sheet_focus(tab_focus_ids: Dictionary) -> Array[StringName]:
+	var sheet_ids: Array[StringName] = []
+	match _current_tab:
+		"home":
+			sheet_ids = _register_home_sheet_focus()
+		"store":
+			sheet_ids = _register_store_sheet_focus()
+		"research":
+			sheet_ids = _register_research_sheet_focus()
+		"automation":
+			sheet_ids = _register_automation_sheet_focus()
+		"prestige":
+			sheet_ids = _register_prestige_sheet_focus()
+		_:
+			sheet_ids = []
+	if sheet_ids.is_empty():
+		return sheet_ids
+	_current_sheet_primary_id = sheet_ids[0]
+	var tab_key := StringName(_current_tab)
+	if tab_focus_ids.has(tab_key):
+		var tab_focus_id: StringName = tab_focus_ids[tab_key]
+		_focus_map.set_neighbour(tab_focus_id, FOCUS_DOWN, sheet_ids[0])
+		_focus_map.set_neighbour(sheet_ids[0], FOCUS_UP, tab_focus_id)
+	if _current_tab == "home" and _focus_nodes.has(StringName("tab_feed")):
+		_focus_map.set_neighbour(StringName("tab_feed"), FOCUS_UP, sheet_ids[0])
+	return sheet_ids
+
+func _register_home_sheet_focus() -> Array[StringName]:
+	var vertical_ids: Array[StringName] = []
+	var util_ids: Array[StringName] = []
+	var feed_id: StringName = _register_focus_node(StringName("sheet_home_feed"), _home_feed_button)
+	if feed_id != StringName():
+		vertical_ids.append(feed_id)
+	var promote_id: StringName = _register_focus_node(StringName("sheet_home_promote"), _home_promote_button)
+	if promote_id != StringName():
+		vertical_ids.append(promote_id)
+	var copy_id: StringName = _register_focus_node(StringName("sheet_home_copy"), _home_copy_button)
+	if copy_id != StringName():
+		vertical_ids.append(copy_id)
+		util_ids.append(copy_id)
+	var paste_id: StringName = _register_focus_node(StringName("sheet_home_paste"), _home_paste_button)
+	if paste_id != StringName():
+		util_ids.append(paste_id)
+	var settings_id: StringName = _register_focus_node(StringName("sheet_home_settings"), _home_settings_button)
+	if settings_id != StringName():
+		util_ids.append(settings_id)
+	_link_vertical(vertical_ids)
+	if util_ids.size() > 1:
+		_link_row(util_ids)
+	if promote_id != StringName():
+		for util_id in util_ids:
+			_focus_map.set_neighbour(util_id, FOCUS_UP, promote_id)
+	var ids: Array[StringName] = []
+	for id in vertical_ids:
+		if id != StringName() and not ids.has(id):
+			ids.append(id)
+	for util_id in util_ids:
+		if util_id != StringName() and not ids.has(util_id):
+			ids.append(util_id)
+	return ids
+
+func _register_store_sheet_focus() -> Array[StringName]:
+	var ids: Array[StringName] = []
+	var prod_button: Variant = _store_buttons.get("prod_1")
+	if prod_button is Button:
+		var focus_id: StringName = _register_focus_node(StringName("sheet_store_prod"), prod_button as Button)
+		if focus_id != StringName():
+			ids.append(focus_id)
+	var cap_button: Variant = _store_buttons.get("cap_1")
+	if cap_button is Button:
+		var focus_id: StringName = _register_focus_node(StringName("sheet_store_cap"), cap_button as Button)
+		if focus_id != StringName():
+			ids.append(focus_id)
+	var auto_button: Variant = _store_buttons.get("auto_1")
+	if auto_button is Button:
+		var focus_id: StringName = _register_focus_node(StringName("sheet_store_auto"), auto_button as Button)
+		if focus_id != StringName():
+			ids.append(focus_id)
+	_link_vertical(ids)
+	return ids
+
+func _register_research_sheet_focus() -> Array[StringName]:
+	var ids: Array[StringName] = []
+	var prod_button: Variant = _research_buttons.get("r_prod_1")
+	if prod_button is Button:
+		var focus_id: StringName = _register_focus_node(StringName("sheet_research_prod"), prod_button as Button)
+		if focus_id != StringName():
+			ids.append(focus_id)
+	var cap_button: Variant = _research_buttons.get("r_cap_1")
+	if cap_button is Button:
+		var focus_id: StringName = _register_focus_node(StringName("sheet_research_cap"), cap_button as Button)
+		if focus_id != StringName():
+			ids.append(focus_id)
+	var auto_button: Variant = _research_buttons.get("r_auto_1")
+	if auto_button is Button:
+		var focus_id: StringName = _register_focus_node(StringName("sheet_research_auto"), auto_button as Button)
+		if focus_id != StringName():
+			ids.append(focus_id)
+	_link_vertical(ids)
+	return ids
+
+func _register_automation_sheet_focus() -> Array[StringName]:
+	var ids: Array[StringName] = []
+	var auto_button: Variant = _automation_buttons.get("auto_1")
+	if auto_button is Button:
+		var focus_id: StringName = _register_focus_node(StringName("sheet_automation_auto"), auto_button as Button)
+		if focus_id != StringName():
+			ids.append(focus_id)
+	_link_vertical(ids)
+	return ids
+
+func _register_prestige_sheet_focus() -> Array[StringName]:
+	var ids: Array[StringName] = []
+	var focus_id: StringName = _register_focus_node(StringName("sheet_prestige_button"), _prestige_button)
+	if focus_id != StringName():
+		ids.append(focus_id)
+	_link_vertical(ids)
+	return ids
+
+func _register_canvas_focus(sheet_ids: Array[StringName]) -> StringName:
+	if _canvas_panel == null:
+		return StringName()
+	var canvas_id: StringName = _register_focus_node(StringName("canvas_panel"), _canvas_panel)
+	if canvas_id == StringName():
+		return StringName()
+	if not sheet_ids.is_empty():
+		var last_id: StringName = sheet_ids[sheet_ids.size() - 1]
+		_focus_map.set_neighbour(last_id, FOCUS_DOWN, canvas_id)
+		_focus_map.set_neighbour(canvas_id, FOCUS_UP, last_id)
+	else:
+		var tab_id: StringName = _tab_focus_id(_current_tab)
+		if tab_id != StringName() and _focus_nodes.has(tab_id):
+			_focus_map.set_neighbour(canvas_id, FOCUS_UP, tab_id)
+	if not _is_desktop_layout and _focus_nodes.has(StringName("tab_feed")):
+		_focus_map.set_neighbour(canvas_id, FOCUS_DOWN, StringName("tab_feed"))
+		_focus_map.set_neighbour(StringName("tab_feed"), FOCUS_UP, canvas_id)
+	elif _is_desktop_layout:
+		var tab_id: StringName = _tab_focus_id(_current_tab)
+		if tab_id != StringName() and _focus_nodes.has(tab_id):
+			_focus_map.set_neighbour(canvas_id, FOCUS_DOWN, tab_id)
+	return canvas_id
+
+func _tab_focus_id(tab_id: String) -> StringName:
+	return StringName("tab_%s" % tab_id)
+
+func _tab_button_available(tab_id: String) -> bool:
+	if _is_desktop_layout:
+		var button: Variant = _find_dock_button(tab_id)
+		return button != null and button.is_visible_in_tree()
+	var button_variant: Variant = _bottom_tab_buttons_by_id.get(StringName(tab_id))
+	if button_variant is BaseButton:
+		var button := button_variant as BaseButton
+		return button.is_visible_in_tree()
+	return false
+
+func _find_dock_button(tab_id: String) -> BaseButton:
+	for button in _dock_buttons:
+		if button and _button_tab_id(button) == tab_id:
+			return button
+	return null
+
+func _link_horizontal(ids: Array[StringName], wrap: bool) -> void:
+	var filtered: Array[StringName] = []
+	for id in ids:
+		if id != StringName() and _focus_nodes.has(id):
+			filtered.append(id)
+	var count := filtered.size()
+	if count <= 1:
+		return
+	for i in range(count - 1):
+		var current := filtered[i]
+		var next_id := filtered[i + 1]
+		_focus_map.set_neighbour(current, FOCUS_RIGHT, next_id)
+		_focus_map.set_neighbour(next_id, FOCUS_LEFT, current)
+	if wrap:
+		var first := filtered[0]
+		var last := filtered[count - 1]
+		if first != last:
+			_focus_map.set_neighbour(last, FOCUS_RIGHT, first)
+			_focus_map.set_neighbour(first, FOCUS_LEFT, last)
+
+func _link_vertical(ids: Array[StringName]) -> void:
+	var filtered: Array[StringName] = []
+	for id in ids:
+		if id != StringName() and _focus_nodes.has(id):
+			filtered.append(id)
+	for i in range(filtered.size() - 1):
+		var current := filtered[i]
+		var next_id := filtered[i + 1]
+		_focus_map.set_neighbour(current, FOCUS_DOWN, next_id)
+		_focus_map.set_neighbour(next_id, FOCUS_UP, current)
+
+func _link_row(ids: Array[StringName]) -> void:
+	var filtered: Array[StringName] = []
+	for id in ids:
+		if id != StringName() and _focus_nodes.has(id):
+			filtered.append(id)
+	for i in range(filtered.size() - 1):
+		var current := filtered[i]
+		var next_id := filtered[i + 1]
+		_focus_map.set_neighbour(current, FOCUS_RIGHT, next_id)
+		_focus_map.set_neighbour(next_id, FOCUS_LEFT, current)
+
+func _cycle_tab(step: int) -> void:
+	var available: Array[String] = []
+	for tab_id in TAB_SEQUENCE:
+		if _tab_button_available(tab_id):
+			available.append(tab_id)
+	if available.is_empty():
+		return
+	var current_index := available.find(_current_tab)
+	if current_index == -1:
+		current_index = 0
+	var next_index := (current_index + step) % available.size()
+	if next_index < 0:
+		next_index += available.size()
+	var target := available[next_index]
+	if target == _current_tab:
+		return
+	_show_tab(target)
+	tab_selected.emit(target)
+
+func _handle_focus_direction(direction: StringName) -> bool:
+	if _focus_map == null:
+		return false
+	var focus_owner := get_viewport().gui_get_focus_owner()
+	if focus_owner == null or not (focus_owner is Control):
+		return _focus_default_to_current_tab()
+	var control := focus_owner as Control
+	if not _owns_control(control):
+		return false
+	var focus_id := _focus_id_for_control(control)
+	if focus_id == StringName():
+		return false
+	var next_id := _focus_map.move(focus_id, direction)
+	if next_id != focus_id:
+		_focus_current_id = next_id
+		return true
+	return false
+
+func _focus_default_to_current_tab() -> bool:
+	_focus_default_for_tab(_current_tab)
+	return _focus_current_id != StringName()
 
 func _focus_default_for_tab(tab_id: String) -> void:
-	match tab_id:
-		"home":
-			if _home_feed_button:
-				_home_feed_button.grab_focus()
-			elif _feed_button:
-				_feed_button.grab_focus()
-		"store":
-			if not _grab_first_button(_store_buttons) and _feed_button:
-				_feed_button.grab_focus()
-		"research":
-			if not _grab_first_button(_research_buttons) and _feed_button:
-				_feed_button.grab_focus()
-		"automation":
-			if not _grab_first_button(_automation_buttons) and _feed_button:
-				_feed_button.grab_focus()
-		"prestige":
-			if _prestige_button:
-				_prestige_button.grab_focus()
-			elif _feed_button:
-				_feed_button.grab_focus()
-		_:
-			if _feed_button:
-				_feed_button.grab_focus()
-
-func _grab_first_button(collection: Dictionary) -> bool:
-	for value in collection.values():
-		if value is Button:
-			(value as Button).grab_focus()
-			return true
-	return false
+	if _focus_map == null:
+		return
+	if _current_sheet_primary_id != StringName() and _focus_nodes.has(_current_sheet_primary_id):
+		_focus_map.focus(_current_sheet_primary_id)
+		return
+	var tab_focus_id := _tab_focus_id(tab_id)
+	if tab_focus_id != StringName() and _focus_nodes.has(tab_focus_id):
+		_focus_map.focus(tab_focus_id)
+		return
+	if _focus_nodes.has(StringName("tab_feed")):
+		_focus_map.focus(StringName("tab_feed"))
 
 func _register_tab_buttons() -> void:
 	var bottom_bar := $RootMargin/RootStack/BottomBar/TabBar
@@ -714,6 +1071,32 @@ func _button_tab_id(button: BaseButton) -> String:
 	return inferred.to_lower()
 
 func _input(event: InputEvent) -> void:
+	if not is_visible_in_tree():
+		return
+	if event.is_action_pressed("ui_tab_prev"):
+		_cycle_tab(-1)
+		accept_event()
+		return
+	elif event.is_action_pressed("ui_tab_next"):
+		_cycle_tab(1)
+		accept_event()
+		return
+	elif event.is_action_pressed("ui_left"):
+		if _handle_focus_direction(FOCUS_LEFT):
+			accept_event()
+			return
+	elif event.is_action_pressed("ui_right"):
+		if _handle_focus_direction(FOCUS_RIGHT):
+			accept_event()
+			return
+	elif event.is_action_pressed("ui_up"):
+		if _handle_focus_direction(FOCUS_UP):
+			accept_event()
+			return
+	elif event.is_action_pressed("ui_down"):
+		if _handle_focus_direction(FOCUS_DOWN):
+			accept_event()
+			return
 	if event.is_action_pressed("ui_tab_home"):
 		_show_tab("home")
 		tab_selected.emit("home")
@@ -771,6 +1154,7 @@ func _show_tab(tab_id: String) -> void:
 	for sheet in _sheets:
 		sheet.visible = sheet.get_meta("tab_id") == tab_id
 	_sheet_overlay.visible = true
+	_rebuild_focus_graph(false)
 	_focus_default_for_tab(tab_id)
 
 func _update_layout() -> void:
@@ -803,14 +1187,14 @@ func _update_layout() -> void:
 	elif is_tablet:
 		sheet_height = SHEET_HEIGHT_TABLET
 	var use_side_anchor := show_environment
-	_configure_sheet_position(sheet_height, use_side_anchor, side_sheet_width)
+	_configure_sheet_position(sheet_height, use_side_anchor, side_sheet_width, window_size.x)
 	_adjust_canvas_width(window_size.x, environment_column_width)
 	_apply_canvas_hint()
 	_refresh_canvas_message_visibility()
 	_sync_factory_viewport_size()
 	layout_changed.emit()
 
-func _configure_sheet_position(sheet_height: float, use_side_anchor: bool, side_width: float) -> void:
+func _configure_sheet_position(sheet_height: float, use_side_anchor: bool, side_width: float, viewport_width: float) -> void:
 	var margin := 16.0
 	if use_side_anchor:
 		_move_sheet_to_anchor(_desktop_sheet_anchor)
@@ -853,17 +1237,63 @@ func _configure_sheet_position(sheet_height: float, use_side_anchor: bool, side_
 			_mobile_sheet_anchor.offset_right = -margin
 			_mobile_sheet_anchor.offset_top = -sheet_height - margin
 			_mobile_sheet_anchor.offset_bottom = -margin
-		if _sheet_overlay:
-			_sheet_overlay.anchor_left = 0.0
-			_sheet_overlay.anchor_right = 1.0
-			_sheet_overlay.anchor_top = 0.0
-			_sheet_overlay.anchor_bottom = 1.0
-			_sheet_overlay.offset_left = 0.0
-			_sheet_overlay.offset_right = 0.0
-			_sheet_overlay.offset_top = 0.0
-			_sheet_overlay.offset_bottom = 0.0
-			_sheet_overlay.custom_minimum_size = Vector2(0.0, 0.0)
-			_sheet_overlay.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if _sheet_overlay:
+		_sheet_overlay.anchor_left = 0.0
+		_sheet_overlay.anchor_right = 1.0
+		_sheet_overlay.anchor_top = 0.0
+		_sheet_overlay.anchor_bottom = 1.0
+		_sheet_overlay.offset_left = 0.0
+		_sheet_overlay.offset_right = 0.0
+		_sheet_overlay.offset_top = 0.0
+		_sheet_overlay.offset_bottom = 0.0
+		_sheet_overlay.custom_minimum_size = Vector2(0.0, 0.0)
+		_sheet_overlay.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	_apply_sheet_layout(use_side_anchor, side_width, margin, sheet_height, viewport_width)
+
+func _apply_sheet_layout(use_side_anchor: bool, side_width: float, margin: float, sheet_height: float, viewport_width: float) -> void:
+	var margin_int := int(round(margin))
+	for sheet_control in _sheets:
+		if sheet_control == null:
+			continue
+		var sheet := sheet_control as Control
+		if sheet == null:
+			continue
+		sheet.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		sheet.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		if use_side_anchor:
+			sheet.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			sheet.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+			sheet.custom_minimum_size = Vector2(side_width, 0.0)
+			sheet.offset_left = 0.0
+			sheet.offset_right = 0.0
+			sheet.offset_top = 0.0
+			sheet.offset_bottom = 0.0
+			if sheet.has_theme_stylebox_override("panel"):
+				sheet.remove_theme_stylebox_override("panel")
+		else:
+			sheet.anchor_left = 0.0
+			sheet.anchor_right = 1.0
+			sheet.anchor_top = 0.0
+			sheet.anchor_bottom = 1.0
+			sheet.offset_left = 0.0
+			sheet.offset_right = 0.0
+			sheet.offset_top = 0.0
+			sheet.offset_bottom = 0.0
+			sheet.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			var desired_width := clampf(viewport_width - (margin * 2.0), 320.0, 520.0)
+			var capped_height := minf(sheet_height, 280.0)
+			sheet.custom_minimum_size = Vector2(desired_width, capped_height)
+			if sheet is PanelContainer and _tokens:
+				var style := StyleBoxFlat.new()
+				style.bg_color = _tokens.colour(&"sheet_mobile_bg")
+				style.border_width_left = 1
+				style.border_width_right = 1
+				style.border_width_top = 1
+				style.border_width_bottom = 1
+				style.border_color = _tokens.colour(&"panel_border")
+				style.set_corner_radius_all(int(round(_tokens.radius(&"corner_md"))))
+				(sheet as PanelContainer).add_theme_stylebox_override("panel", style)
 
 func _environment_column_width(viewport_width: float) -> float:
 	if viewport_width >= 1600.0:

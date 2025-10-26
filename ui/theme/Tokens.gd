@@ -6,6 +6,7 @@ class_name UITokens
 	"banner_text": Color8(232, 239, 245, 255),
 	"banner_alert": Color8(255, 194, 69, 255),
 	"panel_bg": Color8(26, 32, 38, 255),
+    "sheet_mobile_bg": Color8(40, 48, 60, 255),
 	"panel_border": Color8(62, 78, 92, 255),
 	"button_primary": Color8(214, 157, 64, 255),
 	"button_primary_text": Color8(26, 20, 10, 255),

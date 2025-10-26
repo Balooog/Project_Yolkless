@@ -5,11 +5,24 @@
 Supported platforms: **WSL/Ubuntu**, **desktop Linux**, and **Windows** (via PowerShell/WSL). macOS is unofficial—use the same commands with the macOS Godot binary.
 
 ## Prerequisites
-- Install the renderer-enabled **Godot 4.5.1 Windows console build** at `C:\src\godot\Godot_v4.5.1-stable_win64_console.exe` (visible inside WSL as `/mnt/c/src/godot/Godot_v4.5.1-stable_win64_console.exe`).
-- Update the repo’s `.env` file (tracked in git) if the binary location changes. Codex/CI source this file automatically.
-- Optional: add `export GODOT_BIN="/mnt/c/src/godot/Godot_v4.5.1-stable_win64_console.exe"` to your shell profile for manual sessions.
-- **Do not** rely on Snap packages for CI; they lack required capabilities for headless capture.
+- The repo now ships with a **dual-path Godot setup**:
+  - `tools/godot_resolver.sh` auto-selects the Linux CLI (`./bin/Godot_v4.5.1-stable_linux.x86_64`) for WSL, native Linux, and CI.
+  - Designers on Windows may keep the renderer-enabled console build at `C:\src\godot\Godot_v4.5.1-stable_win64_console.exe` for GPU captures (set `GODOT_BIN` manually when using it).
+- `tools/bootstrap_godot.sh` downloads and unpacks the Linux tarball automatically; no manual install required for WSL/CI.
+- `.env` exports `GODOT_BIN=./bin/Godot_v4.5.1-stable_linux.x86_64` and `VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json`; `source .env` once per shell to pull these defaults.
 - Install dependencies listed in `CONTRIBUTING.md` (Python, git-lfs, etc.).
+- **Do not** rely on Snap packages for CI; use the bundled tarball via the resolver.
+
+### Renderer Setup (WSL)
+Lavapipe provides software Vulkan for UI captures:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y mesa-vulkan-drivers vulkan-tools libvulkan1 curl unzip
+export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json
+```
+
+For persistent shells add the `VK_ICD_FILENAMES` export to your profile or reuse the value from `.env`.
 
 ## Common Commands
 ```bash
@@ -19,9 +32,9 @@ source .env
 # Headless sanity (warnings as errors)
 ./tools/check_only.sh
 
-# Launch editor / project
-$GODOT_BIN --path . --editor
-$GODOT_BIN --path . --headless --quit
+# Launch editor / project (resolver determines the right binary)
+$(bash tools/godot_resolver.sh) --path . --editor
+$(bash tools/godot_resolver.sh) --headless --path . --quit
 
 # CI wrapper (prints ✅/❌ summary)
 ./tools/check_only_ci.sh
@@ -34,8 +47,8 @@ Baseline capture + compare for the PX-010 UI program.
 ./tools/ui_baseline.sh
 
 # Sweep S/M/L viewports and capture screenshots
-# Capture using renderer-enabled binary (writes to Godot user:// then syncs below)
-source .env && ./tools/ui_viewport_matrix.sh --capture
+# Uses Vulkan (lavapipe) inside WSL to render into the Godot user:// workspace
+./tools/ui_viewport_matrix.sh
 
 # Sync captured PNGs into dev/screenshots/ui_current/
 source .env && ./tools/sync_ui_screenshots.sh
@@ -50,14 +63,14 @@ Runtime lint runs automatically in dev builds; use the headless helper for scene
 # In-game dev build prints UILint summary in console.
 
 # One-off lint for a scene
-$GODOT_BIN --headless --script res://tools/uilint_scene.gd res://scenes/ui_smoke/MainHUD.tscn
+$(bash tools/godot_resolver.sh) --headless --script res://tools/uilint_scene.gd res://scenes/ui_smoke/MainHUD.tscn
 ```
 
 ## Replay & Telemetry
 Headless performance/telemetry capture (see [Telemetry & Replay](../quality/Telemetry_Replay.md)).
 ```bash
 # Five-minute replay with seed 42
-$GODOT_BIN --headless --path . --script res://tools/replay_headless.gd --duration=300 --seed=42
+$(bash tools/godot_resolver.sh) --headless --path . --script res://tools/replay_headless.gd --duration=300 --seed=42
 # Outputs:
 #   logs/telemetry/replay_YYYYMMDD_HHMM.json
 #   logs/perf/tick_<timestamp>.csv
@@ -69,14 +82,14 @@ $GODOT_BIN --headless --path . --script res://tools/replay_headless.gd --duratio
 ## Smoke Flow (local PR checklist)
 1. `source .env && ./tools/check_only_ci.sh` → ensure ✅ output.
 2. `./tools/ui_viewport_matrix.sh` then `./tools/ui_compare.sh` → expect zero diffs (or review intentional deltas).
-3. `$GODOT_BIN --headless --script res://tools/replay_headless.gd --duration=300 --seed=42` → inspect JSON/CSV p95 metrics.
+3. `$(bash tools/godot_resolver.sh) --headless --script res://tools/replay_headless.gd --duration=300 --seed=42` → inspect JSON/CSV p95 metrics.
 4. Optional: run `./tools/ui_baseline.sh` to refresh baseline after approved UI changes (commit PNG updates).
 
 ## Troubleshooting
-- **“command not found: $GODOT_BIN”** — ensure the env var points to an executable; check `chmod +x`.
+- **“command not found: $GODOT_BIN”** — run `bash tools/godot_resolver.sh`; if it fails, rerun `tools/bootstrap_godot.sh` to reinstall the tarball.
 - **Permission errors writing screenshots** — verify `dev/screenshots/` exists and is writable; create with `mkdir -p`.
 - **Snap/AppArmor blocks** — remove Snap installs; use the tarball binary.
-- **Headless display errors** — pass `--headless` and `--render-thread 1` if necessary; ensure `libgbm` is installed on WSL.
+- **Headless/Vulkan errors** — confirm `VK_ICD_FILENAMES` points to lavapipe (`/usr/share/vulkan/icd.d/lvp_icd.x86_64.json`) and that `mesa-vulkan-drivers` is installed.
 - **Visual regression diffs >1%** — update baseline only after designer approval; store new PNGs in git.
 - **UILint violations** — run the scene lint command with `GODOT_BIN` set; fix overflow, missing size flags, or unlabeled buttons per [UI Principles](../ux/UI_Principles.md).
 

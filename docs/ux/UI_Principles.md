@@ -56,7 +56,7 @@
   - D-pad/left stick moves focus between tabs and sheet controls.
   - `A`/Enter activates; `B`/Esc closes sheets; `Y` opens Store; `X` opens Research.
   - Feed action bound to `RT`/Space; sheets must not block feed activation.
-- TODO: implement controller navigation and palette swaps (see [Architecture Alignment TODO](../architecture/Implementation_TODO.md)).
+- Controller navigation is handled via `FocusMap` (LB/RB cycling, RT feed) and Settings exposes color-blind palettes.
 
 ## Links
 - Architecture context: [Overview](../architecture/Overview.md)

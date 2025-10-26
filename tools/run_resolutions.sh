@@ -6,11 +6,22 @@ set -euo pipefail
 #   ./tools/run_resolutions.sh                # use defaults
 #   GODOT_ARGS="--fullscreen" ./tools/run_resolutions.sh 1920x1080
 
-: "${GODOT_BIN:=/mnt/c/src/godot/Godot_v4.5.1-stable_win64_console.exe}"
+: "${VK_ICD_FILENAMES:=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json}"
+export VK_ICD_FILENAMES
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd -- "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 GODOT_ARGS="${GODOT_ARGS:-}"
+
+if [[ -z "${GODOT_BIN:-}" ]] || [[ ! -x "${GODOT_BIN:-}" ]]; then
+	GODOT_BIN="$(bash "${SCRIPT_DIR}/godot_resolver.sh")"
+	export GODOT_BIN
+fi
+
+if [[ ! -x "$GODOT_BIN" ]]; then
+	echo "[run_resolutions] Godot binary not found at $GODOT_BIN" >&2
+	exit 1
+fi
 
 if [ "$#" -gt 0 ]; then
   RESOLUTIONS=("$@")

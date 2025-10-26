@@ -56,6 +56,18 @@ size_flags_horizontal = 1
 unique_name_in_owner = true
 size_flags_horizontal = 3
 
+[node name="ColorPaletteRow" type="HBoxContainer" parent="Panel/VBox"]
+custom_minimum_size = Vector2(0, 32)
+
+[node name="ColorPaletteLabel" type="Label" parent="Panel/VBox/ColorPaletteRow"]
+unique_name_in_owner = true
+size_flags_horizontal = 1
+text = "Color Palette"
+
+[node name="ColorPaletteOption" type="OptionButton" parent="Panel/VBox/ColorPaletteRow"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+
 [node name="VisualRow" type="HBoxContainer" parent="Panel/VBox"]
 custom_minimum_size = Vector2(0, 32)
 

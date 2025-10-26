@@ -66,6 +66,8 @@ func _capture_scene(scene_path: String, absolute_output: String) -> void:
 	# Allow layout to settle across a couple of frames.
 	await process_frame
 	await process_frame
+	RenderingServer.force_draw(true, 0.0)
+	await RenderingServer.frame_post_draw
 
 	var viewport := get_root()
 	var texture := viewport.get_texture()
@@ -88,7 +90,8 @@ func _capture_scene(scene_path: String, absolute_output: String) -> void:
 		await process_frame
 		return
 
-	image.flip_y()
+	# Vulkan outputs appear inverted only on the Y axis in most engines, but lavapipe already returns upright data.
+	# We amend orientation handling below once we know which backend is active.
 	var file_base := _scene_basename(scene_path)
 	var filename := "%s_%dx%d.png" % [file_base, _viewport_override.x, _viewport_override.y]
 	var file_path := absolute_output.path_join(filename)

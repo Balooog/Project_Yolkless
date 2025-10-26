@@ -18,10 +18,12 @@ jobs:
       - name: Validate data tables
         run: |
           python3 tools/validate_tables.py --tables=data/upgrade.tsv,data/research.tsv,data/environment_profiles.tsv,data/materials.tsv --schema=docs/data/Schemas.md
-      - name: Run headless replay
+      - name: Run nightly replay
         run: |
-          mkdir -p reports/nightly/${{ github.run_id }}
-          "$GODOT_BIN" --headless --path . --script res://tools/replay_headless.gd --duration=300 --seed=42 --strategy=normal > reports/nightly/${{ github.run_id }}/replay_stdout.log
+          NIGHTLY_TIMESTAMP=${{ github.run_id }} ./tools/nightly_replay.sh
+      - name: Generate dashboard
+        run: |
+          ./tools/generate_dashboard.sh reports/nightly reports/dashboard/index.html
       - name: Archive telemetry
         if: always()
         uses: actions/upload-artifact@v4
@@ -31,3 +33,4 @@ jobs:
             reports/nightly/${{ github.run_id }}
             logs/telemetry
             logs/perf
+            reports/dashboard/index.html

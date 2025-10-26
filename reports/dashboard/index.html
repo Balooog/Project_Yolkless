@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Project Yolkless – Nightly Dashboard</title>
+	<style>
+		body { font-family: Arial, sans-serif; margin: 24px; color: #222; background: #f5f5f5; }
+		h1 { margin-bottom: 0.2em; }
+		.subtitle { color: #666; margin-top: 0; }
+		section { background: #fff; padding: 16px 20px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.08); margin-bottom: 20px; }
+		table { width: 100%; border-collapse: collapse; }
+		th, td { text-align: left; padding: 8px 10px; }
+		th { background: #ececec; font-weight: 600; }
+		tr:nth-child(even) { background: #fafafa; }
+		.metric { text-align: right; white-space: nowrap; }
+		.label { white-space: nowrap; }
+		.ok { color: #1f7f3d; font-weight: 600; }
+		.alert-list { color: #a94442; }
+		.summary-list { margin: 0; padding-left: 20px; }
+	</style>
+</head>
+<body>
+	<h1>Project Yolkless – Nightly Dashboard</h1>
+	<p class="subtitle">Generated at 2025-10-26T21:17:17+00:00 UTC • Records: 5</p>
+
+	<section>
+		<h2>Summary</h2>
+		<ul class="summary-list"><li><strong>Sandbox Tick p95 (ms):</strong> min 0.756 / max 1.333 / avg 0.998</li><li><strong>Environment Tick p95 (ms):</strong> min 0.019 / max 0.326 / avg 0.086</li><li><strong>PPS Avg:</strong> min 0.424 / max 0.424 / avg 0.424</li><li><strong>Comfort Index Avg:</strong> min 0.578 / max 0.581 / avg 0.580</li></ul>
+	</section>
+
+	<section>
+		<h2>Alerts</h2>
+		<ul class="alert-list"><li>20251025-171853: Sandbox p95 tick decrease of -15.2% (prev 1.333 → current 1.131)</li><li>20251025-171853: Environment p95 tick decrease of -91.1% (prev 0.326 → current 0.029)</li><li>20251026-155035: Sandbox p95 tick decrease of -33.2% (prev 1.131 → current 0.756)</li><li>20251026-155035: Environment p95 tick decrease of -31.0% (prev 0.029 → current 0.020)</li><li>manual-test: Sandbox p95 tick increase of 21.2% (prev 0.800 → current 0.970)</li><li>manual-test: Environment p95 tick increase of 89.5% (prev 0.019 → current 0.036)</li></ul>
+	</section>
+
+	<section>
+		<h2>Run History</h2>
+		<table>
+			<thead>
+				<tr>
+					<th>Run ID</th>
+					<th>Timestamp</th>
+					<th>Sandbox p95 (ms)</th>
+					<th>Environment p95 (ms)</th>
+					<th>PPS Avg</th>
+					<th>CI Avg</th>
+					<th>Power Ratio Avg</th>
+					<th>Final CI</th>
+					<th>CI Bonus (%)</th>
+					<th>Final PPS</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr><td class="label">20251025-150742</td><td class="label">2025-10-25 19:07:44</td><td class="metric">1.333 ms</td><td class="metric">0.326 ms</td><td class="metric">0.424</td><td class="metric">0.578</td><td class="metric">1.029</td><td class="metric">0.577</td><td class="metric">2.89 %</td><td class="metric">0.423</td></tr>
+<tr><td class="label">20251025-171853</td><td class="label">2025-10-25 21:18:54</td><td class="metric">1.131 ms</td><td class="metric">0.029 ms</td><td class="metric">0.424</td><td class="metric">0.581</td><td class="metric">1.029</td><td class="metric">0.581</td><td class="metric">2.90 %</td><td class="metric">0.423</td></tr>
+<tr><td class="label">20251026-155035</td><td class="label">2025-10-26 15:50:35</td><td class="metric">0.756 ms</td><td class="metric">0.020 ms</td><td class="metric">0.424</td><td class="metric">0.581</td><td class="metric">1.029</td><td class="metric">0.582</td><td class="metric">2.91 %</td><td class="metric">0.423</td></tr>
+<tr><td class="label">20251026-115618</td><td class="label">2025-10-26 15:56:19</td><td class="metric">0.800 ms</td><td class="metric">0.019 ms</td><td class="metric">0.424</td><td class="metric">0.580</td><td class="metric">1.029</td><td class="metric">0.580</td><td class="metric">2.90 %</td><td class="metric">0.423</td></tr>
+<tr><td class="label">manual-test</td><td class="label">2025-10-26 21:17:00</td><td class="metric">0.970 ms</td><td class="metric">0.036 ms</td><td class="metric">0.424</td><td class="metric">0.579</td><td class="metric">1.029</td><td class="metric">0.579</td><td class="metric">2.89 %</td><td class="metric">0.423</td></tr>
+			</tbody>
+		</table>
+	</section>
+</body>
+</html>

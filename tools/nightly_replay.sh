@@ -1,10 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-: "${GODOT_BIN:=/mnt/c/src/godot/Godot_v4.5.1-stable_win64_console.exe}"
+: "${VK_ICD_FILENAMES:=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json}"
+export VK_ICD_FILENAMES
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-ROOT_DIR="$( cd "$SCRIPT_DIR/.." && pwd )"
+SCRIPT_DIR="$(cd -- "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+if [[ -z "${GODOT_BIN:-}" ]] || [[ ! -x "${GODOT_BIN:-}" ]]; then
+	GODOT_BIN="$(bash "${ROOT_DIR}/tools/godot_resolver.sh")"
+	export GODOT_BIN
+fi
+
+if [[ ! -x "$GODOT_BIN" ]]; then
+	echo "[nightly_replay] Godot binary not found at $GODOT_BIN" >&2
+	exit 1
+fi
 REPORT_ROOT="$ROOT_DIR/reports/nightly"
 STAMP="${NIGHTLY_TIMESTAMP:-$(date +%Y%m%d-%H%M%S)}"
 RUN_DIR="$REPORT_ROOT/$STAMP"

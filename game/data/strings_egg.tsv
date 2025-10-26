@@ -49,6 +49,11 @@ text_scale_125	125%
 settings_title	Accessibility & Diagnostics
 high_contrast_label	High Contrast UI
 high_contrast_tooltip	Increases contrast for key interface elements
+color_palette_label	Color Palette
+color_palette_tooltip	Choose a color-safe palette for accessibility
+color_palette_default	Default Palette
+color_palette_deuteranopia	Deuteranopia Friendly
+color_palette_protanopia	Protanopia Friendly
 settings_visuals	Visual Effects
 visuals_label	Visual Effects
 visuals_feed_particles	Feed Particles
