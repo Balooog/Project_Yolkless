@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/prototype/ui_architecture.tscn" id="1"]
+[ext_resource type="Script" path="res://ui/smoke/SetTab.gd" id="2"]
+
+[node name="AutomationHUD" type="Control"]
+script = ExtResource("2")
+prototype_path = NodePath("Prototype")
+tab_id = "automation"
+
+[node name="Prototype" parent="." instance=ExtResource("1")]

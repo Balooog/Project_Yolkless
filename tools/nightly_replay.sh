@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+: "${GODOT_BIN:=/mnt/c/src/godot/Godot_v4.5.1-stable_win64_console.exe}"
+
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ROOT_DIR="$( cd "$SCRIPT_DIR/.." && pwd )"
 REPORT_ROOT="$ROOT_DIR/reports/nightly"
@@ -8,7 +10,6 @@ STAMP="${NIGHTLY_TIMESTAMP:-$(date +%Y%m%d-%H%M%S)}"
 RUN_DIR="$REPORT_ROOT/$STAMP"
 mkdir -p "$RUN_DIR"
 
-GODOT_BIN="${GODOT_BIN:-godot4}"
 DURATION="${DURATION:-300}"
 SEED="${SEED:-42}"
 STRATEGY="${STRATEGY:-normal}"

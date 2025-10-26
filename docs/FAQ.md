@@ -3,7 +3,7 @@
 ## Build & Run
 
 **Q:** Why does Codex fail to execute the Godot Snap package?  
-**A:** Snap lacks required permissions for headless capture. Use the tarball binary and export `GODOT_BIN` (see [Build Cookbook](dev/Build_Cookbook.md)).
+**A:** Snap lacks required permissions for headless capture. Use the shared Windows console build (`/mnt/c/src/godot/Godot_v4.5.1-stable_win64_console.exe`) via the repo `.env` (see [Build Cookbook](dev/Build_Cookbook.md)).
 
 **Q:** Where are screenshots saved?  
 **A:** Local captures go to `dev/screenshots/`; CI artifacts live under `artifacts/ui_baseline/` in the pipeline.

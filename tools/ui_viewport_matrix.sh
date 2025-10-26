@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+: "${GODOT_BIN:=/mnt/c/src/godot/Godot_v4.5.1-stable_win64_console.exe}"
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-GODOT_BIN="${GODOT_BIN:-godot4}"
 
 VIEWPORTS=(
 	"640x360"
@@ -14,5 +15,5 @@ VIEWPORTS=(
 
 for vp in "${VIEWPORTS[@]}"; do
 	echo "[ui_viewport_matrix] capturing viewport ${vp}"
-	"${GODOT_BIN}" --headless --path "${REPO_ROOT}" --script "res://tools/ui_screenshots.gd" -- "--viewport=${vp}"
+	"${GODOT_BIN}" --path "${REPO_ROOT}" --script "res://tools/ui_screenshots.gd" -- "--viewport=${vp}" "--capture"
 done

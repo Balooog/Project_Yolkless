@@ -57,5 +57,5 @@ func radius(token: StringName) -> float:
 func spacing_value(token: StringName) -> float:
 	return float(spacing.get(String(token), 12.0))
 
-func breakpoint(token: StringName) -> int:
+func breakpoint_value(token: StringName) -> int:
 	return int(breakpoints.get(String(token), 0))

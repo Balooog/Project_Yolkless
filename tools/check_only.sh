@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Allow overriding the Godot binary (default to Godot CLI in PATH)
-GODOT_BIN="${GODOT_BIN:-godot4}"
+: "${GODOT_BIN:=/mnt/c/src/godot/Godot_v4.5.1-stable_win64_console.exe}"
 
 if ! command -v "$GODOT_BIN" >/dev/null 2>&1; then
   echo "[check_only] godot binary not found: $GODOT_BIN" >&2

@@ -33,7 +33,7 @@
 - With the prototype HUD active, verify each sheet mirrors the live button/label text from the underlying systems (credits, storage, store buttons, research queue, automation unlocks, prestige state).
 
 ## Telemetry Spot Check
-- Run a short replay harness pass to capture comfort metrics: `godot4 --headless --path . --script res://tools/replay_headless.gd --duration=60 --seed=42 --strategy=normal`.
+- Run a short replay harness pass to capture comfort metrics: `source .env && $GODOT_BIN --headless --path . --script res://tools/replay_headless.gd --duration=60 --seed=42 --strategy=normal`.
 - Confirm the JSON summary reports `sandbox_tick_ms_p95 ≤ 1.9 ms`, `active_cells_max ≤ 400`, and `ci_delta_abs_max ≤ 0.05` after the built-in ~2 s warm-up (StatsProbe ignores early samples automatically). Escalate to engineering if thresholds are exceeded beyond that window.
 
 ## Automated Gates

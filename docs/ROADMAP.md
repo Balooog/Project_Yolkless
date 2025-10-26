@@ -95,7 +95,7 @@
 
 | Task                       | Goal                                        | Status     |
 | -------------------------- | ------------------------------------------- | ---------- |
-| **CI Smoke Test**          | `godot4 --headless --check-only` validation | 🔜         |
+| **CI Smoke Test**          | `$GODOT_BIN --headless --check-only` validation | 🔜         |
 | **Performance Budget**     | ≤5% GPU load idle                           | Ongoing    |
 | **Accessibility Audit**    | WCAG AA compliance                          | Ongoing    |
 | **Save/Load Versioning**   | Persist environment variables               | 🔜         |

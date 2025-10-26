@@ -4,12 +4,12 @@ set -euo pipefail
 # Launch Project Yolkless at several window sizes in sequence.
 # Usage:
 #   ./tools/run_resolutions.sh                # use defaults
-#   GODOT_BIN=godot ./tools/run_resolutions.sh 1280x720 1920x1080
 #   GODOT_ARGS="--fullscreen" ./tools/run_resolutions.sh 1920x1080
+
+: "${GODOT_BIN:=/mnt/c/src/godot/Godot_v4.5.1-stable_win64_console.exe}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-GODOT_BIN="${GODOT_BIN:-godot4}"
 GODOT_ARGS="${GODOT_ARGS:-}"
 
 if [ "$#" -gt 0 ]; then
