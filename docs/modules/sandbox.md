@@ -11,11 +11,20 @@ The sandbox renderer visualises the Comfort Index cellular automata (CA) grid, t
 ## Responsibilities
 | Area | Details |
 | --- | --- |
-| Rendering | Maintain `Image`/`ImageTexture` buffers, update dirty cells only, upscale via nearest-neighbour to viewport size. |
-| Simulation bridge | Pull double-buffered grid snapshots from `SandboxService`, respect smoothing windows. |
-| Performance | Logic ≤ 2 ms, render ≤ 1 ms. Half-rate fallback when frame p95 > 18 ms for five consecutive seconds. |
-| Telemetry | Emit StatsProbe metrics (`sandbox_render_ms_avg`, `sandbox_render_ms_p95`, `sandbox_uploads_per_sec`, `sandbox_dirty_pixels_avg`). |
-| Integration | Replace legacy `EnvironmentRoot` when `Config.env_renderer == "sandbox"`; expose comfort tooltip data via EnvPanel. |
+| Rendering | Diorama: layered backgrounds, sprites, parallax. Map: shader/palette projection of CA cells. |
+| Simulation bridge | Pull snapshots from `SandboxService.current_snapshot()`, respect shared smoothing/skip cadence. |
+| Performance | Logic ≤ 2 ms, render ≤ 1 ms; auto lowers draw cadence when p95 >18 ms for 5 s. |
+| Telemetry | Emit StatsProbe metrics (`sandbox_render_ms_avg`, `sandbox_render_ms_p95`) plus active view mode. |
+| Integration | Replace legacy `EnvironmentRoot` when `Config.env_renderer == "sandbox"`; host Diorama⇄Map toggle; expose comfort tooltip data via EnvPanel. |
+
+## Conveyor Overlay Layer
+- Adds a `ConveyorOverlay` node above the sandbox viewport to render scrolling belts, crates, and comfort-tint accents.
+- Drives belt speed and tint from feed interaction signals (`feed_hold_started()`, `feed_hold_ended()`, `feed_burst(mult)`) and Comfort Index smoothing.
+- Responds to `shipment_triggered()` pulses for auto-dump flashes and subtle camera nudges without mutating the simulation buffers.
+- Clamps speed ≤ 2.5× baseline regardless of PPS or Wisdom multipliers, debounces shipment pulses to ≥ 400 ms, and keeps CA tick independent from visual cadence.
+- Power ratio only affects tint (cooler when `power_ratio<1.0`, warmer on surplus); animation speed remains linked to PPS and burst state.
+- Sends timing metrics (`belt_anim_ms_avg`, `belt_anim_ms_p95`) to StatBus/telemetry and honours `Settings.reduce_sandbox_motion` by halving burst intensity, disabling speedlines/micro-pan, and respecting accessibility palettes.
+- Shares sprite palettes with era assets (`art/conveyor/`) so Diorama evolution remains cohesive across eras and mirrors Sandbox palette swaps.
 
 ## Inputs
 - `EnvironmentService.environment_updated(state: Dictionary)` — drives tone/colour adjustments.
@@ -26,6 +35,17 @@ The sandbox renderer visualises the Comfort Index cellular automata (CA) grid, t
 - `ci_changed(ci: float, bonus: float)` — forwarded from SandboxService to StatBus/Economy/UI.
 - StatsProbe stream (1 Hz) capturing render timing, upload counts, dirty pixel averages.
 - UI hooks for EnvPanel (`Comfort +X.XX %` tooltip) and sandbox debug overlays.
+
+## View Modes & Guardrails
+- Diorama and Map views share the same CA front buffer; toggling the view swaps presentation only and must complete ≤ 100 ms without touching sim cadence.
+- Diorama uses era-specific LUTs, props, and conveyor accents; Map view uses a fixed legend/heatmap palette with an always-visible CI/PPS legend.
+- CI ranges are normalized per era so tint thresholds line up between Diorama props and Map legend.
+- When `Config.reduce_sandbox_motion` is enabled, both views disable camera pan/drift, halve burst-linked motion, and keep tint changes low-frequency.
+
+## Mini-Game Interaction Constraints
+- Mini-games (future RM-0XX) never touch Credits/RP directly; any bonus routes through the Reputation reward channel documented in the Balance Playbook.
+- While a mini-game is active, Sandbox visualization (Diorama + Conveyor overlay) ticks visuals at ¼ speed for calmness while the core CA simulation continues at the standard cadence to preserve determinism.
+- Telemetry records `minigame_active` and `minigame_duration` alongside render metrics so throttled sessions remain traceable.
 
 ## Performance Targets
 | Metric | Budget | Notes |
@@ -38,30 +58,39 @@ The sandbox renderer visualises the Comfort Index cellular automata (CA) grid, t
 ## File Map
 | Path | Role |
 | --- | --- |
-| `scenes/sandbox/SandboxCanvas.tscn` | Viewport + script mounting the renderer. |
-| `scenes/sandbox/SandboxCanvas.gd` | Scene script wiring inputs/outputs, fallback logic. |
-| `src/sandbox/SandboxRenderer.gd` | Core renderer with buffer management and dirty-cell uploads. |
-| `ui/components/EnvPanel.tscn` | Tooltip integration (Comfort bonus). |
+| `scenes/sandbox/SandboxCanvas.tscn` | Diorama viewport host (SubViewportContainer). |
+| `game/scenes/modules/environment/EnvironmentStage_Backyard.tscn` | Era 1 placeholder (backyard coop). |
+| `game/scenes/modules/environment/EnvironmentStage_SmallFarm.tscn` | Era 2 placeholder (small farm). |
+| `game/scenes/modules/environment/EnvironmentStage_Industrial.tscn` | Era 3 placeholder (industrial plant). |
+| `game/scenes/modules/environment/EnvironmentStage_EcoRevival.tscn` | Era 4 placeholder (eco revival). |
+| `game/scenes/modules/environment/EnvironmentStage_OffWorld.tscn` | Era 5 placeholder (off-world habitat). |
+| `scenes/sandbox/TopDownCanvas.tscn` | Map view host (Control + shader). |
+| `src/sandbox/SandboxRenderer.gd` | Diorama renderer (CPU buffers, parallax, StatsProbe). |
+| `src/sandbox/TopDownRenderer.gd` | Map renderer (palette/shader). |
+| `ui/widgets/EnvPanel.tscn` | Tooltip + map legend integration. |
 | `data/environment_config.json` | Smoothing and cadence configuration. |
 
 ## Signals & Metrics
 | Signal | Payload | Consumers |
 | --- | --- | --- |
 | `ci_changed(ci: float, bonus: float)` | `{ ci, bonus }` | StatBus, Economy, EnvPanel. |
-| `render_fallback_changed(active: bool)` | `{ active }` *(planned)* | Telemetry/Debug overlay to note half-rate mode. |
+| `fallback_state_changed(active: bool)` | `{ active }` | Telemetry hooks, EnvPanel tooltip, runtime log.
 
 | Metric | Source | Description |
 | --- | --- | --- |
-| `sandbox_render_ms_avg` | StatsProbe | Average render cost. |
+| `sandbox_render_ms_avg` | StatsProbe | Average render cost (current view). |
 | `sandbox_render_ms_p95` | StatsProbe | p95 render cost (alerts > 1 ms). |
-| `sandbox_uploads_per_sec` | StatsProbe | Upload cadence (expect ≥20 at full rate). |
-| `sandbox_dirty_pixels_avg` | StatsProbe | Dirty coverage monitor (flags unusual churn). |
+| `sandbox_render_fallback_ratio` | StatsProbe | Fraction of samples spent in half-rate fallback (0–1). |
+| `sandbox_render_view_mode` | StatsProbe/Dashboard | Last active view label (`diorama`, `map`, etc.). |
+| `belt_anim_ms_avg/p95` | StatsProbe | Conveyor overlay animation timing under PPS bursts and throttles. |
 
 ## Testing & Validation
 - **Scene smoke:** Instantiate `scenes/sandbox/SandboxCanvas.tscn` headless to ensure buffers load.
 - **Perf soak:** Run `tools/replay_headless.gd` with sandbox enabled; confirm `sandbox_render_ms_p95 ≤ 1.0 ms`.
+- **Fallback share:** Inspect replay summary `sandbox_render_fallback_ratio`; keep sustained fallback below 0.05 (≤5 %) absent GPU experiments.
 - **Determinism capture:** Hash successive frames for identical seeds/presets to guarantee reproducibility (±1 pixel).
 - **Visual regression:** Include sandbox viewport in UI baseline screenshots (PX-010.9).
+- **Era sweep:** Capture a run that promotes through tiers to confirm basic placeholder props appear for each stage and log replacement needs (see table above).
 
 ## Cross References
 - Roadmap: [RM-021 — Environmental Simulation Layer](../roadmap/RM-021.md)

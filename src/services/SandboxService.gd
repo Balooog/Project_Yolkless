@@ -14,6 +14,10 @@ const EnvironmentService: GDScript = preload("res://src/services/EnvironmentServ
 const SandboxGrid: GDScript = preload("res://src/sandbox/SandboxGrid.gd")
 const StatsProbe: GDScript = preload("res://src/services/StatsProbe.gd")
 const YolkLogger: GDScript = preload("res://game/scripts/Logger.gd")
+const STABLE_DELTA_THRESHOLD := 0.0002
+const STABLE_ACTIVE_THRESHOLD := 0.44
+const STABLE_SKIP_LIMIT := 8
+const ENV_TARGET_EPS := 0.01
 var _environment: EnvironmentService
 var _statbus: StatBus
 var _grid: SandboxGrid
@@ -57,6 +61,7 @@ var _metrics_release_counter: int = 0
 var _metrics_front: Dictionary = {}
 var _metrics_back: Dictionary = {}
 var _grid_cell_count: float = 0.0
+var _stable_tick_counter: int = 0
 
 func _ready() -> void:
 	_load_config()
@@ -127,9 +132,19 @@ func _tick(delta: float) -> void:
 	_grid.heat = _heat
 	_grid.moisture = _moisture
 	_grid.breeze = _breeze
+	var skip_step := false
+	var comfort_data: Dictionary
 	if delta > 0.0:
-		_grid.step(delta)
-	var comfort_data: Dictionary = _compute_ci()
+		skip_step = _should_skip_step()
+		if skip_step and not _last_comfort.is_empty():
+			comfort_data = _last_comfort.duplicate(true)
+		else:
+			if skip_step:
+				skip_step = false
+			_grid.step(delta)
+			comfort_data = _compute_ci()
+	else:
+		comfort_data = _compute_ci()
 	var raw_ci: float = float(comfort_data.get("ci", 0.0))
 	var raw_active: float = float(comfort_data.get("active_fraction", 0.0))
 	_push_window_sample(_ci_window, _ci_window_size, raw_ci)
@@ -152,6 +167,10 @@ func _tick(delta: float) -> void:
 	var tick_ms: float = float(Time.get_ticks_usec() - tick_start) / 1000.0
 	_record_stats_probe(tick_ms, _smoothed_ci, _last_active_fraction, _last_ci_delta)
 	_log_telemetry(delta, _smoothed_ci, bonus)
+	if skip_step:
+		_stable_tick_counter = min(_stable_tick_counter + 1, STABLE_SKIP_LIMIT)
+	else:
+		_stable_tick_counter = 0
 
 func emit_signal_ci(ci: float, bonus: float) -> void:
 	ci_changed.emit(ci, bonus)
@@ -201,6 +220,11 @@ func latest_metrics() -> Dictionary:
 	if _metrics_front.is_empty():
 		return _build_metrics(_smoothed_ci, current_bonus())
 	return _metrics_front.duplicate(true)
+
+func current_snapshot() -> Array:
+	if _grid == null:
+		return []
+	return _grid.get_snapshot()
 
 func _apply_environment_targets(state: Dictionary, immediate: bool) -> void:
 	if state.is_empty():
@@ -291,7 +315,30 @@ func _load_config() -> void:
 	_last_ci_delta = 0.0
 	_last_active_fraction = 0.0
 	_smoothed_ci = 0.0
+	_stable_tick_counter = 0
 	_initialize_metrics_buffers()
+
+func _should_skip_step() -> bool:
+	if _last_comfort.is_empty():
+		return false
+	if _is_environment_adjusting():
+		return false
+	if _stable_tick_counter >= STABLE_SKIP_LIMIT:
+		return false
+	if abs(_last_ci_delta) > STABLE_DELTA_THRESHOLD:
+		return false
+	if _last_active_fraction < STABLE_ACTIVE_THRESHOLD:
+		return false
+	return true
+
+func _is_environment_adjusting() -> bool:
+	if abs(_heat_target - _heat) > ENV_TARGET_EPS:
+		return true
+	if abs(_moisture_target - _moisture) > ENV_TARGET_EPS:
+		return true
+	if abs(_breeze_target - _breeze) > ENV_TARGET_EPS:
+		return true
+	return false
 
 func _record_stats_probe(tick_ms: float, smoothed_ci: float, active_fraction: float, ci_delta: float) -> void:
 	if _stats_probe == null or not is_instance_valid(_stats_probe):

@@ -46,8 +46,8 @@ graph TD
 - Houses factory viewport; integrates environment visuals inside layout.
 
 ## Supporting Services
-- AutomationService: schedules autobursts and machine toggles (~5 Hz).
-- PowerService: tracks generation/consumption, informs automation (~5 Hz).
+- AutomationService: schedules autobursts and machine toggles (~5 Hz) but never alters Sandbox tick cadence—all throughput adjustments flow through Economy modifiers only.
+- PowerService: tracks generation/consumption, informs automation (~5 Hz) and conditions conveyor/sandbox tint via `power_ratio` without touching animation speed or CA cadence.
 - EventDirector: dispatches gentle ±10% events with serene telemetry.
 - Telemetry: captures StatBus snapshots for QA replay.
 
@@ -63,6 +63,7 @@ graph TD
 - StatBus is **pull by default**; services may optionally push high-latency changes via signals.
 - No gameplay threads yet; any future GPU sandbox path must double-buffer results on the main thread.
 - `SimulationClock` autoload currently orchestrates the fixed 10 Hz loop and enables services to opt-out of their legacy per-frame processing.
+- Mini-games or accessibility toggles may slow **visual playback** (Diorama/Map/Conveyor) but the CA simulation tick stays fixed at the scheduled cadence for determinism across automation and power layers.
 
 ### Tick-Order Timeline
 

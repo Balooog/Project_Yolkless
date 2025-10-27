@@ -193,6 +193,8 @@ func _apply_fire(x: int, y: int, delta: float) -> void:
 			_next[ny][nx] = MATERIAL_FIRE
 
 func _apply_plant(x: int, y: int, _delta: float) -> void:
+	if _active_fraction_snapshot >= MAX_ACTIVE_FRACTION:
+		return
 	var overfill: float = max(_active_fraction_snapshot - MAX_ACTIVE_FRACTION, 0.0)
 	var suppression: float = clamp(1.0 - overfill * 3.0, 0.1, 1.0)
 	var grow_chance: float = clamp((0.010 + moisture * 0.02 - heat * 0.008) * suppression, 0.0, 0.04)

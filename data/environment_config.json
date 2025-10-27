@@ -1,8 +1,8 @@
 {
-  "ema_alpha": 0.2,
+  "ema_alpha": 0.1,
   "hidden_tick_fraction": 0.25,
-  "ci_window_size": 4,
-  "active_window_size": 4,
+  "ci_window_size": 8,
+  "active_window_size": 8,
   "metrics_double_buffer": true,
   "metrics_release_interval": 1
 }

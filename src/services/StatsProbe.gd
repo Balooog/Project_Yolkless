@@ -12,6 +12,7 @@ const SERVICE_ENVIRONMENT := "environment"
 const SERVICE_AUTOMATION := "automation"
 const SERVICE_POWER := "power"
 const SERVICE_ECONOMY := "economy"
+const SERVICE_SANDBOX_RENDER := "sandbox_render"
 
 var _buffer: Array[Dictionary] = []
 var _flush_interval := DEFAULT_FLUSH_INTERVAL
@@ -28,7 +29,8 @@ var _service_thresholds := {
 	SERVICE_ENVIRONMENT: 0.5,
 	SERVICE_AUTOMATION: 1.0,
 	SERVICE_POWER: 0.8,
-	SERVICE_ECONOMY: 1.5
+	SERVICE_ECONOMY: 1.5,
+	SERVICE_SANDBOX_RENDER: 1.0
 }
 var _pending_writes: Array = []
 var _write_scheduled := false
@@ -68,7 +70,9 @@ func _check_thresholds(payload: Dictionary) -> void:
 	var sample_count: int = int(_service_sample_counts.get(service, 0))
 	if payload.has("tick_ms"):
 		var service_threshold: float = float(_service_thresholds.get(service, _thresholds["tick_ms"]))
-		var within_warmup: bool = service == SERVICE_SANDBOX and sample_count <= SANDBOX_TICK_WARMUP_SAMPLES
+		var within_warmup: bool = service == SERVICE_SANDBOX or service == SERVICE_SANDBOX_RENDER
+		if within_warmup:
+			within_warmup = sample_count <= SANDBOX_TICK_WARMUP_SAMPLES
 		if payload["tick_ms"] > service_threshold and not within_warmup:
 			var metric_name := "%s_tick_ms" % service
 			stats_probe_alert.emit(StringName(metric_name), payload["tick_ms"], service_threshold)
@@ -112,10 +116,12 @@ func _process_pending_writes() -> void:
 		if file == null:
 			push_warning("StatsProbe: Failed to open %s for writing" % path)
 			continue
-		file.store_line("service,tick_ms,pps,ci,active_cells,power_ratio,ci_delta,storage,feed_fraction,power_state,auto_active")
+		file.store_line("service,tick_ms,pps,ci,active_cells,power_ratio,ci_delta,storage,feed_fraction,power_state,auto_active,sandbox_render_view_mode,sandbox_render_fallback_active")
 		for row_variant in rows:
 			var row_dict: Dictionary = row_variant
-			var csv := "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % [
+			var fallback_flag: int = 1 if row_dict.get("sandbox_render_fallback_active", false) else 0
+			var view_mode_value: String = String(row_dict.get("sandbox_render_view_mode", ""))
+			var csv := "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % [
 				row_dict.get("service", SERVICE_SANDBOX),
 				row_dict.get("tick_ms", 0.0),
 				row_dict.get("pps", 0.0),
@@ -126,7 +132,9 @@ func _process_pending_writes() -> void:
 				row_dict.get("storage", 0.0),
 				row_dict.get("feed_fraction", 0.0),
 				row_dict.get("power_state", 0.0),
-				row_dict.get("auto_active", 0)
+				row_dict.get("auto_active", 0),
+				view_mode_value,
+				fallback_flag
 			]
 			file.store_line(csv)
 		file.close()
@@ -153,7 +161,10 @@ func summarize() -> Dictionary:
 				"storage_accum": 0.0,
 				"feed_fraction_accum": 0.0,
 				"power_state_accum": 0.0,
-				"auto_active_accum": 0.0
+				"auto_active_accum": 0.0,
+				"fallback_samples": 0,
+				"fallback_active_samples": 0,
+				"view_mode_last": ""
 			}
 		var group: Dictionary = grouped[service]
 		var tick_value: float = float(entry.get("tick_ms", 0.0))
@@ -176,6 +187,11 @@ func summarize() -> Dictionary:
 			group["power_state_accum"] += entry.get("power_state", entry.get("power_ratio", 0.0))
 		elif service == SERVICE_AUTOMATION:
 			group["auto_active_accum"] += entry.get("auto_active", 0)
+		elif service == SERVICE_SANDBOX_RENDER:
+			group["fallback_samples"] = int(group["fallback_samples"]) + 1
+			if entry.get("sandbox_render_fallback_active", false):
+				group["fallback_active_samples"] = int(group["fallback_active_samples"]) + 1
+			group["view_mode_last"] = String(entry.get("sandbox_render_view_mode", group["view_mode_last"]))
 		grouped[service] = group
 
 	var summary := {}
@@ -216,6 +232,12 @@ func summarize() -> Dictionary:
 				summary["economy_pps_avg"] = float(group["pps_accum"]) / count_float
 				summary["economy_storage_avg"] = float(group["storage_accum"]) / count_float
 				summary["economy_feed_fraction_avg"] = float(group["feed_fraction_accum"]) / count_float
+			SERVICE_SANDBOX_RENDER:
+				summary["sandbox_render_ms_p95"] = p95
+				summary["sandbox_render_ms_avg"] = avg
+				var render_samples: float = max(float(group["fallback_samples"]), 1.0)
+				summary["sandbox_render_fallback_ratio"] = float(group["fallback_active_samples"]) / render_samples
+				summary["sandbox_render_view_mode"] = String(group["view_mode_last"])
 			_:
 				summary["%s_tick_ms_p95" % service] = p95
 				summary["%s_tick_ms_avg" % service] = avg

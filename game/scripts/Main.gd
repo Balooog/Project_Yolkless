@@ -9,6 +9,7 @@ const EnvPanel := preload("res://ui/widgets/EnvPanel.gd")
 const EnvironmentService := preload("res://src/services/EnvironmentService.gd")
 const FactoryConveyor := preload("res://game/scripts/conveyor/FactoryConveyor.gd")
 const UIArchitecturePrototype := preload("res://ui/prototype/UIArchitecturePrototype.gd")
+const SandboxCanvasScene := preload("res://scenes/sandbox/SandboxCanvas.tscn")
 
 const FEED_FLASH_COLOR := Color(1, 0.7, 0.7, 1)
 const DEFAULT_ENV_STAGE_SIZE := Vector2(640, 360)
@@ -75,6 +76,8 @@ var environment_service: EnvironmentService
 var power_service: PowerService
 var automation_service: AutomationService
 var sandbox_service: SandboxService
+var sandbox_canvas: Control
+var sandbox_renderer: SandboxRenderer
 var _feed_deny_sound_warned := false
 var _toast_tween: Tween
 var _show_cap_pulse := true
@@ -99,6 +102,7 @@ var _prototype_feed_queue := 0
 var _comfort_index: float = 0.0
 var _comfort_bonus: float = 0.0
 var factory_viewport: SubViewport
+var env_renderer_mode: String = "legacy"
 
 func _ready() -> void:
 	_configure_input_actions()
@@ -140,6 +144,20 @@ func _ready() -> void:
 	offline_close.pressed.connect(func(): offline_popup.hide())
 	btn_ship_now.pressed.connect(_on_ship_now_pressed)
 
+	var config_node := get_node_or_null("/root/Config")
+	var logging_enabled := true
+	var logging_force_disable := false
+	var seed := 0
+	if config_node:
+		logging_enabled = config_node.logging_enabled
+		logging_force_disable = config_node.logging_force_disable
+		seed = int(config_node.seed)
+		var env_value: Variant = config_node.get("env_renderer")
+		if env_value != null:
+			var mode := String(env_value).to_lower()
+			if mode == "sandbox" or mode == "legacy":
+				env_renderer_mode = mode
+
 	if ui_prototype:
 		if not ui_prototype.feed_requested.is_connected(_on_prototype_feed_requested):
 			ui_prototype.feed_requested.connect(_on_prototype_feed_requested)
@@ -168,13 +186,35 @@ func _ready() -> void:
 			environment_panel = proto_env
 		factory_viewport = ui_prototype.get_factory_viewport()
 		if factory_viewport:
-			_move_environment_into_viewport(factory_viewport)
+			if env_renderer_mode == "sandbox":
+				_setup_sandbox_canvas(factory_viewport)
+				if environment_root_node:
+					environment_root_node.visible = false
+			else:
+				_move_environment_into_viewport(factory_viewport)
+				if environment_root_node:
+					environment_root_node.visible = true
 			_update_factory_viewport_bounds()
 		_set_prototype_visible(true)
 	else:
 		if legacy_ui_root:
 			legacy_ui_root.visible = true
 		environment_panel = get_node_or_null("%EnvironmentPanel") as EnvPanel
+	if env_renderer_mode == "sandbox":
+		if not sandbox_canvas or not is_instance_valid(sandbox_canvas):
+			sandbox_canvas = SandboxCanvasScene.instantiate()
+			add_child(sandbox_canvas)
+			sandbox_canvas.set_anchors_preset(Control.PRESET_FULL_RECT)
+			sandbox_canvas.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			sandbox_renderer = sandbox_canvas as SandboxRenderer
+			if sandbox_renderer and not sandbox_renderer.fallback_state_changed.is_connected(_on_sandbox_fallback_changed):
+				sandbox_renderer.fallback_state_changed.connect(_on_sandbox_fallback_changed)
+		if environment_root_node:
+			environment_root_node.visible = false
+	else:
+		if environment_root_node:
+			environment_root_node.visible = true
+		sandbox_renderer = null
 
 	if conveyor_manager:
 		if not conveyor_manager.throughput_updated.is_connected(_on_conveyor_throughput_updated):
@@ -211,14 +251,6 @@ func _ready() -> void:
 	debug_overlay.configure(eco, res, sav, bal)
 
 	var logger := _get_logger()
-	var config := get_node_or_null("/root/Config")
-	var logging_enabled := true
-	var logging_force_disable := false
-	var seed := 0
-	if config:
-		logging_enabled = config.logging_enabled
-		logging_force_disable = config.logging_force_disable
-		seed = int(config.seed)
 	if logger:
 		logger.setup(logging_enabled, logging_force_disable)
 	text_scale = 1.0
@@ -922,11 +954,27 @@ func _on_ci_changed(ci: float, bonus: float) -> void:
 		var metrics: Dictionary = {}
 		if sandbox_service:
 			metrics = sandbox_service.last_comfort_components()
+		if sandbox_renderer and is_instance_valid(sandbox_renderer):
+			var renderer_metrics: Dictionary = sandbox_renderer.get_renderer_metrics()
+			for key in renderer_metrics.keys():
+				metrics[key] = renderer_metrics[key]
 		environment_panel.update_comfort(_comfort_index, _comfort_bonus, metrics)
 	_update_power_label()
 	if _prototype_available():
 		var bonus_text: String = _format_num(_comfort_bonus * 100.0, 1)
 		ui_prototype.set_canvas_hint("Comfort bonus +%s%%" % bonus_text)
+
+func _on_sandbox_fallback_changed(_active: bool) -> void:
+	if environment_panel == null:
+		return
+	var metrics: Dictionary = {}
+	if sandbox_service:
+		metrics = sandbox_service.last_comfort_components()
+	if sandbox_renderer and is_instance_valid(sandbox_renderer):
+		var renderer_metrics: Dictionary = sandbox_renderer.get_renderer_metrics()
+		for key in renderer_metrics.keys():
+			metrics[key] = renderer_metrics[key]
+	environment_panel.update_comfort(_comfort_index, _comfort_bonus, metrics)
 
 func _on_power_state_changed(state: float) -> void:
 	_update_power_label()
@@ -1301,13 +1349,13 @@ func _action_has_key(action: String, keycode: int) -> bool:
 func _add_joy_axis_event(action: String, axis: int, threshold: float) -> void:
 	if not InputMap.has_action(action):
 		InputMap.add_action(action)
+	InputMap.action_set_deadzone(action, clamp(abs(threshold), 0.0, 1.0))
 	for event in InputMap.action_get_events(action):
 		if event is InputEventJoypadMotion and event.axis == axis and is_equal_approx(event.axis_value, threshold):
 			return
 	var joy_event := InputEventJoypadMotion.new()
 	joy_event.axis = axis
 	joy_event.axis_value = threshold
-	joy_event.deadzone = 0.5
 	InputMap.action_add_event(action, joy_event)
 
 func _action_has_joypad_button(action: String, button_index: int) -> bool:
@@ -1427,6 +1475,17 @@ func _move_environment_into_viewport(viewport: SubViewport) -> void:
 		environment_root_node.position = Vector2(viewport.size.x, viewport.size.y) * 0.5
 	if _prototype_available():
 		ui_prototype.mark_canvas_ready()
+
+func _setup_sandbox_canvas(viewport: SubViewport) -> void:
+	if sandbox_canvas and is_instance_valid(sandbox_canvas):
+		return
+	sandbox_canvas = SandboxCanvasScene.instantiate()
+	viewport.add_child(sandbox_canvas)
+	sandbox_canvas.set_anchors_preset(Control.PRESET_FULL_RECT)
+	sandbox_canvas.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	sandbox_renderer = sandbox_canvas as SandboxRenderer
+	if sandbox_renderer and not sandbox_renderer.fallback_state_changed.is_connected(_on_sandbox_fallback_changed):
+		sandbox_renderer.fallback_state_changed.connect(_on_sandbox_fallback_changed)
 
 func _update_factory_viewport_bounds() -> void:
 	if factory_viewport == null:

@@ -56,6 +56,10 @@
 | Reputation | Shipment quality milestones | Research unlock thresholds | Pride |
 | Comfort | Sandbox stability & comfort tuning upgrades | PPS bonus (`ci_bonus`) | Serenity |
 | Wisdom | Prestige resets | Faster runs & narrative rewards | Renewal |
+| Insight *(mini-game placeholder)* | Mini-game sessions (RM-0XX) | Temporary PPS bonus (+2–3 % for 2–3 min, ≥10 min cooldown) | Flow |
+
+- Mini-game rewards stay on their own track (Insight/Reputation) and never inject Credits/RP directly; PPS boosts are additive with CI and capped by the cooldown.
+- When mini-games trigger, throttle Sandbox visual playback (Conveyor + Diorama) to ¼ speed while keeping the CA tick constant to preserve deterministic economy results.
 
 ## Scaling Curves & Example Formulas
 

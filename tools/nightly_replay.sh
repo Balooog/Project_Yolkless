@@ -24,13 +24,18 @@ mkdir -p "$RUN_DIR"
 DURATION="${DURATION:-300}"
 SEED="${SEED:-42}"
 STRATEGY="${STRATEGY:-normal}"
+ENV_RENDERER_MODE="${ENV_RENDERER:-}"
 
 RUN_LOG="$RUN_DIR/headless.log"
 SUMMARY_JSON="$RUN_DIR/summary.json"
 
 pushd "$ROOT_DIR" >/dev/null
 {
-  "$GODOT_BIN" --headless --path "$ROOT_DIR" --script res://tools/replay_headless.gd --duration="$DURATION" --seed="$SEED" --strategy="$STRATEGY" 2>&1 | tee "$RUN_LOG"
+  ARGS=("--headless" "--path" "$ROOT_DIR" "--script" "res://tools/replay_headless.gd" "--duration=$DURATION" "--seed=$SEED" "--strategy=$STRATEGY")
+  if [[ -n "$ENV_RENDERER_MODE" ]]; then
+    ARGS+=("--env_renderer=$ENV_RENDERER_MODE")
+  fi
+  "$GODOT_BIN" "${ARGS[@]}" 2>&1 | tee "$RUN_LOG"
 } || true
 popd >/dev/null
 

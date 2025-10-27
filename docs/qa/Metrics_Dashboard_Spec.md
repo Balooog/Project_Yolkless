@@ -10,7 +10,8 @@
    - `pps_avg`
    - `ci_avg`
    - `power_ratio_avg`
-4. **Output:** `/reports/dashboard/index.html` with timestamp, summary table, and inline graphs.
+   - `sandbox_render_fallback_ratio`
+4. **Output:** `/reports/dashboard/index.html` with timestamp, summary table, inline graphs, and run history columns for sandbox fallback share + active view.
 5. **CI Integration:** Nightly job `generate-dashboard` runs after `replay-nightly`, uploads HTML + assets as artifacts, and pushes to `gh-pages` (or equivalent).
 6. **Alerts:** Metric drift >15 % week-over-week flagged in summary (`alerts` section with owner + recommended action).
 7. **Dependencies:** Python 3.10+, `pandas`, `matplotlib`, `jinja2` listed in `tools/requirements.txt`.
