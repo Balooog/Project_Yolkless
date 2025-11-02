@@ -42,6 +42,16 @@
 - Always maintain ≥16 px padding between canvas edge and UI overlays.
 - Zoom/pan gestures should respect calm motion speeds; no sudden jumps.
 - Sandbox (environment stage) stays above the conveyor belt so both remain visible across breakpoints.
+- Provide a serene **View Toggle** between Diorama and Map modes:
+  - Toggle button sits in the sandbox header (`View: Diorama ▸ Map`).
+  - Auto-idle drift to Map after 5 minutes of inactivity; any interaction returns to Diorama with a soft fade.
+  - Prestige transition pans from Diorama to Map, then fades into the next era assets.
+  - Both views must surface Comfort tooltip (+X.XX %) and era/map legends.
+  - Swap completes in ≤100 ms and must not reset the CA sim, conveyor overlay, or EnvPanel bindings.
+- Map view uses a fixed CI/PPS legend or heatmap palette visible across breakpoints; Diorama continues to apply era LUTs and prop palettes.
+- CI tint normalization stays aligned between Map legend bands and Diorama LUT thresholds for each era.
+- **Conveyor overlay feedback**: belt scroll accelerates within 150 ms on feed hold, decays within 300 ms on release, and pulses warmly on shipments; apply EMA tinting from Comfort Index so transitions stay calm.
+- Mirror conveyor sound and tint to match Sandbox palette per era; never allow bursts to exceed the calm motion thresholds above.
 
 ## Accessibility
 - Support text scale presets (100/110/125%).
@@ -57,6 +67,7 @@
   - `A`/Enter activates; `B`/Esc closes sheets; `Y` opens Store; `X` opens Research.
   - Feed action bound to `RT`/Space; sheets must not block feed activation.
 - Controller navigation is handled via `FocusMap` (LB/RB cycling, RT feed) and Settings exposes color-blind palettes.
+- Global **Reduce Motion** flag persists via `Config.gd`; UI, Sandbox, Conveyor, and Map layers must halve burst speed, disable speedlines/camera pan, and retain legible tint cues when enabled.
 
 ## Links
 - Architecture context: [Overview](../architecture/Overview.md)

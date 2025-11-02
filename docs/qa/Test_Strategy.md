@@ -19,6 +19,11 @@
 - **Soak:** No crashes, memory steady (<5 % drift), StatsProbe alerts cleared.
 - **Manual:** Checklist signed by design lead; qualitative notes stored under `logs/playtest_notes/`.
 
+## Feature Guardrails
+- **Mini-game isolation (future RM-0XX):** Run replay with a forced mini-game session; confirm PPS bonus arrives via Insight/Reputation, Sandbox visuals throttle to ¼ speed, and CA tick metrics remain unchanged.
+- **Reduce Motion sweep:** Execute CI pipeline once with `Config.reduce_sandbox_motion=true`; verify conveyor/map/diorama disable speedlines/camera pan and telemetry still exports `belt_anim_ms_*`.
+- **View parity:** Follow [RM-021 sandbox checklist](RM-021-sandbox-checklist.md) after renderer changes to ensure Diorama/Map guardrails hold.
+
 ## Tooling References
 - [Build Cookbook](../dev/Build_Cookbook.md)
 - [Telemetry & Replay](../quality/Telemetry_Replay.md)

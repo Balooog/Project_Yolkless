@@ -11,7 +11,11 @@
 | `EnvironmentService` | `environment_updated(state: Dictionary)` | `{ temperature, light, humidity, modifiers, ci }` | SandboxService, UI EnvPanel, StatBus | 5 Hz |
 | `EnvironmentService` | `day_phase_changed(phase: StringName)` | `{ phase }` | Lighting, Audio | phase transitions |
 | `EnvironmentService` | `preset_changed(preset: StringName)` | `{ preset }` | UI dropdown, telemetry | on preset swap |
+| `UIPrototype` | `feed_hold_started()` | `{}` | Main, Sandbox ConveyorOverlay, AudioService | user input press |
+| `UIPrototype` | `feed_hold_ended()` | `{}` | Main, Sandbox ConveyorOverlay, AudioService | user input release |
+| `UIPrototype` | `feed_burst(mult: float)` | `{ mult }` | ConveyorOverlay, AudioService, StatsProbe (planned) | per Economy burst |
 | `SandboxService` | `ci_changed(ci: float, bonus: float)` | `{ ci, bonus }` | Economy StatBus, Telemetry | 2 Hz |
+| `SandboxRenderer` | `fallback_state_changed(active: bool)` | `{ active }` | Telemetry, EnvPanel tooltip, debug overlay | on fallback enter/exit |
 | `AutomationService` | `mode_changed(building_id: StringName, mode: int)` | `{ building_id, mode }` | UI overlays, save system | when automation toggles |
 | `AutomationService` | `auto_burst_enqueued()` | `{}` | HUD queue indicator, telemetry | when queue increments |
 | `PowerService` | `power_state_changed(state: float)` | `{ state }` | UI, AutomationService | 5 Hz |
@@ -37,6 +41,8 @@
 | `ci_changed(ci, bonus)` | `/root/SandboxService` | 2 | StatBus `/root/StatBus`, HUD comfort widget | none |
 | `power_warning(level)` | `/root/PowerService` | burst | HUD `/root/Main/UI`, AutomationService `/root/AutomationService` | debounce 0.5 s |
 | `throughput_updated(rate, queue)` | `/root/Main/ConveyorManager` | 60 | HUD stats, Telemetry probe | HUD samples at 10 Hz |
+| `feed_hold_started/ended` | `/root/Main/UIPrototype` | user input | Main, ConveyorOverlay, AudioService | none; reacts instantly |
+| `feed_burst(mult)` | `/root/Main/UIPrototype` | burst | ConveyorOverlay, AudioService, StatsProbe | clamp burst spam to ≤30 Hz upstream |
 
 ## Signal Lifetimes & Context
 
@@ -48,3 +54,5 @@
 | `auto_burst_enqueued` | Main thread | Within AutomationService tick | Emits during queue increments; avoid expensive logging. |
 | `throughput_updated` | Main thread | Every frame (60 Hz) | Downstream should sample at ≤10 Hz to avoid UI spam. |
 | `stats_probe_alert` *(future)* | Worker thread | After StatsProbe batch flush | Must `call_deferred` to interact with UI/SceneTree. |
+| `feed_burst` | Main thread | After Economy confirms burst multiplier | Deterministic timing; overlay applies EMA before anim kicks. |
+| `feed_hold_started/ended` | Main thread | Immediate on input press/release | Keep work lightweight to avoid UI hitching; use deferred audio triggers if needed. |

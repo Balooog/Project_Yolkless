@@ -36,6 +36,9 @@ source .env
 $(bash tools/godot_resolver.sh) --path . --editor
 $(bash tools/godot_resolver.sh) --headless --path . --quit
 
+# Toggle sandbox viewport (optional)
+# Project defaults to the SandboxCanvas renderer; set `env_renderer="legacy"` on the `/root/Config` node if you need the old environment view.
+
 # CI wrapper (prints ✅/❌ summary)
 ./tools/check_only_ci.sh
 ```
@@ -76,7 +79,7 @@ $(bash tools/godot_resolver.sh) --headless --path . --script res://tools/replay_
 #   logs/perf/tick_<timestamp>.csv
 #   reports/nightly/<date>/*.png (if enabled)
 ```
-- Review summary JSON for `sandbox_tick_ms_p95`, `sandbox_render_ms_p95`, `ci_delta_abs_max`, `sandbox_uploads_per_sec`.
+- Review summary JSON for `sandbox_tick_ms_p95`, `sandbox_render_ms_p95`, `sandbox_render_fallback_ratio`, `ci_delta_abs_max`.
 - Compare against [Performance Budgets](../quality/Performance_Budgets.md).
 
 ## Smoke Flow (local PR checklist)

@@ -7,6 +7,10 @@ Track items required to bring the current codebase in line with the high-level d
   - [x] Complete `SandboxService` CA implementation, telemetry mapping, and StatBus integration so comfort bonuses flow end-to-end (see `docs/prompts/PX-021.1.md`). *(Comfort bonus now hooked through EnvPanel and StatBus clamps in Economy.)*
   - [x] Author `data/environment_profiles.tsv` plus loader/preset wiring to unlock seasonal tuning (see `docs/data/Schemas.md`).
   - [x] Add sandbox double-buffering/perf smoothing to prep GPU paths while keeping within `docs/quality/Performance_Budgets.md`. *(SandboxService now buffers metrics with configurable release cadence.)*
+  - [x] PX-021.2 follow-up: add adaptive sandbox tick skipping when `ci_delta` remains within ±0.0002 for ≥8 samples to cut p95 below 1 ms; throttle plant growth when `active_cells` stays maxed for multiple ticks. *(Skip logic + plant clamp in `SandboxService`/`SandboxGrid` bring sandbox p95 to ≈0.74 ms.)*
+  - [ ] PX-021.4 — Diorama era evolution (assets, camera, tint modulation) without resetting the sim.
+  - [ ] PX-021.5 — Top-down map renderer + toggle (shared CA buffer, instant switch).
+  - [ ] PX-014.3 — Sandbox timelapse capture + nightly dashboard hook.
 - [ ] **Phase 2 — Telemetry & Validation Foundation** *(docs/quality/Telemetry_Replay.md, docs/dev/Build_Cookbook.md)*
   - [x] Implement `tools/replay_headless.gd`, replace ad-hoc `ci/econ_probe.gd` usage, and document the workflow.
   - [x] Build `tools/validate_tables.py`, hook it into CI, and enforce schema checks for TSV/JSON assets. *(Script in place; CI hook tracked under telemetry follow-up.)*
@@ -19,9 +23,9 @@ Track items required to bring the current codebase in line with the high-level d
   - [x] Implement palette export tooling, populate `data/materials.tsv`, and sync art tokens (docs/art/Style_Guide.md).
   - [x] Audit UI copy against `docs/theme_map.md` and refresh prompts/strings where drifted; archive diffs in `docs/prompts/`.
 - [ ] **Phase 5 — Systems Stress & Automation** *(docs/roadmap/, docs/quality/Playtest_Scenarios.md)*
-  - [ ] Automate nightly telemetry replays (headless + log archival) and capture deltas for dashboarding.
+  - [ ] Automate nightly telemetry replays (headless + log archival) and capture deltas/timelapse assets for dashboarding (PX-014.2, PX-014.3).
   - [ ] Re-benchmark Conveyor/Environment modules versus budgets and update `docs/modules/conveyor.md` and related ADRs as limits shift.
-  - [ ] Extend QA checklists with comfort metrics and scripted playtest flows in `docs/qa/`.
+  - [ ] Extend QA checklists with comfort metrics, map-view coverage, and scripted playtest flows in `docs/qa/`.
 
 ## Core Simulation Spine
 - [x] Introduce `StatBus` service with pull-by-default API, optional signal push, and cap enforcement/logging (see `StatBus_Catalog.md`).

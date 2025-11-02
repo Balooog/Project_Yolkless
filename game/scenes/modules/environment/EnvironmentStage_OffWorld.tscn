@@ -1,0 +1,58 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://game/scenes/modules/environment/EnvironmentStage_Backyard.gd" id="1"]
+
+[node name="EnvironmentStage_OffWorld" type="Node2D"]
+z_index = -5
+script = ExtResource("1")
+sky_top_color = Color(0.32, 0.28, 0.58, 1)
+sky_bottom_color = Color(0.58, 0.38, 0.68, 1)
+haze_color = Color(0.32, 0.3, 0.52, 0.18)
+ground_color = Color(0.36, 0.28, 0.5, 1)
+horizon_color = Color(0.3, 0.24, 0.46, 1)
+stripe_color = Color(0.52, 0.46, 0.72, 1)
+fence_color = Color(0.64, 0.56, 0.86, 1)
+structure_body_color = Color(0.72, 0.76, 0.92, 1)
+structure_roof_color = Color(0.48, 0.64, 0.92, 1)
+structure_detail_color = Color(0.92, 0.82, 0.96, 1)
+tree_canopy_color = Color(0.52, 0.76, 0.86, 1)
+tree_trunk_color = Color(0.44, 0.44, 0.62, 1)
+spawn_chickens = false
+spawn_tree_row = false
+prop_configs = [
+	{
+		"type": "box",
+		"position": Vector2(190, 110),
+		"size": Vector2(110, 140),
+		"color": Color(0.48, 0.5, 0.82, 1),
+		"z_index": 6
+	},
+	{
+		"type": "box",
+		"position": Vector2(300, 120),
+		"size": Vector2(90, 120),
+		"color": Color(0.56, 0.64, 0.94, 1),
+		"z_index": 6
+	},
+	{
+		"type": "box",
+		"position": Vector2(220, 30),
+		"size": Vector2(28, 150),
+		"color": Color(0.84, 0.6, 0.96, 0.9),
+		"z_index": 8
+	},
+	{
+		"type": "polygon",
+		"position": Vector2(300, 10),
+		"points": [Vector2(-24, 0), Vector2(24, 0), Vector2(12, -60), Vector2(-12, -60)],
+		"color": Color(0.52, 0.84, 0.98, 0.95),
+		"z_index": 8
+	},
+	{
+		"type": "triangle",
+		"position": Vector2(220, -60),
+		"size": Vector2(70, 80),
+		"color": Color(0.96, 0.74, 1, 0.88),
+		"z_index": 9
+	}
+]

@@ -7,6 +7,7 @@
 | Economy tick | ≤ 1.5 ms *(provisional)* | 10 Hz | Includes feed drain/refill, stat computations. |
 | Sandbox simulation | ≤ 2.0 ms *(provisional)* | 5 Hz | Cellular automata on 32×18 grid; run in pools. (*Latest p95 @2025-10-25: 1.24 ms after downscaling; monitor as content grows*) |
 | Sandbox viewport render | ≤ 1.0 ms *(target)* | 60 Hz | `SandboxRenderer` uploads dirty cells, nearest-neighbour upscale. Fallback halves cadence if frame p95 >18 ms for 5 s. |
+| Conveyor overlay animation | ≤ 0.2 ms *(target)* | 60 Hz | `ConveyorOverlay` belt scroll + tint; StatsProbe exports `belt_anim_ms_avg` / `_p95`. |
 | EnvironmentService | ≤ 0.5 ms | 5 Hz | Curve sampling + CA inputs. |
 | AutomationService | ≤ 1.0 ms *(provisional)* | 5 Hz | Scheduling decisions + mode updates. |
 | PowerService | ≤ 0.8 ms | 5 Hz | Ledger recompute and StatBus push. |
@@ -26,10 +27,13 @@
 
 - Add perf counters to `/docs/quality/Telemetry_Replay.md` scenarios.
 - Any module exceeding budgets must file an ADR or PX hotfix referencing this document.
-- StatsProbe exports per-service tick metrics (`sandbox/environment/automation/power/economy/ui`) and renderer telemetry (`sandbox_render_ms_avg`, `sandbox_render_ms_p95`, `sandbox_uploads_per_sec`, `sandbox_dirty_pixels_avg`) so nightly telemetry can flag budget regressions automatically.
+- StatsProbe exports per-service tick metrics (`sandbox/environment/automation/power/economy/ui`) and renderer telemetry (`sandbox_render_ms_avg`, `sandbox_render_ms_p95`, `sandbox_render_fallback_ratio`, `sandbox_render_view_mode`) so nightly telemetry can flag budget regressions automatically.
+- Keep `sandbox_render_fallback_ratio` ≈0 %; sustained fallback (>5 %) requires renderer investigation or asset tuning before merge.
+- Conveyor overlay metrics (`belt_anim_ms_avg`, `belt_anim_ms_p95`) join the telemetry suite; regression threshold 0.25 ms raises alerts in nightly dashboards.
+- Enforce conveyor guardrails in perf captures: speed clamp ≤2.5× baseline, shipment pulse cadence ≥400 ms, and Reduce Motion runs halve burst multipliers without exceeding the 0.2 ms budget.
 - Renderer smoke tests run through lavapipe (`VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json`) via `./tools/ui_viewport_matrix.sh`; track p95 render cost when comparing Vulkan vs hardware captures.
 - UI visual regression harness (PX-010.9) compares baseline screenshots; >1% diff requires review before merge.
-- **Latest StatsProbe benchmark (2025-10-26):** `sandbox_tick_ms_p95=0.756 ms`, `environment_tick_ms_p95=0.02 ms`, `active_cells_max=259`, `pps_avg≈0.424`. Budgets are holding on 4.5.1 after the smoothing tweaks; keep an eye on cell growth as belts become busier.
+- **Latest StatsProbe benchmark (2025-10-26 skip pass):** `sandbox_tick_ms_p95=0.735 ms`, `environment_tick_ms_p95=0.029 ms`, `active_cells_max=259`, `pps_avg≈0.424`. Adaptive skip + plant clamp keeps sandbox comfortably under the 2 ms alert while leaving headroom for renderer work.
 
 ## Memory & Draw Call Targets
 

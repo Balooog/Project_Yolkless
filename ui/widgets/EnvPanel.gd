@@ -126,8 +126,15 @@ func _update_state_texts() -> void:
 		_format_air_summary(air_pct)
 	]
 	var comfort_summary := _format_comfort_summary(comfort_bonus)
+	var summary_parts: Array[String] = []
+	summary_parts.append(_format_temp_summary(temp_c))
+	summary_parts.append(_format_air_summary(air_pct))
 	if comfort_summary != "":
-		summary_label.text += "  |  %s" % comfort_summary
+		summary_parts.append(comfort_summary)
+	var era_label_text := String(_sandbox_metrics.get("era_label", ""))
+	if era_label_text != "":
+		summary_parts.append("Era: %s" % era_label_text)
+	summary_label.text = "  |  ".join(summary_parts)
 
 	if weather_icon:
 		var icon_key := _weather_icon_key(phase, air_pct)
@@ -148,6 +155,15 @@ func _update_state_texts() -> void:
 	comfort_value.text = "%0.0f%%" % comfort_percent
 	var bonus_percent: float = max(comfort_bonus * 100.0, 0.0)
 	comfort_bonus_value.text = "+%0.1f%%" % bonus_percent
+	if comfort_value:
+		var tooltip_parts: Array[String] = ["Comfort %.2f%%" % comfort_percent]
+		if era_label_text != "":
+			tooltip_parts.append("Era: %s" % era_label_text)
+		if bool(_sandbox_metrics.get("fallback_active", false)):
+			tooltip_parts.append("Renderer fallback")
+		comfort_value.tooltip_text = " — ".join(tooltip_parts)
+		if comfort_bonus_value:
+			comfort_bonus_value.tooltip_text = comfort_value.tooltip_text
 
 	_sync_selector_to_state()
 

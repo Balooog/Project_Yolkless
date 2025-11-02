@@ -76,7 +76,11 @@ func add_segment(length_value: float, speed_value: float, capacity_value: int = 
 func attach_item(item: ConveyorItem) -> void:
 	if item == null:
 		return
-	add_child(item)
+	var parent := item.get_parent()
+	if parent and parent != self:
+		parent.remove_child(item)
+	if item.get_parent() != self:
+		add_child(item)
 	item.position = _sample_at_distance(0.0)
 	item.rotation = 0.0
 	_items.append(item)

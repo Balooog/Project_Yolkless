@@ -24,6 +24,7 @@ var _duration: float = DEFAULT_DURATION
 var _tick_dt: float = DEFAULT_DT
 var _strategy: String = DEFAULT_STRATEGY
 var _seed: int = 42
+var _env_renderer_mode: String = ""
 
 var _logger: YolkLogger
 var _environment: EnvironmentService
@@ -66,12 +67,16 @@ func _parse_args() -> void:
 			_seed = int(arg.split("=")[1])
 		elif arg.begins_with("--strategy="):
 			_strategy = String(arg.split("=")[1]).to_lower()
+		elif arg.begins_with("--env_renderer="):
+			_env_renderer_mode = String(arg.split("=")[1]).to_lower()
 
 func _setup_singletons() -> void:
 	var root := get_root()
 	var config_node: Node = _ensure_node(root, "Config", CONFIG_SCRIPT)
 	if config_node:
 		config_node.set("seed", _seed)
+		if _env_renderer_mode != "":
+			config_node.set("env_renderer", _env_renderer_mode)
 	_logger = _ensure_node(root, "Logger", LOGGER_SCRIPT) as YolkLogger
 	_ensure_node(root, "StatBusSingleton", STATBUS_SCRIPT)
 	_environment = _ensure_node(root, "EnvironmentServiceSingleton", ENVIRONMENT_SERVICE_SCRIPT) as EnvironmentService

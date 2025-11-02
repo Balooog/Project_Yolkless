@@ -30,6 +30,7 @@ class RunRecord:
 	final_ci: float
 	final_bonus: float
 	final_pps: float
+	render_view: str = ""
 
 	@property
 	def iso_label(self) -> str:
@@ -65,9 +66,13 @@ def build_run_record(folder: Path) -> Optional[RunRecord]:
 	if not summary_file.exists():
 		return None
 	data = load_summary(summary_file)
-	stats = data.get("stats")
-	if not isinstance(stats, dict):
+	stats_raw = data.get("stats")
+	if not isinstance(stats_raw, dict):
 		return None
+	render_view = str(stats_raw.get("sandbox_render_view_mode", "") or "")
+	stats_converted: Dict[str, float] = {
+		k: float(v) for k, v in stats_raw.items() if isinstance(v, (int, float))
+	}
 	timestamp_raw = data.get("timestamp")
 	if not isinstance(timestamp_raw, str):
 		return None
@@ -81,10 +86,11 @@ def build_run_record(folder: Path) -> Optional[RunRecord]:
 		timestamp=timestamp,
 		label=label,
 		source_dir=folder,
-		stats={k: float(v) for k, v in stats.items() if isinstance(v, (int, float))},
+		stats=stats_converted,
 		final_ci=float(final.get("ci", 0.0) or 0.0),
 		final_bonus=float(final.get("ci_bonus", 0.0) or 0.0),
 		final_pps=float(final.get("pps", 0.0) or 0.0),
+		render_view=render_view,
 	)
 
 
@@ -103,6 +109,8 @@ def compute_alerts(records: List[RunRecord], threshold: float = 0.15) -> List[st
 		return alerts
 	key_metrics = [
 		("sandbox_tick_ms_p95", "Sandbox p95 tick"),
+		("sandbox_render_ms_p95", "Sandbox render p95"),
+		("sandbox_render_fallback_ratio", "Sandbox fallback ratio"),
 		("environment_tick_ms_p95", "Environment p95 tick"),
 		("pps_avg", "Average PPS"),
 		("ci_avg", "Average Comfort Index"),
@@ -118,9 +126,16 @@ def compute_alerts(records: List[RunRecord], threshold: float = 0.15) -> List[st
 			diff_ratio = (curr_value - prev_value) / prev_value
 			if abs(diff_ratio) >= threshold:
 				direction = "increase" if diff_ratio > 0 else "decrease"
-				alerts.append(
-					f"{current.label}: {label} {direction} of {diff_ratio * 100:.1f}% (prev {prev_value:.3f} → current {curr_value:.3f})"
-				)
+				if key == "sandbox_render_fallback_ratio":
+					prev_display = prev_value * 100.0
+					curr_display = curr_value * 100.0
+					alerts.append(
+						f"{current.label}: {label} {direction} of {diff_ratio * 100:.1f}% (prev {prev_display:.2f}% → current {curr_display:.2f}%)"
+					)
+				else:
+					alerts.append(
+						f"{current.label}: {label} {direction} of {diff_ratio * 100:.1f}% (prev {prev_value:.3f} → current {curr_value:.3f})"
+					)
 	return alerts
 
 
@@ -133,21 +148,32 @@ def render_metric_cell(value: MetricValue, unit: str = "", precision: int = 3) -
 	return f"<td class=\"metric\">{formatted}</td>"
 
 
-def build_table_rows(records: Iterable[RunRecord], metrics: List[Tuple[str, str, str]]) -> str:
+def render_text_cell(value: Optional[str]) -> str:
+	if value is None or value.strip() == "":
+		return "<td class=\"label\">—</td>"
+	return f"<td class=\"label\">{value}</td>"
+
+
+def build_table_rows(records: Iterable[RunRecord]) -> str:
 	rows: List[str] = []
 	for run in records:
+		fallback_ratio = run.stats.get("sandbox_render_fallback_ratio")
+		fallback_percent = fallback_ratio * 100.0 if fallback_ratio is not None else None
 		cells = [
 			f"<td class=\"label\">{run.label}</td>",
 			f"<td class=\"label\">{run.iso_label}</td>",
 			render_metric_cell(run.stats.get("sandbox_tick_ms_p95"), "ms"),
+			render_metric_cell(run.stats.get("sandbox_render_ms_p95"), "ms"),
+			render_metric_cell(fallback_percent, "%", 1),
+			render_text_cell(run.render_view),
+			render_metric_cell(run.stats.get("environment_tick_ms_p95"), "ms"),
+			render_metric_cell(run.stats.get("pps_avg")),
+			render_metric_cell(run.stats.get("ci_avg")),
+			render_metric_cell(run.stats.get("power_ratio_avg")),
+			render_metric_cell(run.final_ci),
+			render_metric_cell(run.final_bonus * 100.0, "%", 2),
+			render_metric_cell(run.final_pps),
 		]
-		for key, label, unit in metrics:
-			value = run.stats.get(key)
-			precision = 3 if unit == "" else 3
-			cells.append(render_metric_cell(value, unit, precision))
-		cells.append(render_metric_cell(run.final_ci, precision=3))
-		cells.append(render_metric_cell(run.final_bonus * 100.0, "%", 2))
-		cells.append(render_metric_cell(run.final_pps, precision=3))
 		rows.append("<tr>" + "".join(cells) + "</tr>")
 	return "\n".join(rows)
 
@@ -165,20 +191,29 @@ def build_metric_summary(records: List[RunRecord], key: str) -> Dict[str, float]
 
 def render_summary_block(records: List[RunRecord]) -> str:
 	metrics = [
-		("sandbox_tick_ms_p95", "Sandbox Tick p95 (ms)"),
-		("environment_tick_ms_p95", "Environment Tick p95 (ms)"),
-		("pps_avg", "PPS Avg"),
-		("ci_avg", "Comfort Index Avg"),
+		("sandbox_tick_ms_p95", "Sandbox Tick p95 (ms)", False),
+		("sandbox_render_ms_p95", "Sandbox Render p95 (ms)", False),
+		("sandbox_render_fallback_ratio", "Sandbox Fallback (%)", True),
+		("environment_tick_ms_p95", "Environment Tick p95 (ms)", False),
+		("pps_avg", "PPS Avg", False),
+		("ci_avg", "Comfort Index Avg", False),
 	]
 	rows: List[str] = []
-	for key, label in metrics:
+	for key, label, is_percent in metrics:
 		summary = build_metric_summary(records, key)
 		if math.isnan(summary["avg"]):
 			value_text = "n/a"
 		else:
-			value_text = (
-				f"min {summary['min']:.3f} / max {summary['max']:.3f} / avg {summary['avg']:.3f}"
-			)
+			if is_percent:
+				value_text = (
+					f"min {summary['min'] * 100.0:.2f}% / "
+					f"max {summary['max'] * 100.0:.2f}% / "
+					f"avg {summary['avg'] * 100.0:.2f}%"
+				)
+			else:
+				value_text = (
+					f"min {summary['min']:.3f} / max {summary['max']:.3f} / avg {summary['avg']:.3f}"
+				)
 		rows.append(f"<li><strong>{label}:</strong> {value_text}</li>")
 	return "<ul class=\"summary-list\">" + "".join(rows) + "</ul>"
 
@@ -191,13 +226,23 @@ def render_alerts(alerts: List[str]) -> str:
 
 
 def render_dashboard(records: List[RunRecord], alerts: List[str]) -> str:
-	metrics = [
-		("environment_tick_ms_p95", "Environment p95 Tick", "ms"),
-		("pps_avg", "PPS Avg", ""),
-		("ci_avg", "Comfort Index Avg", ""),
-		("power_ratio_avg", "Power Ratio Avg", ""),
+	headers = [
+		"Run ID",
+		"Timestamp",
+		"Sandbox Tick p95 (ms)",
+		"Sandbox Render p95 (ms)",
+		"Sandbox Fallback (%)",
+		"Sandbox View",
+		"Environment p95 (ms)",
+		"PPS Avg",
+		"CI Avg",
+		"Power Ratio Avg",
+		"Final CI",
+		"CI Bonus (%)",
+		"Final PPS",
 	]
-	rows = build_table_rows(records, metrics)
+	header_html = "".join(f"<th>{title}</th>" for title in headers)
+	rows = build_table_rows(records)
 	summary_block = render_summary_block(records)
 	alert_block = render_alerts(alerts)
 	generated_at = datetime.now(UTC).isoformat(timespec="seconds")
@@ -241,16 +286,7 @@ def render_dashboard(records: List[RunRecord], alerts: List[str]) -> str:
 		<table>
 			<thead>
 				<tr>
-					<th>Run ID</th>
-					<th>Timestamp</th>
-					<th>Sandbox p95 (ms)</th>
-					<th>Environment p95 (ms)</th>
-					<th>PPS Avg</th>
-					<th>CI Avg</th>
-					<th>Power Ratio Avg</th>
-					<th>Final CI</th>
-					<th>CI Bonus (%)</th>
-					<th>Final PPS</th>
+					{header_html}
 				</tr>
 			</thead>
 			<tbody>

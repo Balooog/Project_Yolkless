@@ -1,5 +1,6 @@
 profile_id	label	daylen	temp_min	temp_max	humidity_mean	humidity_swing	light_mean	light_swing	air_mean	air_swing	wind_mean	theme	tier_min
-early_farm	Early Farm	600	0.42	0.64	0.60	0.14	0.68	0.22	0.86	0.08	0.28	morning	1
-mid_growth	Mid Growth	580	0.48	0.72	0.58	0.18	0.60	0.20	0.72	0.12	0.35	noon	3
-late_serene	Late Serene	640	0.46	0.70	0.65	0.16	0.70	0.18	0.80	0.10	0.30	sunset	4
-colony_alpha	Colony Alpha	720	0.40	0.58	0.52	0.10	0.90	0.14	0.95	0.04	0.42	space	6
+early_farm	Backyard Coop	600	0.42	0.64	0.60	0.14	0.68	0.22	0.86	0.08	0.28	morning	1
+mid_growth	Small Farm	600	0.46	0.70	0.58	0.16	0.72	0.24	0.78	0.10	0.30	day	3
+industrial_push	Industrial Plant	560	0.54	0.80	0.52	0.22	0.62	0.20	0.62	0.20	0.36	dusk	4
+eco_revival	Eco Revival	640	0.46	0.70	0.68	0.12	0.76	0.18	0.90	0.06	0.28	sunset	5
+colony_alpha	Off-World Habitat	720	0.40	0.58	0.52	0.10	0.90	0.14	0.95	0.04	0.42	space	6

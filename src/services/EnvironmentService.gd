@@ -12,7 +12,11 @@ const LOG_INTERVAL := 20.0
 const StatsProbe := preload("res://src/services/StatsProbe.gd")
 
 const STAGE_PATHS := {
-	StringName("early_farm"): "res://game/scenes/modules/environment/EnvironmentStage_Backyard.tscn"
+	StringName("early_farm"): "res://game/scenes/modules/environment/EnvironmentStage_Backyard.tscn",
+	StringName("mid_growth"): "res://game/scenes/modules/environment/EnvironmentStage_SmallFarm.tscn",
+	StringName("industrial_push"): "res://game/scenes/modules/environment/EnvironmentStage_Industrial.tscn",
+	StringName("eco_revival"): "res://game/scenes/modules/environment/EnvironmentStage_EcoRevival.tscn",
+	StringName("colony_alpha"): "res://game/scenes/modules/environment/EnvironmentStage_OffWorld.tscn"
 }
 
 const TEMP_RANGE_C := Vector2(-5.0, 40.0)
