@@ -15,9 +15,11 @@ const SandboxGrid: GDScript = preload("res://src/sandbox/SandboxGrid.gd")
 const StatsProbe: GDScript = preload("res://src/services/StatsProbe.gd")
 const YolkLogger: GDScript = preload("res://game/scripts/Logger.gd")
 const STABLE_DELTA_THRESHOLD := 0.0002
-const STABLE_ACTIVE_THRESHOLD := 0.44
+const STABLE_ACTIVE_THRESHOLD := 0.38
 const STABLE_SKIP_LIMIT := 8
 const ENV_TARGET_EPS := 0.01
+const ACTIVE_RELAX_THRESHOLD := 0.27
+const ACTIVE_RELAX_TARGET := 0.22
 var _environment: EnvironmentService
 var _statbus: StatBus
 var _grid: SandboxGrid
@@ -90,22 +92,29 @@ func get_ci() -> float:
 func get_ci_bonus() -> float:
 	return current_bonus()
 
+func comfort_snapshot() -> Dictionary:
+	return _last_comfort.duplicate(true)
+
 func _on_environment_updated(state: Dictionary) -> void:
 	var previous_preset: StringName = _latest_state.get("preset", StringName())
-	var current_preset: StringName = state.get("preset", StringName())
-	if _latest_state.is_empty():
-		_latest_state = {}
-	else:
+	var was_uninitialized: bool = _latest_state.is_empty()
+	if not was_uninitialized:
 		_latest_state.clear()
+	var preset_variant: Variant = state.get("preset", previous_preset)
+	var current_preset: StringName
+	if preset_variant is StringName:
+		current_preset = preset_variant
+	else:
+		current_preset = StringName(String(preset_variant))
 	_latest_state["preset"] = current_preset
 	_latest_state["phase"] = state.get("phase", StringName())
-	var preset_changed: bool = current_preset != previous_preset
-	_apply_environment_targets(state, preset_changed)
+	var preset_changed: bool = (not was_uninitialized) and current_preset != previous_preset
+	_apply_environment_targets(state, was_uninitialized)
 	if preset_changed:
-		_smoothed_ci = 0.0
-		if _grid:
-			_grid.seed_grid()
-			set_inputs(_breeze_target, _moisture_target, _heat_target, true)
+		_ci_window.clear()
+		_active_window.clear()
+		_last_ci_delta = 0.0
+		_stable_tick_counter = 0
 	# Update on next idle frame so environment tick timing excludes sandbox work.
 	call_deferred("_tick", 0.0)
 	_accumulator = 0.0
@@ -127,6 +136,8 @@ func set_scheduler_enabled(enabled: bool) -> void:
 func _tick(delta: float) -> void:
 	if _grid == null:
 		return
+	if delta > 0.0 and _grid.active_cell_fraction() > ACTIVE_RELAX_THRESHOLD:
+		_grid.relax_density(ACTIVE_RELAX_TARGET)
 	var tick_start := Time.get_ticks_usec()
 	_blend_inputs()
 	_grid.heat = _heat
