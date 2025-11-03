@@ -21,10 +21,10 @@ offset_right = 0.0
 offset_bottom = 0.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 24
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 32
 
 [node name="RootStack" type="VBoxContainer" parent="RootMargin"]
 layout_mode = 2
@@ -194,10 +194,10 @@ offset_left = 0.0
 offset_top = 0.0
 offset_right = 0.0
 offset_bottom = 0.0
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 24
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 32
 
 [node name="HomeColumn" type="VBoxContainer" parent="RootMargin/RootStack/MainStack/CanvasWrapper/MobileSheetAnchor/SheetOverlay/HomeSheet/HomeMargin"]
 size_flags_horizontal = 3
@@ -278,10 +278,10 @@ offset_left = 0.0
 offset_top = 0.0
 offset_right = 0.0
 offset_bottom = 0.0
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 24
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 32
 
 [node name="StoreColumn" type="VBoxContainer" parent="RootMargin/RootStack/MainStack/CanvasWrapper/MobileSheetAnchor/SheetOverlay/StoreSheet/StoreMargin"]
 size_flags_horizontal = 3
@@ -315,10 +315,10 @@ offset_left = 0.0
 offset_top = 0.0
 offset_right = 0.0
 offset_bottom = 0.0
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 24
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 32
 
 [node name="ResearchColumn" type="VBoxContainer" parent="RootMargin/RootStack/MainStack/CanvasWrapper/MobileSheetAnchor/SheetOverlay/ResearchSheet/ResearchMargin"]
 size_flags_horizontal = 3
@@ -355,10 +355,10 @@ offset_left = 0.0
 offset_top = 0.0
 offset_right = 0.0
 offset_bottom = 0.0
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 24
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 32
 
 [node name="AutomationColumn" type="VBoxContainer" parent="RootMargin/RootStack/MainStack/CanvasWrapper/MobileSheetAnchor/SheetOverlay/AutomationSheet/AutomationMargin"]
 size_flags_horizontal = 3
@@ -388,10 +388,10 @@ offset_left = 0.0
 offset_top = 0.0
 offset_right = 0.0
 offset_bottom = 0.0
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 24
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 32
 
 [node name="PrestigeColumn" type="VBoxContainer" parent="RootMargin/RootStack/MainStack/CanvasWrapper/MobileSheetAnchor/SheetOverlay/PrestigeSheet/PrestigeMargin"]
 size_flags_horizontal = 3

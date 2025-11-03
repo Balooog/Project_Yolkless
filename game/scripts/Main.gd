@@ -103,6 +103,11 @@ var _prototype_metrics := {
 	"pps": "0 PPS",
 	"research": "0 RP"
 }
+var _prototype_status := {
+	"power": {"value": "Load n/a", "tone": StringName("normal")},
+	"economy": {"value": "₡ 0", "tone": StringName("normal")},
+	"population": {"value": "0 hens", "tone": StringName("normal")}
+}
 var _prototype_feed_status := "Feed silo ready"
 var _prototype_feed_fraction := 0.0
 var _prototype_feed_queue := 0
@@ -461,6 +466,7 @@ func _update_soft_view(value: float) -> void:
 	lbl_soft.text = soft_template.format({
 		"value": _format_num(value)
 	})
+	_set_prototype_status("economy", "₡ %s" % _format_num(value))
 	var pps_template := _strings_get("pps_label", "Egg Flow: {pps}/s")
 	lbl_pps.text = pps_template.format({
 		"pps": _format_num(eco.current_pps(), 1)
@@ -505,6 +511,8 @@ func _update_factory_view() -> void:
 			"cost": _format_num(next_cost)
 		})
 		btn_promote.disabled = eco.soft + 1e-6 < next_cost
+	var population_estimate := int(round(eco.feed_capacity))
+	_set_prototype_status("population", "%s hens" % _format_num(float(population_estimate), 0))
 	_refresh_prototype_home_sheet()
 
 func _update_conveyor_view(rate: float, queue_len: int, jam_active: bool = false) -> void:
@@ -821,6 +829,19 @@ func _commit_prototype_metrics() -> void:
 	if not _prototype_available():
 		return
 	ui_prototype.set_metrics(_prototype_metrics)
+	_commit_prototype_status()
+
+func _commit_prototype_status() -> void:
+	if not _prototype_available():
+		return
+	ui_prototype.set_status(_prototype_status)
+
+func _set_prototype_status(key: String, value: String, tone: String = "normal") -> void:
+	_prototype_status[key] = {
+		"value": value,
+		"tone": StringName(tone)
+	}
+	_commit_prototype_status()
 
 func _sync_prototype_all() -> void:
 	_commit_prototype_metrics()
@@ -1696,6 +1717,12 @@ func _update_power_label() -> void:
 		label += " ⚠"
 	elif warning_level == PowerService.WARNING_WARNING:
 		label += " ⚡"
+	var status_tone := "normal"
+	if warning_level == PowerService.WARNING_CRITICAL:
+		status_tone = "critical"
+	elif warning_level == PowerService.WARNING_WARNING:
+		status_tone = "warning"
+	_set_prototype_status("power", "%s%% load" % ratio_text, status_tone)
 	if _comfort_bonus > 0.0:
 		var comfort_text: String = _format_num(_comfort_bonus * 100.0, 1)
 		label += " | Comfort +%s%%" % comfort_text

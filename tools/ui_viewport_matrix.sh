@@ -12,15 +12,16 @@ export GODOT_BIN
 
 MODE="godot"
 OUTPUT_DIR=""
+BASELINE_MODE="false"
 
 usage() {
 	cat <<'EOF'
 Usage: ui_viewport_matrix.sh [options]
 
 Options:
-  --baseline            Generate placeholder baselines in dev/screenshots/ui_baseline/.
-  --out-dir=PATH        Generate placeholder PNGs into PATH (implies placeholder mode).
-  --placeholders        Generate placeholder PNGs into dev/screenshots/ui_current/.
+  --baseline            Capture Godot HUD screenshots into dev/screenshots/ui_baseline/.
+  --out-dir=PATH        Capture screenshots into PATH.
+  --placeholders        Generate synthetic placeholder PNGs into dev/screenshots/ui_current/.
   --help                Show this help message.
 
 Without options the script captures the viewport matrix from Godot smoke scenes.
@@ -29,30 +30,29 @@ EOF
 
 while [[ $# -gt 0 ]]; do
 	case "$1" in
-		--baseline)
-			MODE="placeholder"
-			OUTPUT_DIR="${REPO_ROOT}/dev/screenshots/ui_baseline"
-			shift
-			;;
-		--out-dir=*)
-			MODE="placeholder"
-			OUTPUT_DIR="${1#*=}"
-			shift
-			;;
-		--placeholders)
-			MODE="placeholder"
-			OUTPUT_DIR="${REPO_ROOT}/dev/screenshots/ui_current"
-			shift
-			;;
-		--help|-h)
-			usage
-			exit 0
-			;;
-		*)
-			echo "[ui_viewport_matrix] unknown option: $1" >&2
-			usage
-			exit 1
-			;;
+	--baseline)
+		BASELINE_MODE="true"
+		OUTPUT_DIR="${REPO_ROOT}/dev/screenshots/ui_baseline"
+		shift
+		;;
+	--out-dir=*)
+		OUTPUT_DIR="${1#*=}"
+		shift
+		;;
+	--placeholders)
+		MODE="placeholder"
+		OUTPUT_DIR="${REPO_ROOT}/dev/screenshots/ui_current"
+		shift
+		;;
+	--help|-h)
+		usage
+		exit 0
+		;;
+	*)
+		echo "[ui_viewport_matrix] unknown option: $1" >&2
+		usage
+		exit 1
+		;;
 	esac
 done
 
@@ -74,14 +74,31 @@ PY
 	exit 0
 fi
 
-VIEWPORTS=(
-	"640x360"
-	"800x600"
-	"1280x720"
-	"1920x1080"
-)
+if [[ -n "${OUTPUT_DIR}" ]]; then
+	if [[ "${OUTPUT_DIR}" != /* ]]; then
+		OUTPUT_DIR="$(cd "${REPO_ROOT}" && python3 - "$OUTPUT_DIR" <<'PY'
+import pathlib
+import sys
+print(pathlib.Path(sys.argv[1]).resolve())
+PY
+)"
+	fi
+	mkdir -p "${OUTPUT_DIR}"
+	find "${OUTPUT_DIR}" -maxdepth 1 -type f \( -name '*.png' -o -name '*.png.import' \) -delete
+fi
+
+VIEWPORTS=("1280x720")
+
+if [[ "${BASELINE_MODE}" == "false" ]] && [[ -z "${OUTPUT_DIR}" ]]; then
+	# Default matrix capture with multiple breakpoints only when output dir not specified.
+	VIEWPORTS=("640x360" "800x600" "1280x720" "1920x1080")
+fi
 
 for vp in "${VIEWPORTS[@]}"; do
 	echo "[ui_viewport_matrix] capturing viewport ${vp}"
-	"${GODOT_BIN}" --path "${REPO_ROOT}" --rendering-driver vulkan --script "res://tools/ui_screenshots.gd" -- "--viewport=${vp}" "--capture"
+	cmd=("${GODOT_BIN}" --path "${REPO_ROOT}" --rendering-driver vulkan --script "res://tools/ui_screenshots.gd" -- "--viewport=${vp}" "--capture")
+	if [[ -n "${OUTPUT_DIR}" ]]; then
+		cmd+=("--output=${OUTPUT_DIR}")
+	fi
+	"${cmd[@]}"
 done
