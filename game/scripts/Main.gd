@@ -307,9 +307,9 @@ func _ready() -> void:
 		_sync_prototype_all()
 
 	sav.load_state()
-	var offline_gain: float = sav.grant_offline()
-	if offline_gain > 0.0:
-		_show_offline_popup(offline_gain)
+	var offline_summary: Dictionary = sav.apply_offline_rewards()
+	if float(offline_summary.get("grant", 0.0)) > 0.0:
+		_show_offline_popup(offline_summary)
 
 	apply_text_scale(text_scale)
 	_apply_contrast_theme()
@@ -1214,17 +1214,59 @@ func _hide_toast() -> void:
 		toast_label.modulate = Color(1, 1, 1, 0)
 	_toast_tween = null
 
-func _show_offline_popup(amount: float) -> void:
+func _show_offline_popup(summary: Dictionary) -> void:
+	var amount: float = float(summary.get("grant", 0.0))
+	var passive_pct: float = float(summary.get("passive_multiplier", eco.last_offline_passive_multiplier())) * 100.0
+	var decimals: int = 1 if passive_pct < 10.0 else 0
+	var pct_text: String = String.num(passive_pct, decimals)
 	var title: String = _strings_get("offline_summary_title", "While you were away…")
 	var body_template: String = _strings_get(
 		"offline_summary_body",
 		"Your farm produced {amount} at {pct}% passive efficiency. Feed to boost output!"
 	)
-	var passive_pct: float = eco.last_offline_passive_multiplier() * 100.0
-	var decimals: int = 1 if passive_pct < 10.0 else 0
-	var pct_text: String = String.num(passive_pct, decimals)
-	var body: String = body_template.format({"amount": "+%s" % _format_num(amount), "pct": pct_text})
-	offline_label.text = "%s\n%s" % [title, body]
+	var amount_text := "+%s" % _format_num(amount)
+	var body: String = body_template.format({"amount": amount_text, "pct": pct_text})
+	var duration_sim: float = float(summary.get("applied_seconds", summary.get("elapsed_seconds", 0.0)))
+	var duration_total: float = float(summary.get("elapsed_seconds", duration_sim))
+	var comfort_before: Dictionary = summary.get("comfort_before", {})
+	var comfort_after: Dictionary = summary.get("comfort_after", {})
+	var before_bonus: float = float(comfort_before.get("ci_bonus", 0.0)) * 100.0
+	var after_bonus: float = float(comfort_after.get("ci_bonus", 0.0)) * 100.0
+	var bonus_delta: float = after_bonus - before_bonus
+	var automation_after: Dictionary = summary.get("automation_after", {})
+	var automation_enabled: bool = bool(automation_after.get("global_enabled", true))
+	var automation_targets: int = int(automation_after.get("active_targets", 0))
+	var lines: Array[String] = [body]
+	if duration_sim > 0.0:
+		if bool(summary.get("clamped", false)) and duration_total > duration_sim + 1.0:
+			var clamped_template := _strings_get("offline_summary_duration_clamped", "Simulated {applied} of {total} offline")
+			lines.append(clamped_template.format({"applied": _format_duration(duration_sim), "total": _format_duration(duration_total)}))
+		else:
+			var duration_template := _strings_get("offline_summary_duration", "Simulated {duration} offline")
+			lines.append(duration_template.format({"duration": _format_duration(duration_total)}))
+	var comfort_template := _strings_get(
+		"offline_summary_comfort",
+		"Comfort bonus: {before}% → {after}% ({delta}% change)"
+	)
+	lines.append(comfort_template.format({
+		"before": String.num(before_bonus, 2),
+		"after": String.num(after_bonus, 2),
+		"delta": String.num(bonus_delta, 2)
+	}))
+	var automation_state: String
+	if automation_enabled and automation_targets > 0:
+		automation_state = _strings_get("offline_summary_automation_ready", "Automation ready ({count} routines)").format({"count": automation_targets})
+	elif automation_enabled:
+		automation_state = _strings_get("offline_summary_automation_available", "Automation available")
+	else:
+		automation_state = _strings_get("offline_summary_automation_paused", "Automation paused")
+	lines.append(automation_state)
+	var overflow_seconds: float = float(summary.get("overflow_seconds", 0.0))
+	if overflow_seconds > 1.0:
+		var cap_template := _strings_get("offline_summary_cap_notice", "Cap reached: extra {overflow} held for telemetry")
+		lines.append(cap_template.format({"overflow": _format_duration(overflow_seconds)}))
+	var detail_text := "\n".join(lines)
+	offline_label.text = "%s\n%s" % [title, detail_text]
 	offline_popup.popup_centered()
 
 func _format_num(value: float, decimals: int = 0) -> String:
@@ -1234,6 +1276,20 @@ func _format_num(value: float, decimals: int = 0) -> String:
 	if abs_val >= 1_000.0:
 		return "%.1fk" % (value / 1_000.0)
 	return String.num(value, decimals)
+
+func _format_duration(seconds: float) -> String:
+	var total := max(int(round(seconds)), 0)
+	var hours := total / 3600
+	var minutes := (total % 3600) / 60
+	var secs := total % 60
+	var parts: Array[String] = []
+	if hours > 0:
+		parts.append("%dh" % hours)
+	if minutes > 0:
+		parts.append("%dm" % minutes)
+	if hours == 0 and minutes == 0:
+		parts.append("%ds" % secs)
+	return " ".join(parts)
 
 func _research_cost(id: String) -> int:
 	var node: Dictionary = bal.research.get(id, {})

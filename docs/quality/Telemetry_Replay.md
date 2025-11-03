@@ -3,7 +3,7 @@
 > Ensures balance changes respect comfort-idle pacing by simulating long sessions with consistent metrics. See [Glossary](../Glossary.md) for terminology.
 
 ## Log Formats
-- **CSV (`logs/telemetry/*.csv`)**: Columns include `timestamp`, `pps`, `storage`, `ci_bonus`, `event`, `power_state`, `active_cells`, `sandbox_render_view_mode`, `sandbox_render_fallback_active`, `minigame_active`.
+- **CSV (`logs/telemetry/*.csv`)**: Columns include `timestamp`, `pps`, `storage`, `ci_bonus`, `event`, `power_state`, `active_cells`, `sandbox_render_view_mode`, `sandbox_render_fallback_active`, `minigame_active`, and economy sub-phase timings (`eco_in_ms`, `eco_apply_ms`, `eco_ship_ms`, `eco_research_ms`, `eco_statbus_ms`, `eco_ui_ms`).
 - **JSON (`logs/telemetry/*.json`)**: Batch summaries with averages/percentiles plus per-scenario arrays for shipments and comfort samples (`{ "time", "ci", "bonus" }`).
 - All entries include `scenario` tag (e.g., `hands_off`, `burst_cycle`).
 
@@ -11,9 +11,12 @@
 ```bash
 # 5 minute hands-off baseline
 godot --headless --path . --script res://tools/replay_headless.gd --duration=300 --seed=12345 --strategy=idle --env_renderer=sandbox
+
+# Spread shipment bookkeeping over two frames
+godot --headless --path . --script res://tools/replay_headless.gd --duration=300 --economy_amortize_shipment=true
 ```
 - Outputs human-readable log to `logs/yolkless.log` and summary JSON at `logs/telemetry/replay_YYYYMMDD_HHMM.json`.
-- Command flags: `--duration` (seconds), `--seed`, `--dt` (tick size, default 0.1), `--strategy` (`normal|burst|idle|pulse`).
+- Command flags: `--duration` (seconds), `--seed`, `--dt` (tick size, default 0.1), `--strategy` (`normal|burst|idle|pulse`), `--economy_amortize_shipment` (true/false, defaults to false).
 - StatsProbe writes additional CSV snapshots to `logs/perf/tick_<timestamp>.csv`, ignores `ci_delta` alerts for the first ~2 s of sampling to avoid warm-up spikes, and clamps alerts to tighter budgets (`tick_ms > 1.9`, `active_cells > 400`, `|ci_delta| > 0.05`, `sandbox_render_ms_p95 > 1.0`, renderer frame p95 > 18 ms sustained for ≥5 s).
 
 ## Key Metrics
@@ -32,6 +35,12 @@ godot --headless --path . --script res://tools/replay_headless.gd --duration=300
 | `automation_tick_ms_p95` | StatsProbe | Tracks AutomationService scheduling cost vs the 1.0 ms target. |
 | `power_tick_ms_p95` | StatsProbe | Ensures PowerService updates remain beneath the 0.8 ms threshold. |
 | `economy_tick_ms_p95` | StatsProbe | Verifies the Economy loop respects the 1.5 ms budget (see `economy_pps_avg` for pacing). |
+| `eco_ship_ms_p95` / `_avg` | StatsProbe | Attributes shipment/auto-dump work; alerts when p95 exceeds 7 ms. |
+| `eco_in_ms_p95` / `_avg` | StatsProbe | Measures feed/refill polling cost ahead of shipment logic. |
+| `eco_apply_ms_p95` / `_avg` | StatsProbe | Tracks multiplier application and bonus stacking. |
+| `eco_research_ms_p95` / `_avg` | StatsProbe | Captures research/automation updates triggered by Economy. |
+| `eco_statbus_ms_p95` / `_avg` | StatsProbe | Quantifies StatBus writes/reads from the economy tick. |
+| `eco_ui_ms_p95` / `_avg` | StatsProbe | Surfaces UI/broadcast signal overhead (storage, burst state, logs). |
 | `active_cells_max` | StatsProbe | Surfaces sandbox load spikes (SandboxGrid coverage). |
 | `ci_delta_abs_max` | StatsProbe | Flags sudden comfort swings that may indicate instability. |
 | `minigame_active` / `minigame_duration` | Replay controller | Ensures mini-game cooldown rules remain isolated from Credits/RP. |
@@ -55,7 +64,8 @@ godot --headless --path . --script res://tools/replay_headless.gd --duration=300
 
 ## Instrumentation Fields
 - `service`, `tick_ms`, `pps`, `ci`, `active_cells`, `power_ratio`, `ci_delta`, `storage`, `feed_fraction`, `power_state`, `auto_active`, `minigame_active`, `minigame_duration` sampled at 10 Hz (fields populate per service).
-- Renderer stream adds 1 Hz aggregates: `sandbox_render_ms_avg`, `sandbox_render_ms_p95`, `sandbox_render_fallback_ratio`, `belt_anim_ms_avg`, `belt_anim_ms_p95`, `sandbox_render_view_mode`.
+- Offline catch-up emits a single `service=offline` row per session with `elapsed`, `applied`, `grant`, and `passive_multiplier` columns to document capped awards.
+- Renderer stream adds 1 Hz aggregates: `sandbox_render_ms_avg`, `sandbox_render_ms_p95`, `sandbox_render_fallback_ratio`, `belt_anim_ms_avg`, `belt_anim_ms_p95`, `sandbox_render_view_mode`, plus the economy sub-phase metrics (`eco_in_ms_p95`, `eco_apply_ms_p95`, `eco_ship_ms_p95`, `eco_research_ms_p95`, `eco_statbus_ms_p95`, `eco_ui_ms_p95`).
 - Alerts emitted through `stats_probe_alert(metric, value, threshold)` and copied into replay JSON under `alerts`.
 - CSV naming convention: `logs/perf/tick_<timestamp>.csv`; JSON graph exported to `/reports/nightly/<date>.json` with companion PNG trend. JSON summaries now include `sandbox_tick_ms_p95`, `sandbox_render_ms_p95`, `sandbox_render_ms_avg`, `sandbox_render_fallback_ratio`, `sandbox_render_view_mode`, `active_cells_max`, and `ci_delta_abs_max` for regression tracking.
 

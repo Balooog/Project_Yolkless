@@ -145,6 +145,9 @@ func _active_auto_count() -> int:
 			active_auto += 1
 	return active_auto
 
+func active_auto_count() -> int:
+	return _active_auto_count()
+
 func _get_stats_probe() -> StatsProbe:
 	var node := get_node_or_null("/root/StatsProbeSingleton")
 	if node is StatsProbe:

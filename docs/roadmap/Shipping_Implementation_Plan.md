@@ -6,7 +6,7 @@
 
 | Order | Target Window | PX | Task | Notes |
 | --- | --- | --- | --- | --- |
-| 1 | Sprint 1 | PX-007.1 | Finish offline passive production | Ship catch-up math and summary flow before touching conveyors. |
+| 1 | Sprint 1 | PX-007.1 | Finish offline passive production | Complete 2025-11-02 - catch-up math, snapshot telemetry, and summary popup live. |
 | 2 | Sprint 1 | PX-011.3 | Wire conveyor throughput into Economy and StatBus | Reconcile items-per-second with shipment yields. |
 | 3 | Sprint 2 | PX-013.2 | Surface automation scheduling and status UI | Expose queue telemetry and control toggles. |
 | 4 | Sprint 2 | PX-014.4 | Complete StatsProbe diff dashboards | Lock in CI artifact review before expansion. |

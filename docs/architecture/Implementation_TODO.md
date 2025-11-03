@@ -4,7 +4,7 @@ Track items required to bring the current codebase in line with the high-level d
 
 ## Execution Sequence (Roadmap-Aligned)
 - [ ] **Phase 0 - Alpha Hardening (solo plan)** *(PX-007.1, PX-011.3, PX-013.2, PX-014.4, PX-018.3)*
-  - [ ] PX-007.1 offline passive production flow and summary popup.
+  - [x] PX-007.1 offline passive production flow and summary popup.
   - [ ] PX-011.3 conveyor throughput integration with Economy and StatBus.
   - [ ] PX-013.2 automation HUD exposure plus scheduling preview.
   - [ ] PX-014.4 telemetry diff dashboards in CI.
