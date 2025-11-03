@@ -1,5 +1,16 @@
 # Release Playbook
 
+> Fast reference for getting a tag out safely. Detailed guidance follows below.
+
+## Quick Release Flow
+1. Ensure `main` is green; docs-lint passes.
+2. Tag release locally or via GitHub UI: `vX.Y.Z` (SemVer).
+3. Push tag → `release.yml` updates `CHANGELOG.md` and pushes to `main`.
+4. Create GitHub Release; attach any extra artifacts if needed.
+5. Review [Release Milestones](Release_Milestones.md) to confirm phase gate evidence is archived.
+
+---
+
 > Guides versioning, changelog preparation, and release execution for Project Yolkless.
 
 ## Versioning Scheme

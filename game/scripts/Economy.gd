@@ -54,6 +54,24 @@ var _power_service: PowerService
 var _use_scheduler := false
 var _snapshot_timer: float = 0.0
 var _stats_probe: StatsProbe
+const PROFILING_PHASE_IN := StringName("eco_in_ms")
+const PROFILING_PHASE_APPLY := StringName("eco_apply_ms")
+const PROFILING_PHASE_SHIP := StringName("eco_ship_ms")
+const PROFILING_PHASE_RESEARCH := StringName("eco_research_ms")
+const PROFILING_PHASE_STATBUS := StringName("eco_statbus_ms")
+const PROFILING_PHASE_UI := StringName("eco_ui_ms")
+const PROFILING_PHASES := [
+	PROFILING_PHASE_IN,
+	PROFILING_PHASE_APPLY,
+	PROFILING_PHASE_SHIP,
+	PROFILING_PHASE_RESEARCH,
+	PROFILING_PHASE_STATBUS,
+	PROFILING_PHASE_UI
+]
+var _profiling_sections: Dictionary = {}
+var _profiling_active: bool = false
+var _ship_amortization_enabled: bool = false
+var _pending_shipment_logs: Array[Dictionary] = []
 
 func setup(balance: Balance, research: Research) -> void:
 	_balance = balance
@@ -74,6 +92,8 @@ func setup(balance: Balance, research: Research) -> void:
 	_bind_services()
 	_register_statbus_metrics()
 	_stats_probe = _get_stats_probe()
+	_profiling_init()
+	_refresh_config_flags()
 
 func _process(delta: float) -> void:
 	if _use_scheduler:
@@ -89,7 +109,10 @@ func set_scheduler_enabled(enabled: bool) -> void:
 func _tick(delta: float) -> void:
 	if _balance == null or _research == null:
 		return
+	_profiling_reset()
+	_process_deferred_shipments()
 	var tick_start := Time.get_ticks_usec()
+	var input_start := tick_start
 	var previous_feed: float = feed_current
 	var env_feed_modifier: float = _environment_feed_modifier()
 	_update_power_service(_environment_power_modifier())
@@ -113,13 +136,23 @@ func _tick(delta: float) -> void:
 		_feed_reported_empty = false
 	if feed_current < feed_capacity:
 		_feed_reported_full = false
+	_profiling_accumulate(PROFILING_PHASE_IN, Time.get_ticks_usec() - input_start)
 
+	var apply_start := Time.get_ticks_usec()
 	var base_pps := _base_pps()
 	var pps: float = _current_pps()
+	_profiling_accumulate(PROFILING_PHASE_APPLY, Time.get_ticks_usec() - apply_start)
+
+	var statbus_start := Time.get_ticks_usec()
 	_update_statbus_pps(base_pps, pps)
 	_update_feed_fraction_stat()
+	_profiling_accumulate(PROFILING_PHASE_STATBUS, Time.get_ticks_usec() - statbus_start)
+
 	var gained: float = pps * delta
+	var ship_start := Time.get_ticks_usec()
 	_apply_income(gained)
+	_profiling_accumulate(PROFILING_PHASE_SHIP, Time.get_ticks_usec() - ship_start)
+
 	_refresh_automation_binding()
 	_snapshot_timer += delta
 	if _snapshot_timer >= SNAPSHOT_INTERVAL:
@@ -130,6 +163,7 @@ func _tick(delta: float) -> void:
 	if feed_capacity > 0.0:
 		feed_fraction = clamp(feed_current / feed_capacity, 0.0, 1.0)
 	_record_stats_probe(tick_ms, pps, base_pps, feed_fraction)
+	_profiling_finish()
 
 func try_burst(source_auto: bool = false) -> bool:
 	if burst_active:
@@ -138,7 +172,9 @@ func try_burst(source_auto: bool = false) -> bool:
 		return false
 	_is_auto_burst = source_auto
 	burst_active = true
+	var ui_start := Time.get_ticks_usec()
 	burst_state.emit(true)
+	_profiling_accumulate(PROFILING_PHASE_UI, Time.get_ticks_usec() - ui_start)
 	_log_feed_start(source_auto)
 	return true
 
@@ -156,7 +192,9 @@ func _stop_feeding(reason: String) -> void:
 	if not burst_active:
 		return
 	burst_active = false
+	var ui_start := Time.get_ticks_usec()
 	burst_state.emit(false)
+	_profiling_accumulate(PROFILING_PHASE_UI, Time.get_ticks_usec() - ui_start)
 	_is_auto_burst = false
 	_log_feed_stop(reason)
 
@@ -205,23 +243,41 @@ func _deposit_soft(amount: float, reason: String = "income") -> void:
 	if amount <= 0.0:
 		return
 	soft = max(0.0, soft + amount)
+	var ui_start := Time.get_ticks_usec()
 	soft_changed.emit(soft)
+	_profiling_accumulate(PROFILING_PHASE_UI, Time.get_ticks_usec() - ui_start)
 
 func _perform_dump(reason: String = "auto") -> void:
 	if storage <= 0.0:
 		return
+	if _ship_amortization_enabled:
+		_perform_dump_internal(reason, false, true)
+	else:
+		_perform_dump_internal(reason, true, false)
+
+func _perform_dump_internal(reason: String = "auto", log_immediately: bool = true, amortized: bool = false) -> void:
 	var amount: float = storage
+	if amount <= 0.0:
+		return
 	storage = 0.0
 	_storage_reported_full = false
 	_emit_storage_changed()
 	_deposit_soft(amount, reason)
+	var ui_start := Time.get_ticks_usec()
 	dump_triggered.emit(amount, soft)
-	_log("INFO", "ECONOMY", "Auto shipment processed", {
+	_profiling_accumulate(PROFILING_PHASE_UI, Time.get_ticks_usec() - ui_start)
+	var context := {
 		"shipped": amount,
 		"balance": soft,
 		"capacity": _current_capacity(),
 		"reason": reason
-	})
+	}
+	if amortized:
+		context["amortized"] = true
+	if log_immediately or not _ship_amortization_enabled:
+		_log("INFO", "ECONOMY", "Auto shipment processed", context)
+	else:
+		_queue_shipment_log(context)
 
 func _emit_storage_changed() -> void:
 	var capacity := _current_capacity()
@@ -231,7 +287,9 @@ func _emit_storage_changed() -> void:
 		storage = capacity
 	if storage < 0.0:
 		storage = 0.0
+	var ui_start := Time.get_ticks_usec()
 	storage_changed.emit(storage, capacity)
+	_profiling_accumulate(PROFILING_PHASE_UI, Time.get_ticks_usec() - ui_start)
 	_update_statbus_storage(storage, capacity)
 
 func spend_soft(cost: float) -> bool:
@@ -777,24 +835,33 @@ func _register_statbus_metrics() -> void:
 	_update_feed_fraction_stat()
 
 func _update_statbus_pps(base_pps: float, pps: float) -> void:
+	var phase_start := Time.get_ticks_usec()
 	_statbus_ref()
 	if _statbus == null:
+		_profiling_accumulate(PROFILING_PHASE_STATBUS, Time.get_ticks_usec() - phase_start)
 		return
 	_statbus.set_stat(&"pps_base", base_pps, "Economy")
 	_statbus.set_stat(&"pps", pps, "Economy")
+	_profiling_accumulate(PROFILING_PHASE_STATBUS, Time.get_ticks_usec() - phase_start)
 
 func _update_statbus_storage(current_storage: float, capacity: float) -> void:
+	var phase_start := Time.get_ticks_usec()
 	_statbus_ref()
 	if _statbus == null:
+		_profiling_accumulate(PROFILING_PHASE_STATBUS, Time.get_ticks_usec() - phase_start)
 		return
 	_statbus.set_stat(&"storage", current_storage, "Economy")
 	_statbus.set_stat(&"storage_capacity", capacity, "Economy")
+	_profiling_accumulate(PROFILING_PHASE_STATBUS, Time.get_ticks_usec() - phase_start)
 
 func _update_feed_fraction_stat() -> void:
+	var phase_start := Time.get_ticks_usec()
 	_statbus_ref()
 	if _statbus == null:
+		_profiling_accumulate(PROFILING_PHASE_STATBUS, Time.get_ticks_usec() - phase_start)
 		return
 	_statbus.set_stat(&"feed_fraction", get_feed_fraction(), "Economy")
+	_profiling_accumulate(PROFILING_PHASE_STATBUS, Time.get_ticks_usec() - phase_start)
 
 func _update_power_service(value: float) -> void:
 	var service := _get_power_service()
@@ -810,6 +877,15 @@ func _statbus_value(key: StringName, default_value: float = 0.0) -> float:
 		return default_value
 	return _statbus.get_stat(key, default_value)
 
+func _process_deferred_shipments() -> void:
+	if _pending_shipment_logs.is_empty():
+		return
+	var start := Time.get_ticks_usec()
+	for entry in _pending_shipment_logs:
+		_log("INFO", "ECONOMY", "Auto shipment processed", entry)
+	_pending_shipment_logs.clear()
+	_profiling_accumulate(PROFILING_PHASE_SHIP, Time.get_ticks_usec() - start)
+
 func _bind_services() -> void:
 	_power_service = _get_power_service()
 	_automation_service = _get_automation_service()
@@ -818,8 +894,10 @@ func _bind_services() -> void:
 	_refresh_automation_binding()
 
 func _refresh_automation_binding() -> void:
+	var phase_start := Time.get_ticks_usec()
 	var service := _get_automation_service()
 	if service == null:
+		_profiling_accumulate(PROFILING_PHASE_RESEARCH, Time.get_ticks_usec() - phase_start)
 		return
 	if not service.has_target(_automation_target_id()):
 		service.register_autoburst(_automation_target_id(), _automation_interval(), Callable(self, "_handle_autoburst_request"), AutomationService.MODE_MANUAL)
@@ -829,6 +907,7 @@ func _refresh_automation_binding() -> void:
 		if _automation_environment_ok():
 			mode = AutomationService.MODE_AUTO
 	service.set_mode(_automation_target_id(), mode)
+	_profiling_accumulate(PROFILING_PHASE_RESEARCH, Time.get_ticks_usec() - phase_start)
 
 func _refresh_automation_interval() -> void:
 	var service := _get_automation_service()
@@ -875,6 +954,37 @@ func _get_stats_probe() -> StatsProbe:
 		return node as StatsProbe
 	return null
 
+func _profiling_init() -> void:
+	for phase in PROFILING_PHASES:
+		_profiling_sections[phase] = 0.0
+	_profiling_active = false
+
+func _profiling_reset() -> void:
+	for phase in PROFILING_PHASES:
+		_profiling_sections[phase] = 0.0
+	_profiling_active = true
+
+func _profiling_finish() -> void:
+	_profiling_active = false
+
+func _profiling_accumulate(phase: StringName, duration_usec: int) -> void:
+	if not _profiling_active:
+		return
+	var duration_ms: float = float(duration_usec) / 1000.0
+	var current := float(_profiling_sections.get(phase, 0.0))
+	_profiling_sections[phase] = current + duration_ms
+
+func _queue_shipment_log(context: Dictionary) -> void:
+	var entry := context.duplicate(true)
+	_pending_shipment_logs.append(entry)
+
+func _refresh_config_flags() -> void:
+	var config := get_node_or_null("/root/Config")
+	if config:
+		_ship_amortization_enabled = bool(config.get("economy_amortize_shipment"))
+	else:
+		_ship_amortization_enabled = false
+
 func _record_stats_probe(tick_ms: float, pps: float, base_pps: float, feed_fraction: float) -> void:
 	if _stats_probe == null or not is_instance_valid(_stats_probe):
 		_stats_probe = _get_stats_probe()
@@ -885,7 +995,13 @@ func _record_stats_probe(tick_ms: float, pps: float, base_pps: float, feed_fract
 		"tick_ms": tick_ms,
 		"pps": pps,
 		"storage": storage,
-		"feed_fraction": feed_fraction
+		"feed_fraction": feed_fraction,
+		"eco_in_ms": float(_profiling_sections.get(PROFILING_PHASE_IN, 0.0)),
+		"eco_apply_ms": float(_profiling_sections.get(PROFILING_PHASE_APPLY, 0.0)),
+		"eco_ship_ms": float(_profiling_sections.get(PROFILING_PHASE_SHIP, 0.0)),
+		"eco_research_ms": float(_profiling_sections.get(PROFILING_PHASE_RESEARCH, 0.0)),
+		"eco_statbus_ms": float(_profiling_sections.get(PROFILING_PHASE_STATBUS, 0.0)),
+		"eco_ui_ms": float(_profiling_sections.get(PROFILING_PHASE_UI, 0.0))
 	})
 
 func _log(level: String, category: String, message: String, context: Dictionary = {}) -> void:

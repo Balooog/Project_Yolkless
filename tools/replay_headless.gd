@@ -25,6 +25,7 @@ var _tick_dt: float = DEFAULT_DT
 var _strategy: String = DEFAULT_STRATEGY
 var _seed: int = 42
 var _env_renderer_mode: String = ""
+var _economy_amortize_shipment: bool = false
 
 var _logger: YolkLogger
 var _environment: EnvironmentService
@@ -47,6 +48,18 @@ func _initialize() -> void:
 	_run_simulation(ctx)
 	var summary: Dictionary = _build_summary(ctx)
 	_write_summary(summary)
+	var stats: Dictionary = summary.get("stats", {})
+	if stats.has("economy_tick_ms_p95"):
+		var eco_line := "[economy] p95 total=%.3f in=%.3f apply=%.3f ship=%.3f research=%.3f statbus=%.3f ui=%.3f" % [
+			float(stats.get("economy_tick_ms_p95", 0.0)),
+			float(stats.get("eco_in_ms_p95", 0.0)),
+			float(stats.get("eco_apply_ms_p95", 0.0)),
+			float(stats.get("eco_ship_ms_p95", 0.0)),
+			float(stats.get("eco_research_ms_p95", 0.0)),
+			float(stats.get("eco_statbus_ms_p95", 0.0)),
+			float(stats.get("eco_ui_ms_p95", 0.0))
+		]
+		print(eco_line)
 	print(JSON.stringify(summary))
 	_cleanup_context(ctx)
 	if _logger:
@@ -69,6 +82,12 @@ func _parse_args() -> void:
 			_strategy = String(arg.split("=")[1]).to_lower()
 		elif arg.begins_with("--env_renderer="):
 			_env_renderer_mode = String(arg.split("=")[1]).to_lower()
+		elif arg.begins_with("--economy_amortize_shipment="):
+			_economy_amortize_shipment = _parse_bool(arg.split("=")[1])
+
+func _parse_bool(raw: String) -> bool:
+	var lowered := String(raw).strip_edges().to_lower()
+	return lowered in ["1", "true", "yes", "on"]
 
 func _setup_singletons() -> void:
 	var root := get_root()
@@ -77,6 +96,7 @@ func _setup_singletons() -> void:
 		config_node.set("seed", _seed)
 		if _env_renderer_mode != "":
 			config_node.set("env_renderer", _env_renderer_mode)
+		config_node.set("economy_amortize_shipment", _economy_amortize_shipment)
 	_logger = _ensure_node(root, "Logger", LOGGER_SCRIPT) as YolkLogger
 	_ensure_node(root, "StatBusSingleton", STATBUS_SCRIPT)
 	_environment = _ensure_node(root, "EnvironmentServiceSingleton", ENVIRONMENT_SERVICE_SCRIPT) as EnvironmentService

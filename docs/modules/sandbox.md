@@ -55,6 +55,12 @@ The sandbox renderer visualises the Comfort Index cellular automata (CA) grid, t
 | Frame p95 threshold | 18 ms | Trigger half-rate render fallback until stable. |
 | Active cells | ≤ 400 | Mirrors CA budget; track via StatsProbe. |
 
+### Simulation Cadence
+- `SandboxService` keeps the CA grid warm between environment presets; density relax trims active cells toward ~22 % when they exceed 27 % to stay under the 2 ms budget without reseeding.
+- `SandboxGrid` advances the automata in three interleaved phases (one third of the cells per tick, scaled by delta) so the visual state remains fluid while reducing per-tick cost.
+- Plant growth becomes self-thinning under high density, and fire spread samples a reduced neighbourhood set; both changes tame runaway activity while preserving variety.
+- Replay validation target: `replay_2025-10-27_020546.json` (seed 42) reports `sandbox_tick_ms_p95 ≈ 1.06 ms`, no sandbox alerts, with only a single environment tick spike (0.52 ms) to monitor.
+
 ## File Map
 | Path | Role |
 | --- | --- |

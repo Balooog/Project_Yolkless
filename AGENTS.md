@@ -1,8 +1,10 @@
 # Project Yolkless Agent Primer
+> DocOps bootstrap baseline: **v0.2.0** (2025-10-28). Discovery artifacts live in `docs/bootstrap/`.
 
 ## Session Kickoff Checklist
 - Confirm `$(bash tools/godot_resolver.sh)` resolves to `./bin/Godot_v4.5.1-stable_linux.x86_64` inside WSL (Windows GPU captures may still point `GODOT_BIN` to `C:\src\godot\Godot_v4.5.1-stable_win64_console.exe`). Use `source .env` and `$GODOT_BIN --version` as outlined in [Build Cookbook](docs/dev/Build_Cookbook.md); expect `Godot Engine v4.5.1.stable.official`.
 - Skim `README.md`, `docs/ROADMAP.md`, `docs/SPEC-1.md`, and the [Glossary](docs/Glossary.md) to refresh gameplay loop, terminology (Egg Credits, Comfort Index), and active roadmap beats.
+- Walk through the [Gameplay Loop Quickstart](docs/quickstarts/gameplay_loop_quickstart.md) or [Telemetry Replay Quickstart](docs/quickstarts/telemetry_replay_quickstart.md) relevant to the task at hand.
 - Review `docs/architecture/Overview.md`, `docs/architecture/Signals_Events.md`, and [Data Flow Diagram](docs/architecture/DataFlow_Diagram.md) before touching services/autoloads to stay aligned with the 10 Hz simulation spine and signal contracts.
 - Check `docs/dev/build_gotchas.md` and `docs/dev/Tooling.md` for newly logged Godot pitfalls (typed variables, autoload base classes, ternary syntax changes, version policy).
 - For balance/system tasks, open `docs/balance_schema.md` and [Balance Playbook](docs/design/Balance_Playbook.md) alongside relevant TSVs.
@@ -15,6 +17,15 @@ When no explicit request is provided:
 3. Execute work in small verified increments: run lint/tests per the Task Validation section, capture artifacts, and update code/docs accordingly.
 4. Suggest follow-up tasks or monitoring actions based on project status, especially for telemetry, UI regression, or sandbox performance.
 5. Update documentation as you go—prioritize `docs/dev/build_gotchas.md`, module briefs, and changelog entries when new learnings arise.
+
+### PX Delivery Loop (Branch → Implement → Docs → Push)
+1. **Start clean:** `git status --short` must show only intentional changes for the upcoming PX. Stash or land unrelated work before proceeding.
+2. **Checkout:** `git switch main && git pull --ff-only` then `git switch -c feature/PX-###-slug` using the PX identifier.
+3. **Implement:** write code + assets in focused commits while running required validations (unit tests, replays, lint). Keep `python3 tools/docs_lint/check_structure.py` in the loop whenever docs change.
+4. **Update docs:** refresh the PX brief in `docs/prompts/`, adjust roadmap/plan trackers (`docs/architecture/Implementation_TODO.md`, `docs/roadmap/Shipping_Implementation_Plan.md`, related module briefs, StatBus catalog, etc.). No merge until every required document reflects the work.
+5. **Review staged diff:** `git diff --cached --stat` plus targeted `git diff --cached path` to confirm only the PX scope is included. Ensure commit message includes `PX: PX-###` footer.
+6. **Push & PR:** `git push -u origin feature/PX-###-slug`, open a PR referencing the PX/RM, attach validation artifacts, and request Codex review when applicable.
+7. **After merge:** pull `main`, delete the feature branch locally, and move to the next PX following the same loop.
 
 Always surface assumptions, blockers, and recommended verifications in the final response.
 
@@ -38,17 +49,19 @@ Always surface assumptions, blockers, and recommended verifications in the final
   ./tools/ui_baseline.sh   # refresh baseline only after design approval
   $(bash tools/godot_resolver.sh) --headless --script res://tools/uilint_scene.gd res://scenes/ui_smoke/MainHUD.tscn
   ```
+- Run `python3 tools/docs_lint/check_structure.py` before publishing to keep the DocOps tree green.
 - Use `tools/nightly_replay.sh` or `tools/gen_dashboard.py` to inspect nightly performance (metrics definitions in `docs/quality/Telemetry_Replay.md`).
 - Capture profiler data (avg/p95) when altering core services and compare against `docs/quality/Performance_Budgets.md`.
 - After balance or string edits, launch via `./tools/run_dev.sh`, hot reload with `R`, and monitor the debug overlay (`F3`) plus EnvPanel comfort tooltip.
 - Keep logs (`logs/yolkless.log`, telemetry CSV/JSON, dashboard HTML) as artifacts for PRs per `CONTRIBUTING.md`.
-- Ensure CI pipeline stages (`validate-tables`, `renderer-setup`, `build`, `replay`, `ui-baseline`, `generate-dashboard`, `auto-changelog`) complete successfully before merge.
+- Ensure CI pipeline stages (`docs-lint`, `validate-tables`, `renderer-setup`, `build`, `replay`, `ui-baseline`, `generate-dashboard`, `auto-changelog`) complete successfully before merge.
 
 ## Reference Docs to Keep Handy
 - `docs/Developer_Handbook.md` — centralized onboarding/workflow summary.
 - `docs/Glossary.md` & `docs/FAQ.md` — quick terminology and troubleshooting lookup.
 - `docs/dev/Build_Cookbook.md` & `docs/dev/Tooling.md` — build/run commands, Godot policy, CLI helpers.
 - `docs/quality/Telemetry_Replay.md` & `docs/qa/Metrics_Dashboard_Spec.md` — replay expectations, dashboard automation, normalization formulas.
+- `docs/design/Product_Pillars.md`, `docs/design/UX_Principles.md`, and `docs/design/Modules_Index.md` — narrative guardrails and module ownership matrix.
 - `docs/qa/Test_Strategy.md`, `docs/qa/CI_Pipeline.md`, `docs/qa/Risk_Register.md` — validation layers, CI stages, LiveOps monitoring responsibilities.
 - `docs/analysis/IdleGameComparative.md` — comfort-idle benchmarks that guide pacing decisions.
 - `docs/roadmap/` & `docs/prompts/` — active specs (RM-###) and driver prompts (PX-###) for module context.

@@ -25,6 +25,7 @@ DURATION="${DURATION:-300}"
 SEED="${SEED:-42}"
 STRATEGY="${STRATEGY:-normal}"
 ENV_RENDERER_MODE="${ENV_RENDERER:-}"
+ECONOMY_AMORTIZE="${ECONOMY_AMORTIZE_SHIPMENT:-}"
 
 RUN_LOG="$RUN_DIR/headless.log"
 SUMMARY_JSON="$RUN_DIR/summary.json"
@@ -34,6 +35,9 @@ pushd "$ROOT_DIR" >/dev/null
   ARGS=("--headless" "--path" "$ROOT_DIR" "--script" "res://tools/replay_headless.gd" "--duration=$DURATION" "--seed=$SEED" "--strategy=$STRATEGY")
   if [[ -n "$ENV_RENDERER_MODE" ]]; then
     ARGS+=("--env_renderer=$ENV_RENDERER_MODE")
+  fi
+  if [[ -n "$ECONOMY_AMORTIZE" ]]; then
+    ARGS+=("--economy_amortize_shipment=$ECONOMY_AMORTIZE")
   fi
   "$GODOT_BIN" "${ARGS[@]}" 2>&1 | tee "$RUN_LOG"
 } || true

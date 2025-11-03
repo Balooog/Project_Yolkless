@@ -1,0 +1,9 @@
+# Copy to config/user_settings.yaml and edit values.
+ui:
+  language: en
+  autosave_interval_sec: 60
+paths:
+  artifacts_dir: artifacts
+sandbox:
+  default_ticks: 200
+  seed: 42

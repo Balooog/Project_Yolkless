@@ -8,6 +8,23 @@ on:
     - cron: "0 6 * * *"
 
 jobs:
+  docs-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run DocOps lint
+        run: |
+          python3 tools/docs_lint/check_structure.py | tee docs-lint-report.txt
+      - name: Upload DocOps lint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-lint-report
+          path: docs-lint-report.txt
+
   validate-tables:
     runs-on: ubuntu-latest
     steps:
@@ -15,6 +32,25 @@ jobs:
       - name: Validate data tables
         run: |
           python3 tools/validate_tables.py --tables=data/upgrade.tsv,data/research.tsv --schema=docs/data/Schemas.md
+
+  demo-artifacts:
+    runs-on: ubuntu-latest
+    needs: docs-lint
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python3 -m pip install jsonschema
+      - name: Validate contracts
+        run: python3 tools/contracts_validate.py
+      - name: Run telemetry demo
+        run: python3 scripts/telemetry_replay_demo.py --seed 42 --ticks 200
+      - name: Upload telemetry artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: telemetry-artifacts
+          path: artifacts/telemetry/
 
   nightly-replay:
     if: github.event_name == 'schedule'

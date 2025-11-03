@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yolkless.example/contracts/save.schema.json",
+  "title": "SaveWrapper",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["hash", "payload"],
+  "properties": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{32}$",
+      "description": "MD5 hash of the serialized payload used for quick integrity checks."
+    },
+    "payload": {
+      "description": "Decoded save payload or encoded JSON string produced by Save.gd.",
+      "oneOf": [
+        {
+          "type": "string",
+          "contentEncoding": "utf-8",
+          "contentMediaType": "application/json"
+        },
+        { "$ref": "#/$defs/SavePayload" }
+      ]
+    }
+  },
+  "$defs": {
+    "SavePayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["save_version", "ts", "eco", "upgrades", "research"],
+      "properties": {
+        "save_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "ts": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Unix timestamp (seconds) when the save was written."
+        },
+        "eco": {
+          "$ref": "#/$defs/EconomyState"
+        },
+        "upgrades": {
+          "type": "object",
+          "default": {},
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_]+$"
+          },
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "research": {
+          "$ref": "#/$defs/ResearchState"
+        }
+      }
+    },
+    "EconomyState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "soft",
+        "storage",
+        "total_earned",
+        "capacity_rank",
+        "prod_rank",
+        "factory_tier",
+        "feed"
+      ],
+      "properties": {
+        "soft": { "type": "number" },
+        "storage": { "type": "number", "minimum": 0 },
+        "total_earned": { "type": "number", "minimum": 0 },
+        "capacity_rank": { "type": "integer", "minimum": 0 },
+        "prod_rank": { "type": "integer", "minimum": 0 },
+        "factory_tier": { "type": "integer", "minimum": 1 },
+        "feed": { "type": "number", "minimum": 0 }
+      }
+    },
+    "ResearchState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["owned", "pp"],
+      "properties": {
+        "owned": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "pp": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

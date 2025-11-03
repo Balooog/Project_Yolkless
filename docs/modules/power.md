@@ -29,4 +29,9 @@
 - Replay scenarios validate power surges keep CA tick constant and tint-only adjustments occur.
 - Nightly telemetry compares `power_ratio` to conveyor tint state to ensure guardrails hold.
 
+## Next Steps
+- Model per-building generation/consumption once layout placement (RM-019) lands; document tables here.
+- Coordinate with UI/Audio (RM-020) on calm warning cues and link assets when approved.
+- Add multi-zone grid design notes and telemetry expectations prior to Alpha→Beta gate per [Release Milestones](../ops/Release_Milestones.md).
+
 See also: [Automation Module](automation.md), [Sandbox Module](sandbox.md), [Telemetry Guide](../quality/Telemetry_Replay.md).

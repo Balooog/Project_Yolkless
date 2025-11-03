@@ -27,6 +27,7 @@ const MIN_TEMP_SWING := 2.0
 const MIN_LIGHT_SWING := 5.0
 const MIN_HUMIDITY_SWING := 5.0
 const MIN_AIR_SWING := 2.5
+const STAGE_REBUILD_ALERT_MS := 0.6
 
 var _presets: Dictionary = {}
 var _preset_order: Array[StringName] = []
@@ -47,6 +48,8 @@ var _active_stage: Node2D
 var _strings: StringsCatalog
 var _use_scheduler := false
 var _stats_probe: StatsProbe
+var _last_stage_rebuild_ms: float = 0.0
+var _last_stage_rebuild_source: String = ""
 
 func _ready() -> void:
 	_load_presets()
@@ -79,6 +82,7 @@ func register_environment_root(root: Node) -> void:
 		_environment_root = null
 	_environment_root = root as Node2D
 	_rebuild_stage()
+	_prewarm_stage_cache(_stage_for_preset(_current_preset_id))
 
 func select_preset(preset: StringName) -> void:
 	if _apply_preset(preset):
@@ -456,7 +460,10 @@ func _apply_preset(preset: StringName) -> bool:
 	var changed := id != _current_preset_id
 	_current_preset_id = id
 	_time_accumulator = 0.0
-	_rebuild_stage()
+	if changed:
+		call_deferred("_rebuild_stage")
+	else:
+		_rebuild_stage()
 	return changed
 
 func _preset_label(preset: StringName) -> String:
@@ -473,10 +480,33 @@ func _rebuild_stage() -> void:
 	if _environment_root == null or not is_instance_valid(_environment_root):
 		return
 	var target_stage_id := _stage_for_preset(_current_preset_id)
+	var had_stage: bool = _stage_instances.has(target_stage_id)
+	var rebuild_start := Time.get_ticks_usec()
 	var stage := _get_stage_instance(target_stage_id)
 	if stage == null:
 		return
 	_activate_stage(stage)
+	var duration_ms: float = float(Time.get_ticks_usec() - rebuild_start) / 1000.0
+	_last_stage_rebuild_ms = duration_ms
+	_last_stage_rebuild_source = "cached" if had_stage else "instantiated"
+	if duration_ms >= STAGE_REBUILD_ALERT_MS:
+		_log_stage_rebuild(duration_ms, target_stage_id, had_stage)
+
+func _prewarm_stage_cache(current_stage_id: StringName) -> void:
+	if _environment_root == null or not is_instance_valid(_environment_root):
+		return
+	for stage_key in STAGE_PATHS.keys():
+		var stage_id := stage_key as StringName
+		if stage_id == current_stage_id:
+			continue
+		if _stage_instances.has(stage_id):
+			var cached := _stage_instances[stage_id] as Node2D
+			if cached and is_instance_valid(cached):
+				cached.visible = false
+				continue
+		var prewarm := _get_stage_instance(stage_id)
+		if prewarm and is_instance_valid(prewarm):
+			prewarm.visible = false
 
 func _stage_for_preset(preset: StringName) -> StringName:
 	if STAGE_PATHS.has(preset):
@@ -578,10 +608,21 @@ func _record_stats_probe(tick_ms: float) -> void:
 		"service": "environment",
 		"tick_ms": tick_ms,
 		"power_state": float(modifiers.get("power", 1.0)),
-		"feed_fraction": float(modifiers.get("feed", 1.0))
+		"feed_fraction": float(modifiers.get("feed", 1.0)),
+		"stage_rebuild_ms": _last_stage_rebuild_ms,
+		"stage_rebuild_source": _last_stage_rebuild_source
 	})
 
 func _to_number(value: Variant) -> float:
 	if value is float:
 		return value
 	return String(value).to_float()
+
+func _log_stage_rebuild(duration_ms: float, stage_id: StringName, from_cache: bool) -> void:
+	var logger := _logger()
+	if logger:
+		logger.log("WARN", "ENV", "stage_rebuild", {
+			"stage": String(stage_id),
+			"duration_ms": "%.3f" % duration_ms,
+			"cached": from_cache
+		})

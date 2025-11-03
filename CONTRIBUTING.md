@@ -1,49 +1,30 @@
-# Contributing to Project Yolkless
+# Contributing
 
-Thank you for helping build a cozy idle experience. Follow these practices to keep the project serene and maintainable.
+## Core Practices
+- Ship small, focused PRs; branch from `feature/RM-###-slug` when tracking roadmap work.
+- Use Conventional Commits (`feat:`, `fix:`, `docs:` ...); include traceability footers (`RM: RM-011`, `PX: PX-011.2`, `Docs: Balance_Playbook`).
+- Keep gameplay data typed, follow Godot 4 style guides, and prefer Yolkless helpers (`StatBus`, `YolkLogger`) when available.
 
-## Branching & Commits
-- Use feature branches: `feature/RM-###-short-slug` (e.g., `feature/RM-011-early-upgrade`).
-- Commit early, keep messages concise.
-- Include footers for traceability:
-  - `RM: RM-011`
-  - `PX: PX-011.2`
-  - `Docs: StatBus_Catalog`
-- Example commit:
-  ```
-  feat: adjust early shipment pacing
+## Before You Open a PR
+- `python tools/docs_lint/check_structure.py`
+- `make validate-contracts`
+- `python scripts/telemetry_replay_demo.py --seed 42 --ticks 200` (CI will also upload artifacts)
+- Run module checks as needed: `./tools/headless_tick.sh 300`, `$(bash tools/godot_resolver.sh) --headless ...`, profiler budgets, etc.
 
-  - lower prod_1 cost to 50 credits
-  - update telemetry scenario to log shipments
+## Documentation & Artifacts
+- Update docs alongside code; link pages in the PR description.
+- Capture telemetry artifacts (`kpi.json`, `kpi_chart.png`) plus any supporting screenshots/logs (attach or rely on CI uploads).
+- Summarise KPI deltas or balance impacts in the PR notes.
 
-  RM: RM-011
-  PX: PX-011.2
-  Docs: Balance_Playbook
-  ```
+## Release Workflow
+- Advancing a roadmap module across phase gates requires checking off [Release Milestones](docs/ops/Release_Milestones.md) and attaching evidence in the PR.
+- Production will drive tag creation: once a tag `vX.Y.Z` is pushed, `.github/workflows/release.yml` auto-updates `CHANGELOG.md`—do **not** edit the changelog manually on release branches.
+- Include a “Release Readiness” note in PRs that impact milestones, referencing telemetry diffs (`python3 tools/gen_dashboard.py --diff …`) and any outstanding risks recorded in `docs/qa/Risk_Register.md`.
+- For hotfixes, use `hotfix/vX.Y.Z-short-slug` branches and coordinate with Production before tagging to keep automation in sync.
 
-## PR Checklist
-- [ ] Link relevant RM/PX and ADRs in description.
-- [ ] Reference comfort-idle guidance (`docs/analysis/IdleGameComparative.md`).
-- [ ] Include validation evidence (screens, logs, headless output).
-- [ ] Update documentation if schema, signals, or stats change.
-- [ ] Performance check: attach profiler snapshot vs `Performance_Budgets.md`.
-- [ ] Headless replay run (e.g., `replay_headless.gd`) with logs attached.
-- [ ] Request review from owner (see Roadmap modules).
-
-## Coding Standards
-- GDScript 4 style, use signal connections in `_ready`.
-- Keep data in TSV; avoid magic numbers.
-- Use `YolkLogger` for structured logs.
-
-## Testing
-- Run `./tools/headless_tick.sh 300` for economy regressions.
-- Check performance budgets if touching core loops.
-- Ensure comfort metrics (`ci_bonus`) remain within +5% cap.
-- If the headless build surfaces parser errors or warnings, consult [docs/dev/build_gotchas.md](docs/dev/build_gotchas.md) for the latest Godot 4 fixes.
-
-## Documentation
-- Add new stats to [StatBus Catalog](docs/architecture/StatBus_Catalog.md).
-- Update [Signals Matrix](docs/architecture/Signals_Events.md) when emitting new signals.
-- Record architecture choices via ADR template (`docs/templates/ADR_Template.md`).
-
-Welcome to the farm!
+## References
+- [Developer Handbook](docs/Developer_Handbook.md)
+- [Build Cookbook](docs/dev/Build_Cookbook.md)
+- [Test Strategy](docs/qa/Test_Strategy.md)
+- [Release Playbook](docs/ops/Release_Playbook.md)
+- [Roadmap Index](docs/roadmap/INDEX.md)
