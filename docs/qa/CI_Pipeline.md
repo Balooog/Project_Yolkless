@@ -3,34 +3,37 @@
 > Stages executed on every PR and nightly build. Aligns with [Glossary](../Glossary.md), [Test Strategy](Test_Strategy.md), and [Build Cookbook](../dev/Build_Cookbook.md).
 
 ## Stage Overview
-1. `validate-tables` — run schema checks via `tools/validate_tables.py`.
-2. `renderer-setup` — install lavapipe dependencies (`mesa-vulkan-drivers`, `vulkan-tools`, `libvulkan1`) and source `.env` for `VK_ICD_FILENAMES`.
-3. `build` — call `tools/check_only_ci.sh` to ensure warnings-as-errors clean build.
-4. `replay` — execute headless replay (`tools/replay_headless.gd`) and publish JSON/CSV artifacts.
-5. `ui-baseline` — capture viewport matrix using Vulkan, compare against baseline PNGs.
-6. `publish-artifacts` — upload logs, diffs, and telemetry summaries.
-7. `generate-dashboard` — build nightly metrics HTML (see [Metrics Dashboard Spec](Metrics_Dashboard_Spec.md)) via `tools/generate_dashboard.sh`.
-8. (Release tags) `auto-changelog` — generate changelog via `tools/gen_changelog.py` and attach to release (see [Release Playbook](../ops/Release_Playbook.md)).
+1. `docs-lint` — run `python3 tools/docs_lint/check_structure.py` and upload `docs-lint-report.txt` so DocOps drift is caught early.
+2. `validate-tables` — run schema checks via `tools/validate_tables.py`.
+3. `renderer-setup` — install lavapipe dependencies (`mesa-vulkan-drivers`, `vulkan-tools`, `libvulkan1`) and source `.env` for `VK_ICD_FILENAMES`.
+4. `build` — call `tools/check_only_ci.sh` to ensure warnings-as-errors clean build.
+5. `replay` — execute headless replay (`tools/replay_headless.gd`) and publish JSON/CSV artifacts (optional `ECONOMY_AMORTIZE_SHIPMENT=1` for profiling-only runs; stay disabled for CI baselines).
+6. `ui-baseline` — capture viewport matrix using Vulkan, compare against baseline PNGs.
+7. `publish-artifacts` — upload logs, diffs, and telemetry summaries.
+8. `generate-dashboard` — build nightly metrics HTML (see [Metrics Dashboard Spec](Metrics_Dashboard_Spec.md)) via `tools/generate_dashboard.sh`.
+9. (Release tags) `auto-changelog` — generate changelog via `tools/gen_changelog.py` and attach to release (see [Release Playbook](../ops/Release_Playbook.md)).
 
 ## Pipeline Diagram
 
 ```mermaid
 graph LR
-    A[validate-tables] --> B[renderer-setup]
+    D[docs-lint] --> A[validate-tables]
+    A --> B[renderer-setup]
     B --> C[build]
-    C --> D[replay]
-    D --> E[ui-baseline]
-    E --> F[publish-artifacts]
-    F --> G[generate-dashboard]
-    F --> H[auto-changelog (tags)]
+    C --> E[replay]
+    E --> F[ui-baseline]
+    F --> G[publish-artifacts]
+    G --> H[generate-dashboard]
+    G --> I[auto-changelog (tags)]
 ```
 
 ## Artifacts
 | Stage | Artifact | Notes |
 | --- | --- | --- |
+| docs-lint | `docs-lint-report.txt` | Snapshot of DocOps structure check output; inspect when lint fails. |
 | validate-tables | `logs/validation/*.log` | Parser errors/warnings. |
 | renderer-setup | `logs/renderer-setup.txt` | Apt output for lavapipe install + resolver diagnostics. |
-| replay | `reports/nightly/*.json`, `logs/perf/*.csv` | Feed into [Telemetry & Replay](../quality/Telemetry_Replay.md). |
+| replay | `reports/nightly/*.json`, `logs/perf/*.csv` | Feed into [Telemetry & Replay](../quality/Telemetry_Replay.md); includes economy sub-phase metrics (`eco_*`) for p95 budgeting. |
 | ui-baseline | `ui_diff_report.html`, screenshot PNGs | Reviewed against [RM-010 UI checklist](RM-010-ui-checklist.md). |
 | publish-artifacts | `artifacts/*.zip` | Contains UILint.txt, StatsProbe alerts, baseline diff summary.
 | generate-dashboard | `reports/dashboard/index.html` | Produced by `tools/generate_dashboard.sh`; attached for LiveOps review. |

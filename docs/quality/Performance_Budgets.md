@@ -4,7 +4,8 @@
 
 | System | Budget (ms) | Update Rate | Notes |
 | ------ | ----------- | ----------- | ----- |
-| Economy tick | ≤ 1.5 ms *(provisional)* | 10 Hz | Includes feed drain/refill, stat computations. |
+| Economy tick | ≤ 1.5 ms *(provisional)* | 10 Hz | Includes feed drain/refill, stat computations, StatBus writes. |
+| Economy shipment bookkeeping | ≤ 7.0 ms *(target p95)* | on shipment | Covers auto-dump logs, UI signals, and optional amortized bookkeeping. |
 | Sandbox simulation | ≤ 2.0 ms *(provisional)* | 5 Hz | Cellular automata on 32×18 grid; run in pools. (*Latest p95 @2025-10-25: 1.24 ms after downscaling; monitor as content grows*) |
 | Sandbox viewport render | ≤ 1.0 ms *(target)* | 60 Hz | `SandboxRenderer` uploads dirty cells, nearest-neighbour upscale. Fallback halves cadence if frame p95 >18 ms for 5 s. |
 | Conveyor overlay animation | ≤ 0.2 ms *(target)* | 60 Hz | `ConveyorOverlay` belt scroll + tint; StatsProbe exports `belt_anim_ms_avg` / `_p95`. |
@@ -28,6 +29,7 @@
 - Add perf counters to `/docs/quality/Telemetry_Replay.md` scenarios.
 - Any module exceeding budgets must file an ADR or PX hotfix referencing this document.
 - StatsProbe exports per-service tick metrics (`sandbox/environment/automation/power/economy/ui`) and renderer telemetry (`sandbox_render_ms_avg`, `sandbox_render_ms_p95`, `sandbox_render_fallback_ratio`, `sandbox_render_view_mode`) so nightly telemetry can flag budget regressions automatically.
+- Economy telemetry now includes sub-phase timings (`eco_in_ms_*`, `eco_apply_ms_*`, `eco_ship_ms_*`, `eco_research_ms_*`, `eco_statbus_ms_*`, `eco_ui_ms_*`); review `eco_ship_ms_p95 > 7 ms` alerts before merge. Optional amortization (`economy_amortize_shipment=true`) may be used in profiling runs but must remain off for baseline CI captures.
 - Keep `sandbox_render_fallback_ratio` ≈0 %; sustained fallback (>5 %) requires renderer investigation or asset tuning before merge.
 - Conveyor overlay metrics (`belt_anim_ms_avg`, `belt_anim_ms_p95`) join the telemetry suite; regression threshold 0.25 ms raises alerts in nightly dashboards.
 - Enforce conveyor guardrails in perf captures: speed clamp ≤2.5× baseline, shipment pulse cadence ≥400 ms, and Reduce Motion runs halve burst multipliers without exceeding the 0.2 ms budget.

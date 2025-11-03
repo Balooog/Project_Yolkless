@@ -4,3 +4,4 @@ extends Node
 @export var logging_force_disable: bool = false
 @export var seed: int = 0
 @export_enum("legacy", "sandbox") var env_renderer: String = "sandbox"
+@export var economy_amortize_shipment: bool = false

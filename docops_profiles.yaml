@@ -1,0 +1,133 @@
+version: v0.2.0
+profiles:
+  game_sim:
+    display_name: "Game/Sim"
+    docs:
+      architecture:
+        - Overview.md
+        - DataFlow_Diagram.md
+        - Signals_Events.md
+        - StatBus_or_State_Catalog.md
+      design:
+        - Product_Pillars.md
+        - UX_Principles.md
+        - Modules_Index.md
+        - Balance_or_Data_Playbook.md
+      dev:
+        - Build_Cookbook.md
+        - Tooling.md
+        - CommonErrors.md
+      quality:
+        - Performance_Budgets.md
+        - Telemetry_Spec.md
+      ops:
+        - Release_Playbook.md
+    quickstarts:
+      primary: docs/quickstarts/gameplay_loop_quickstart.md
+      secondary: docs/quickstarts/telemetry_replay_quickstart.md
+    agents_focus:
+      - Telemetry & Replay guardrails
+      - Simulation tick constraints
+  mobile_app:
+    display_name: "Mobile App"
+    docs:
+      dev:
+        - Build_Cookbook.md
+        - Tooling.md
+      ops:
+        - Release_Playbook.md
+      qa:
+        - CI_Pipeline.md
+        - Checklists.md
+      design:
+        - UX_Principles.md
+        - Accessibility_Notes.md
+    quickstarts:
+      primary: docs/quickstarts/mobile_build_quickstart.md
+      secondary: docs/quickstarts/store_release_quickstart.md
+    agents_focus:
+      - Store release cadence
+      - Feature flag workflows
+  desktop_data:
+    display_name: "Desktop Data App"
+    docs:
+      data:
+        - Schemas.md
+        - Save_or_Export_Schema.md
+      dev:
+        - Build_Cookbook.md
+        - CommonErrors.md
+      quality:
+        - Performance_Budgets.md
+        - Telemetry_Spec.md
+      qa:
+        - CI_Pipeline.md
+    quickstarts:
+      primary: docs/quickstarts/desktop_workflow_quickstart.md
+      secondary: docs/quickstarts/data_export_quickstart.md
+    agents_focus:
+      - Dataset QA datasets
+      - Packaging/installer guardrails
+  web_viz:
+    display_name: "Web/Viz"
+    docs:
+      architecture:
+        - Overview.md
+        - DataFlow_Diagram.md
+      design:
+        - Viz_Standards.md
+        - Dashboard_Spec.md
+      quality:
+        - Performance_Budgets.md
+        - Caching_Strategy.md
+      ops:
+        - Release_Playbook.md
+    quickstarts:
+      primary: docs/quickstarts/dashboard_quickstart.md
+      secondary: docs/quickstarts/api_adapter_quickstart.md
+    agents_focus:
+      - Caching and performance budgets
+      - API adapter contracts
+  utility_cli:
+    display_name: "Utility/CLI"
+    docs:
+      architecture:
+        - Overview.md
+      dev:
+        - Build_Cookbook.md
+        - Tooling.md
+      qa:
+        - CI_Pipeline.md
+      ops:
+        - Release_Playbook.md
+    quickstarts:
+      primary: docs/quickstarts/cli_usage_quickstart.md
+      secondary: docs/quickstarts/config_schema_quickstart.md
+    agents_focus:
+      - Config schema evolution
+      - Distribution packaging
+adapters:
+  geophysics:
+    docs:
+      data:
+        - Schemas.md
+        - ERT_Schema.md
+      analysis:
+        - Competitive_Comparative.md
+      glossary:
+        - Geophysics_Glossary.md
+    notes:
+      - Highlight MASW/ERI vocabulary and Surfer integrations.
+      - Extend roadmap modules with PR/RM entries for survey acquisition.
+  timesheet:
+    docs:
+      data:
+        - Save_or_Export_Schema.md
+        - Timesheet_Template.md
+      dev:
+        - Tooling.md
+      qa:
+        - CI_Pipeline.md
+    notes:
+      - Document Excel/VBA macro security requirements.
+      - Include smoke workbook set and consolidation flow.

@@ -6,3 +6,5 @@ logs/
 *.ai
 # Local Godot CLI binaries
 bin/
+__pycache__/
+*.pyc

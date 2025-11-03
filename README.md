@@ -22,6 +22,10 @@ We are standardising on a split between Godot scene assets under `game/` and fea
 
 When adding new systems, prefer the `src/`, `ui/`, and `data/` layout and migrate legacy `game/scripts` as part of module-focused work.
 
+## Quickstarts
+- [Gameplay loop walkthrough](docs/quickstarts/gameplay_loop_quickstart.md) — ship the first crates and confirm comfort responses.
+- [Telemetry replay workflow](docs/quickstarts/telemetry_replay_quickstart.md) — record StatBus metrics and update dashboards.
+
 ## Usage
 
 - `./tools/run_dev.sh` launches the playable prototype. Press `R` in-game to hot-reload `data/balance.tsv` after tweaking numbers.
@@ -43,7 +47,7 @@ git add -A && git commit -m "feat(environment): scaffold service layer\n\nRM: RM
 
 # 3) publish & open PR (use gh if installed; otherwise push and open the link)
 git push -u origin HEAD
-# gh pr create --fill --title "RM-021 Environment Layer (PX-021.1)" --body-file docs/roadmap/RM-021.md
+# gh pr create --fill --title "RM-021 Environment Layer (PX-021.1)" --body-file docs/roadmap/RM/RM-021.md
 
 # Save the driver text as a PX file
 code docs/prompts/PX-021.1.md   # paste canvas text

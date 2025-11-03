@@ -30,4 +30,9 @@
 - Integration tests verify automation toggles do not impact sandbox render cadence (check `sandbox_render_ms_*`).
 - Mini-game replay runs confirm PPS bursts remain deterministic with automation active.
 
+## Next Steps
+- Surface automation mode controls and scheduling previews in the RM-010 sheets; capture UX decisions here.
+- Link conveyor delivery callbacks and power throttling behaviours once RM-009/RM-018 backlog items close.
+- Expand telemetry docs with automation-specific KPI thresholds ahead of Alpha exit (see [Release Milestones](../ops/Release_Milestones.md)).
+
 See also: [Power Module](power.md), [Sandbox Module](sandbox.md), [Test Strategy](../qa/Test_Strategy.md).

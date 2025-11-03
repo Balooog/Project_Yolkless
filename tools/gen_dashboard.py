@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-Generate a simple telemetry dashboard from nightly replay summaries.
+Generate telemetry dashboards or diff key metrics between two replay summaries.
 
 Usage:
     python3 tools/gen_dashboard.py --input reports/nightly --output reports/dashboard/index.html
+    python3 tools/gen_dashboard.py --diff reports/nightly/latest.json artifacts/telemetry/kpi.json
 """
 
 from __future__ import annotations
@@ -38,10 +39,24 @@ class RunRecord:
 
 
 def parse_args() -> argparse.Namespace:
-	parser = argparse.ArgumentParser(description="Generate telemetry dashboard HTML.")
-	parser.add_argument("--input", type=Path, required=True, help="Directory containing nightly replay folders.")
-	parser.add_argument("--output", type=Path, required=True, help="Output HTML file.")
-	return parser.parse_args()
+	parser = argparse.ArgumentParser(description="Generate telemetry dashboard HTML or diff replay summaries.")
+	parser.add_argument("--input", type=Path, help="Directory containing nightly replay folders.")
+	parser.add_argument("--output", type=Path, help="Output HTML file.")
+	parser.add_argument(
+		"--diff",
+		nargs=2,
+		metavar=("BASELINE", "CANDIDATE"),
+		type=Path,
+		help="Compare two summary JSON files (baseline -> candidate) and print metric deltas.",
+	)
+	args = parser.parse_args()
+	if args.diff:
+		if args.input or args.output:
+			parser.error("--diff cannot be combined with --input/--output.")
+	else:
+		if args.input is None or args.output is None:
+			parser.error("--input and --output are required unless using --diff.")
+	return args
 
 
 def gather_run_directories(base_path: Path) -> List[Path]:
@@ -55,6 +70,127 @@ def load_summary(summary_path: Path) -> Dict:
 	with summary_path.open("r", encoding="utf-8") as handle:
 		return json.load(handle)
 
+
+def collect_metrics(payload: Dict) -> Dict[str, float]:
+	metrics: Dict[str, float] = {}
+	stats = payload.get("stats")
+	if isinstance(stats, dict):
+		for key in (
+			"ci_avg",
+			"pps_avg",
+			"sandbox_tick_ms_p95",
+			"sandbox_render_ms_p95",
+			"sandbox_render_fallback_ratio",
+			"economy_tick_ms_p95",
+			"eco_ship_ms_p95",
+			"power_ratio_avg",
+		):
+			value = stats.get(key)
+			if isinstance(value, (int, float)):
+				metrics[key] = float(value)
+	final_block = payload.get("final")
+	if isinstance(final_block, dict):
+		for raw_key, alias in (("ci", "final_ci"), ("ci_bonus", "final_ci_bonus"), ("pps", "final_pps")):
+			value = final_block.get(raw_key)
+			if isinstance(value, (int, float)):
+				metrics[alias] = float(value)
+	summary_block = payload.get("summary")
+	if isinstance(summary_block, dict):
+		for key in ("final_ci", "final_rate_per_sec", "final_eggs", "ticks"):
+			value = summary_block.get(key)
+			if isinstance(value, (int, float)):
+				metrics[f"summary_{key}"] = float(value)
+	return metrics
+
+
+def collect_alert_strings(payload: Dict) -> List[str]:
+	alerts_raw = payload.get("alerts")
+	alerts: List[str] = []
+	if isinstance(alerts_raw, list):
+		for entry in alerts_raw:
+			if isinstance(entry, dict):
+				metric = str(entry.get("metric", "metric"))
+				value = entry.get("value")
+				threshold = entry.get("threshold")
+				time_value = entry.get("time")
+				alerts.append(
+					f"{metric} value={value} threshold={threshold} t={time_value}"
+				)
+			else:
+				alerts.append(str(entry))
+	return alerts
+
+
+def format_number(value: Optional[float], precision: int = 4) -> str:
+	if value is None:
+		return "—"
+	if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
+		return "—"
+	return f"{value:.{precision}f}"
+
+
+def format_percent(value: Optional[float], precision: int = 2) -> str:
+	if value is None:
+		return "—"
+	if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
+		return "—"
+	return f"{value:.{precision}f}%"
+
+
+def run_diff(baseline_path: Path, candidate_path: Path) -> None:
+	if not baseline_path.exists():
+		raise SystemExit(f"Baseline summary not found: {baseline_path}")
+	if not candidate_path.exists():
+		raise SystemExit(f"Candidate summary not found: {candidate_path}")
+	baseline_data = load_summary(baseline_path)
+	candidate_data = load_summary(candidate_path)
+	baseline_metrics = collect_metrics(baseline_data)
+	candidate_metrics = collect_metrics(candidate_data)
+	all_keys = sorted(set(baseline_metrics.keys()) | set(candidate_metrics.keys()))
+	if not all_keys:
+		print("No comparable numeric metrics found between inputs.")
+	else:
+		print(f"Telemetry diff\nBaseline : {baseline_path}\nCandidate: {candidate_path}\n")
+		header = f"{'Metric':<32} {'Baseline':>12} {'Candidate':>12} {'Δ':>12} {'Δ%':>12}"
+		print(header)
+		print("-" * len(header))
+		for key in all_keys:
+			base_value = baseline_metrics.get(key)
+			cand_value = candidate_metrics.get(key)
+			delta: Optional[float] = None
+			delta_pct: Optional[float] = None
+			if base_value is not None and cand_value is not None:
+				delta = cand_value - base_value
+				if base_value != 0:
+					delta_pct = (delta / base_value) * 100.0
+			print(
+				f"{key:<32} "
+				f"{format_number(base_value):>12} "
+				f"{format_number(cand_value):>12} "
+				f"{format_number(delta):>12} "
+				f"{format_percent(delta_pct):>12}"
+			)
+
+	baseline_alerts = collect_alert_strings(baseline_data)
+	candidate_alerts = collect_alert_strings(candidate_data)
+	print("\nAlerts:")
+	print(f"- Baseline ({len(baseline_alerts)}):")
+	if baseline_alerts:
+		for entry in baseline_alerts:
+			print(f"    • {entry}")
+	else:
+		print("    • None")
+	print(f"- Candidate ({len(candidate_alerts)}):")
+	if candidate_alerts:
+		for entry in candidate_alerts:
+			print(f"    • {entry}")
+	else:
+		print("    • None")
+	new_alerts = sorted(set(candidate_alerts) - set(baseline_alerts))
+	if new_alerts:
+		print("\nNew alerts introduced:")
+		for entry in new_alerts:
+			print(f"    • {entry}")
 
 def parse_timestamp(raw: str) -> datetime:
 	# Examples: "2025-10-26 15:50:35"
@@ -106,7 +242,7 @@ def load_runs(base_path: Path) -> List[RunRecord]:
 def compute_alerts(records: List[RunRecord], threshold: float = 0.15) -> List[str]:
 	alerts: List[str] = []
 	if len(records) < 2:
-		return alerts
+		pass
 	key_metrics = [
 		("sandbox_tick_ms_p95", "Sandbox p95 tick"),
 		("sandbox_render_ms_p95", "Sandbox render p95"),
@@ -115,27 +251,35 @@ def compute_alerts(records: List[RunRecord], threshold: float = 0.15) -> List[st
 		("pps_avg", "Average PPS"),
 		("ci_avg", "Average Comfort Index"),
 	]
-	for prev, current in zip(records[:-1], records[1:]):
-		for key, label in key_metrics:
-			prev_value = prev.stats.get(key)
-			curr_value = current.stats.get(key)
-			if prev_value in (None, 0.0):
-				continue
-			if curr_value is None:
-				continue
-			diff_ratio = (curr_value - prev_value) / prev_value
-			if abs(diff_ratio) >= threshold:
-				direction = "increase" if diff_ratio > 0 else "decrease"
-				if key == "sandbox_render_fallback_ratio":
-					prev_display = prev_value * 100.0
-					curr_display = curr_value * 100.0
-					alerts.append(
-						f"{current.label}: {label} {direction} of {diff_ratio * 100:.1f}% (prev {prev_display:.2f}% → current {curr_display:.2f}%)"
-					)
-				else:
-					alerts.append(
-						f"{current.label}: {label} {direction} of {diff_ratio * 100:.1f}% (prev {prev_value:.3f} → current {curr_value:.3f})"
-					)
+	if len(records) >= 2:
+		for prev, current in zip(records[:-1], records[1:]):
+			for key, label in key_metrics:
+				prev_value = prev.stats.get(key)
+				curr_value = current.stats.get(key)
+				if prev_value in (None, 0.0):
+					continue
+				if curr_value is None:
+					continue
+				diff_ratio = (curr_value - prev_value) / prev_value
+				if abs(diff_ratio) >= threshold:
+					direction = "increase" if diff_ratio > 0 else "decrease"
+					if key == "sandbox_render_fallback_ratio":
+						prev_display = prev_value * 100.0
+						curr_display = curr_value * 100.0
+						alerts.append(
+							f"{current.label}: {label} {direction} of {diff_ratio * 100:.1f}% (prev {prev_display:.2f}% → current {curr_display:.2f}%)"
+						)
+					else:
+						alerts.append(
+							f"{current.label}: {label} {direction} of {diff_ratio * 100:.1f}% (prev {prev_value:.3f} → current {curr_value:.3f})"
+						)
+	for run in records:
+		eco_tick = run.stats.get("economy_tick_ms_p95")
+		if eco_tick is not None and eco_tick > 10.0:
+			alerts.append(f"{run.label}: Economy tick p95 {eco_tick:.2f} ms exceeds 10 ms budget")
+		eco_ship = run.stats.get("eco_ship_ms_p95")
+		if eco_ship is not None and eco_ship > 7.0:
+			alerts.append(f"{run.label}: Economy shipment p95 {eco_ship:.2f} ms exceeds 7 ms budget")
 	return alerts
 
 
@@ -167,6 +311,8 @@ def build_table_rows(records: Iterable[RunRecord]) -> str:
 			render_metric_cell(fallback_percent, "%", 1),
 			render_text_cell(run.render_view),
 			render_metric_cell(run.stats.get("environment_tick_ms_p95"), "ms"),
+			render_metric_cell(run.stats.get("economy_tick_ms_p95"), "ms"),
+			render_metric_cell(run.stats.get("eco_ship_ms_p95"), "ms"),
 			render_metric_cell(run.stats.get("pps_avg")),
 			render_metric_cell(run.stats.get("ci_avg")),
 			render_metric_cell(run.stats.get("power_ratio_avg")),
@@ -197,6 +343,8 @@ def render_summary_block(records: List[RunRecord]) -> str:
 		("environment_tick_ms_p95", "Environment Tick p95 (ms)", False),
 		("pps_avg", "PPS Avg", False),
 		("ci_avg", "Comfort Index Avg", False),
+		("economy_tick_ms_p95", "Economy Tick p95 (ms)", False),
+		("eco_ship_ms_p95", "Economy Ship p95 (ms)", False),
 	]
 	rows: List[str] = []
 	for key, label, is_percent in metrics:
@@ -234,6 +382,8 @@ def render_dashboard(records: List[RunRecord], alerts: List[str]) -> str:
 		"Sandbox Fallback (%)",
 		"Sandbox View",
 		"Environment p95 (ms)",
+		"Economy Tick p95 (ms)",
+		"Economy Ship p95 (ms)",
 		"PPS Avg",
 		"CI Avg",
 		"Power Ratio Avg",
@@ -273,6 +423,7 @@ def render_dashboard(records: List[RunRecord], alerts: List[str]) -> str:
 
 	<section>
 		<h2>Summary</h2>
+		<p class="subtitle">Economy budgets: tick ≤ 10&nbsp;ms p95, shipments ≤ 7&nbsp;ms p95.</p>
 		{summary_block}
 	</section>
 
@@ -301,6 +452,9 @@ def render_dashboard(records: List[RunRecord], alerts: List[str]) -> str:
 
 def main() -> None:
 	args = parse_args()
+	if args.diff:
+		run_diff(args.diff[0], args.diff[1])
+		return
 	records = load_runs(args.input)
 	if not records:
 		raise SystemExit(f"No replay summaries found under {args.input}")

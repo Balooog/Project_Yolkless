@@ -1,0 +1,193 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yolkless.example/contracts/telemetry.schema.json",
+  "title": "TelemetrySummary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "timestamp",
+    "seed",
+    "strategy",
+    "duration",
+    "dt",
+    "preset",
+    "shipments",
+    "samples",
+    "stats",
+    "alerts",
+    "final"
+  ],
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "seed": {
+      "type": "integer"
+    },
+    "strategy": {
+      "type": "string",
+      "minLength": 1
+    },
+    "duration": {
+      "type": "number",
+      "minimum": 0
+    },
+    "dt": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "preset": {
+      "type": "string"
+    },
+    "shipments": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Shipment" },
+      "minItems": 0
+    },
+    "samples": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Sample" },
+      "minItems": 0
+    },
+    "stats": {
+      "$ref": "#/$defs/Stats"
+    },
+    "alerts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Alert" }
+    },
+    "final": {
+      "$ref": "#/$defs/FinalSnapshot"
+    },
+    "series": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/SeriesPoint" }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "Shipment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["time", "amount", "wallet"],
+      "properties": {
+        "time": { "type": "number", "minimum": 0 },
+        "amount": { "type": "number", "minimum": 0 },
+        "wallet": { "type": "number", "minimum": 0 }
+      }
+    },
+    "Sample": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "time",
+        "ci",
+        "ci_bonus",
+        "ci_delta",
+        "pps",
+        "storage",
+        "wallet",
+        "active_cells",
+        "power_ratio"
+      ],
+      "properties": {
+        "time": { "type": "number", "minimum": 0 },
+        "ci": { "type": "number" },
+        "ci_bonus": { "type": "number" },
+        "ci_delta": { "type": "number" },
+        "pps": { "type": "number" },
+        "storage": { "type": "number", "minimum": 0 },
+        "wallet": { "type": "number", "minimum": 0 },
+        "active_cells": { "type": "number", "minimum": 0 },
+        "power_ratio": { "type": "number", "minimum": 0 }
+      }
+    },
+    "Alert": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["time", "metric", "value", "threshold"],
+      "properties": {
+        "time": { "type": "number", "minimum": 0 },
+        "metric": { "type": "string", "minLength": 1 },
+        "value": { "type": "number" },
+        "threshold": { "type": "number" }
+      }
+    },
+    "FinalSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ci", "ci_bonus", "pps", "wallet", "storage"],
+      "properties": {
+        "ci": { "type": "number" },
+        "ci_bonus": { "type": "number" },
+        "pps": { "type": "number" },
+        "wallet": { "type": "number", "minimum": 0 },
+        "storage": { "type": "number", "minimum": 0 }
+      }
+    },
+    "SeriesPoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tick", "eggs"],
+      "properties": {
+        "tick": { "type": "integer", "minimum": 0 },
+        "eggs": { "type": "number", "minimum": 0 }
+      }
+    },
+    "Stats": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "anyOf": [
+          { "type": "number" },
+          { "type": "string" }
+        ]
+      },
+      "properties": {
+        "sandbox_tick_ms_avg": { "type": "number", "minimum": 0 },
+        "sandbox_tick_ms_p95": { "type": "number", "minimum": 0 },
+        "sandbox_render_ms_avg": { "type": "number", "minimum": 0 },
+        "sandbox_render_ms_p95": { "type": "number", "minimum": 0 },
+        "sandbox_render_fallback_ratio": { "type": "number", "minimum": 0 },
+        "sandbox_render_view_mode": { "type": "string" },
+        "pps_avg": { "type": "number" },
+        "ci_avg": { "type": "number" },
+        "ci_delta_avg": { "type": "number" },
+        "ci_delta_abs_max": { "type": "number" },
+        "power_ratio_avg": { "type": "number", "minimum": 0 },
+        "active_cells_max": { "type": "number", "minimum": 0 },
+        "automation_tick_ms_avg": { "type": "number", "minimum": 0 },
+        "automation_tick_ms_p95": { "type": "number", "minimum": 0 },
+        "automation_auto_active_avg": { "type": "number", "minimum": 0 },
+        "economy_tick_ms_avg": { "type": "number", "minimum": 0 },
+        "economy_tick_ms_p95": { "type": "number", "minimum": 0 },
+        "economy_pps_avg": { "type": "number" },
+        "economy_storage_avg": { "type": "number", "minimum": 0 },
+        "economy_feed_fraction_avg": { "type": "number", "minimum": 0 },
+        "eco_in_ms_avg": { "type": "number", "minimum": 0 },
+        "eco_in_ms_p95": { "type": "number", "minimum": 0 },
+        "eco_apply_ms_avg": { "type": "number", "minimum": 0 },
+        "eco_apply_ms_p95": { "type": "number", "minimum": 0 },
+        "eco_ship_ms_avg": { "type": "number", "minimum": 0 },
+        "eco_ship_ms_p95": { "type": "number", "minimum": 0 },
+        "eco_research_ms_avg": { "type": "number", "minimum": 0 },
+        "eco_research_ms_p95": { "type": "number", "minimum": 0 },
+        "eco_statbus_ms_avg": { "type": "number", "minimum": 0 },
+        "eco_statbus_ms_p95": { "type": "number", "minimum": 0 },
+        "eco_ui_ms_avg": { "type": "number", "minimum": 0 },
+        "eco_ui_ms_p95": { "type": "number", "minimum": 0 },
+        "environment_tick_ms_avg": { "type": "number", "minimum": 0 },
+        "environment_tick_ms_p95": { "type": "number", "minimum": 0 },
+        "environment_stage_rebuild_ms_max": { "type": "number", "minimum": 0 },
+        "environment_stage_rebuild_source_last": { "type": "string" },
+        "power_tick_ms_avg": { "type": "number", "minimum": 0 },
+        "power_tick_ms_p95": { "type": "number", "minimum": 0 },
+        "power_state_avg": { "type": "number" }
+      }
+    }
+  }
+}

@@ -116,12 +116,12 @@ func _process_pending_writes() -> void:
 		if file == null:
 			push_warning("StatsProbe: Failed to open %s for writing" % path)
 			continue
-		file.store_line("service,tick_ms,pps,ci,active_cells,power_ratio,ci_delta,storage,feed_fraction,power_state,auto_active,sandbox_render_view_mode,sandbox_render_fallback_active")
+		file.store_line("service,tick_ms,pps,ci,active_cells,power_ratio,ci_delta,storage,feed_fraction,power_state,auto_active,sandbox_render_view_mode,sandbox_render_fallback_active,stage_rebuild_ms,stage_rebuild_source,eco_in_ms,eco_apply_ms,eco_ship_ms,eco_research_ms,eco_statbus_ms,eco_ui_ms")
 		for row_variant in rows:
 			var row_dict: Dictionary = row_variant
 			var fallback_flag: int = 1 if row_dict.get("sandbox_render_fallback_active", false) else 0
 			var view_mode_value: String = String(row_dict.get("sandbox_render_view_mode", ""))
-			var csv := "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % [
+			var csv := "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % [
 				row_dict.get("service", SERVICE_SANDBOX),
 				row_dict.get("tick_ms", 0.0),
 				row_dict.get("pps", 0.0),
@@ -134,7 +134,15 @@ func _process_pending_writes() -> void:
 				row_dict.get("power_state", 0.0),
 				row_dict.get("auto_active", 0),
 				view_mode_value,
-				fallback_flag
+				fallback_flag,
+				row_dict.get("stage_rebuild_ms", 0.0),
+				row_dict.get("stage_rebuild_source", ""),
+				row_dict.get("eco_in_ms", 0.0),
+				row_dict.get("eco_apply_ms", 0.0),
+				row_dict.get("eco_ship_ms", 0.0),
+				row_dict.get("eco_research_ms", 0.0),
+				row_dict.get("eco_statbus_ms", 0.0),
+				row_dict.get("eco_ui_ms", 0.0)
 			]
 			file.store_line(csv)
 		file.close()
@@ -164,7 +172,15 @@ func summarize() -> Dictionary:
 				"auto_active_accum": 0.0,
 				"fallback_samples": 0,
 				"fallback_active_samples": 0,
-				"view_mode_last": ""
+				"view_mode_last": "",
+				"stage_rebuild_ms_max": 0.0,
+				"stage_rebuild_source_last": "",
+				"eco_in_values": [],
+				"eco_apply_values": [],
+				"eco_ship_values": [],
+				"eco_research_values": [],
+				"eco_statbus_values": [],
+				"eco_ui_values": []
 			}
 		var group: Dictionary = grouped[service]
 		var tick_value: float = float(entry.get("tick_ms", 0.0))
@@ -179,10 +195,21 @@ func summarize() -> Dictionary:
 			var delta_value: float = entry.get("ci_delta", 0.0)
 			group["ci_delta_accum"] += delta_value
 			group["ci_delta_abs_max"] = max(group["ci_delta_abs_max"], abs(delta_value))
+		elif service == SERVICE_ENVIRONMENT:
+			var stage_ms: float = float(entry.get("stage_rebuild_ms", 0.0))
+			if stage_ms > float(group.get("stage_rebuild_ms_max", 0.0)):
+				group["stage_rebuild_ms_max"] = stage_ms
+				group["stage_rebuild_source_last"] = String(entry.get("stage_rebuild_source", group.get("stage_rebuild_source_last", "")))
 		elif service == SERVICE_ECONOMY:
 			group["pps_accum"] += entry.get("pps", 0.0)
 			group["storage_accum"] += entry.get("storage", 0.0)
 			group["feed_fraction_accum"] += entry.get("feed_fraction", 0.0)
+			(group["eco_in_values"] as Array).append(float(entry.get("eco_in_ms", 0.0)))
+			(group["eco_apply_values"] as Array).append(float(entry.get("eco_apply_ms", 0.0)))
+			(group["eco_ship_values"] as Array).append(float(entry.get("eco_ship_ms", 0.0)))
+			(group["eco_research_values"] as Array).append(float(entry.get("eco_research_ms", 0.0)))
+			(group["eco_statbus_values"] as Array).append(float(entry.get("eco_statbus_ms", 0.0)))
+			(group["eco_ui_values"] as Array).append(float(entry.get("eco_ui_ms", 0.0)))
 		elif service == SERVICE_POWER:
 			group["power_state_accum"] += entry.get("power_state", entry.get("power_ratio", 0.0))
 		elif service == SERVICE_AUTOMATION:
@@ -218,6 +245,8 @@ func summarize() -> Dictionary:
 			SERVICE_ENVIRONMENT:
 				summary["environment_tick_ms_p95"] = p95
 				summary["environment_tick_ms_avg"] = avg
+				summary["environment_stage_rebuild_ms_max"] = float(group.get("stage_rebuild_ms_max", 0.0))
+				summary["environment_stage_rebuild_source_last"] = String(group.get("stage_rebuild_source_last", ""))
 			SERVICE_AUTOMATION:
 				summary["automation_tick_ms_p95"] = p95
 				summary["automation_tick_ms_avg"] = avg
@@ -232,6 +261,24 @@ func summarize() -> Dictionary:
 				summary["economy_pps_avg"] = float(group["pps_accum"]) / count_float
 				summary["economy_storage_avg"] = float(group["storage_accum"]) / count_float
 				summary["economy_feed_fraction_avg"] = float(group["feed_fraction_accum"]) / count_float
+				var eco_in_values := group["eco_in_values"] as Array
+				var eco_apply_values := group["eco_apply_values"] as Array
+				var eco_ship_values := group["eco_ship_values"] as Array
+				var eco_research_values := group["eco_research_values"] as Array
+				var eco_statbus_values := group["eco_statbus_values"] as Array
+				var eco_ui_values := group["eco_ui_values"] as Array
+				summary["eco_in_ms_p95"] = _profiling_p95(eco_in_values)
+				summary["eco_in_ms_avg"] = _profiling_avg(eco_in_values)
+				summary["eco_apply_ms_p95"] = _profiling_p95(eco_apply_values)
+				summary["eco_apply_ms_avg"] = _profiling_avg(eco_apply_values)
+				summary["eco_ship_ms_p95"] = _profiling_p95(eco_ship_values)
+				summary["eco_ship_ms_avg"] = _profiling_avg(eco_ship_values)
+				summary["eco_research_ms_p95"] = _profiling_p95(eco_research_values)
+				summary["eco_research_ms_avg"] = _profiling_avg(eco_research_values)
+				summary["eco_statbus_ms_p95"] = _profiling_p95(eco_statbus_values)
+				summary["eco_statbus_ms_avg"] = _profiling_avg(eco_statbus_values)
+				summary["eco_ui_ms_p95"] = _profiling_p95(eco_ui_values)
+				summary["eco_ui_ms_avg"] = _profiling_avg(eco_ui_values)
 			SERVICE_SANDBOX_RENDER:
 				summary["sandbox_render_ms_p95"] = p95
 				summary["sandbox_render_ms_avg"] = avg
@@ -242,3 +289,19 @@ func summarize() -> Dictionary:
 				summary["%s_tick_ms_p95" % service] = p95
 				summary["%s_tick_ms_avg" % service] = avg
 	return summary
+
+func _profiling_p95(values: Array) -> float:
+	if values.is_empty():
+		return 0.0
+	var sorted := values.duplicate()
+	sorted.sort()
+	var index := int(round(0.95 * float(sorted.size() - 1)))
+	return float(sorted[index])
+
+func _profiling_avg(values: Array) -> float:
+	if values.is_empty():
+		return 0.0
+	var sum := 0.0
+	for value in values:
+		sum += float(value)
+	return sum / float(values.size())
