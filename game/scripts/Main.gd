@@ -1291,10 +1291,10 @@ func _format_num(value: float, decimals: int = 0) -> String:
 	return String.num(value, decimals)
 
 func _format_duration(seconds: float) -> String:
-	var total := max(int(round(seconds)), 0)
-	var hours := total / 3600
-	var minutes := (total % 3600) / 60
-	var secs := total % 60
+	var total: int = max(int(round(seconds)), 0)
+	var hours: int = total / 3600
+	var minutes: int = (total % 3600) / 60
+	var secs: int = total % 60
 	var parts: Array[String] = []
 	if hours > 0:
 		parts.append("%dh" % hours)
