@@ -3,6 +3,12 @@
 Track items required to bring the current codebase in line with the high-level documentation. Owners should update this checklist as work lands; reference relevant RM/PX when filing tasks.
 
 ## Execution Sequence (Roadmap-Aligned)
+- [ ] **Phase 0 - Alpha Hardening (solo plan)** *(PX-007.1, PX-011.3, PX-013.2, PX-014.4, PX-018.3)*
+  - [ ] PX-007.1 offline passive production flow and summary popup.
+  - [ ] PX-011.3 conveyor throughput integration with Economy and StatBus.
+  - [ ] PX-013.2 automation HUD exposure plus scheduling preview.
+  - [ ] PX-014.4 telemetry diff dashboards in CI.
+  - [ ] PX-018.3 power warning feedback loop (tint, audio, telemetry).
 - [ ] **Phase 1 — Stabilize Simulation Backbone** *(RM-021, docs/architecture/Overview.md, docs/design/Environment_Playbook.md)*
   - [x] Complete `SandboxService` CA implementation, telemetry mapping, and StatBus integration so comfort bonuses flow end-to-end (see `docs/prompts/PX-021.1.md`). *(Comfort bonus now hooked through EnvPanel and StatBus clamps in Economy.)*
   - [x] Author `data/environment_profiles.tsv` plus loader/preset wiring to unlock seasonal tuning (see `docs/data/Schemas.md`).
