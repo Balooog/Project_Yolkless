@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/ui_baseline/HUD_StatusBase.tscn" id="1"]
+
+[node name="hud_power_warning" instance=ExtResource("1")]
+power_value = "Grid unstable"
+power_tone = "warning"
+economy_value = "₡ 9.1K"
+population_value = "48 hens"
+background_color = Color(0.078, 0.094, 0.122, 1)

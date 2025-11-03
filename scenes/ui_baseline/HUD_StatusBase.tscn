@@ -1,0 +1,112 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://ui/baseline/HUDStatusDock.gd" id="1"]
+[ext_resource type="Resource" path="res://ui/theme/Tokens.tres" id="2"]
+
+[node name="HUDBaseline" type="Control"]
+custom_minimum_size = Vector2(1280, 720)
+script = ExtResource("1")
+
+[node name="Background" type="ColorRect" parent="."]
+unique_name_in_owner = true
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.078, 0.094, 0.122, 1)
+
+[node name="SafeMargin" type="MarginContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 24
+
+[node name="DockPanel" type="PanelContainer" parent="SafeMargin"]
+unique_name_in_owner = true
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -288.0
+offset_right = 0.0
+offset_top = 0.0
+offset_bottom = 128.0
+theme_override_material = null
+
+[node name="StatusColumn" type="VBoxContainer" parent="SafeMargin/DockPanel"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="PowerRow" type="HBoxContainer" parent="SafeMargin/DockPanel/StatusColumn"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="PowerIcon" type="ColorRect" parent="SafeMargin/DockPanel/StatusColumn/PowerRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(18, 18)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
+
+[node name="PowerText" type="VBoxContainer" parent="SafeMargin/DockPanel/StatusColumn/PowerRow"]
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="PowerTitle" type="Label" parent="SafeMargin/DockPanel/StatusColumn/PowerRow/PowerText"]
+unique_name_in_owner = true
+text = "Power"
+
+[node name="PowerValue" type="Label" parent="SafeMargin/DockPanel/StatusColumn/PowerRow/PowerText"]
+unique_name_in_owner = true
+text = "Load Stable"
+
+[node name="EconomyRow" type="HBoxContainer" parent="SafeMargin/DockPanel/StatusColumn"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="EconomyIcon" type="ColorRect" parent="SafeMargin/DockPanel/StatusColumn/EconomyRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(18, 18)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
+
+[node name="EconomyText" type="VBoxContainer" parent="SafeMargin/DockPanel/StatusColumn/EconomyRow"]
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="EconomyTitle" type="Label" parent="SafeMargin/DockPanel/StatusColumn/EconomyRow/EconomyText"]
+unique_name_in_owner = true
+text = "Economy"
+
+[node name="EconomyValue" type="Label" parent="SafeMargin/DockPanel/StatusColumn/EconomyRow/EconomyText"]
+unique_name_in_owner = true
+text = "₡ 0"
+
+[node name="PopulationRow" type="HBoxContainer" parent="SafeMargin/DockPanel/StatusColumn"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="PopulationIcon" type="ColorRect" parent="SafeMargin/DockPanel/StatusColumn/PopulationRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(18, 18)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
+
+[node name="PopulationText" type="VBoxContainer" parent="SafeMargin/DockPanel/StatusColumn/PopulationRow"]
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="PopulationTitle" type="Label" parent="SafeMargin/DockPanel/StatusColumn/PopulationRow/PopulationText"]
+unique_name_in_owner = true
+text = "Population"
+
+[node name="PopulationValue" type="Label" parent="SafeMargin/DockPanel/StatusColumn/PopulationRow/PopulationText"]
+unique_name_in_owner = true
+text = "0 hens"
