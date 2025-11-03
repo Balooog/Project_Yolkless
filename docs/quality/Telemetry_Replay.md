@@ -3,7 +3,7 @@
 > Ensures balance changes respect comfort-idle pacing by simulating long sessions with consistent metrics. See [Glossary](../Glossary.md) for terminology.
 
 ## Log Formats
-- **CSV (`logs/telemetry/*.csv`)**: Columns include `timestamp`, `pps`, `storage`, `ci_bonus`, `event`, `power_state`, `active_cells`, `sandbox_render_view_mode`, `sandbox_render_fallback_active`, `minigame_active`, and economy sub-phase timings (`eco_in_ms`, `eco_apply_ms`, `eco_ship_ms`, `eco_research_ms`, `eco_statbus_ms`, `eco_ui_ms`).
+- **CSV (`logs/telemetry/*.csv`)**: Columns include `timestamp`, `pps`, `storage`, `ci_bonus`, `event`, `power_state`, `power_warning_level`, `power_warning_label`, `active_cells`, `sandbox_render_view_mode`, `sandbox_render_fallback_active`, `minigame_active`, and economy sub-phase timings (`eco_in_ms`, `eco_apply_ms`, `eco_ship_ms`, `eco_research_ms`, `eco_statbus_ms`, `eco_ui_ms`).
 - **JSON (`logs/telemetry/*.json`)**: Batch summaries with averages/percentiles plus per-scenario arrays for shipments and comfort samples (`{ "time", "ci", "bonus" }`).
 - All entries include `scenario` tag (e.g., `hands_off`, `burst_cycle`).
 
@@ -26,6 +26,8 @@ godot --headless --path . --script res://tools/replay_headless.gd --duration=300
 | `ci_bonus` / `ci` | SandboxService / StatsProbe | Tracks serenity gains from environment tuning. |
 | `shipment_interval` | Economy dump log | Ensures early shipments stay within comfort bounds. |
 | `power_state` | PowerService | Detects stress from power deficits. |
+| `power_warning_level` | PowerService | Enum severity mapped from StatBus (0 normal, 1 warning, 2 critical). |
+| `power_warning_label` | PowerService | String label mirroring severity for dashboards. |
 | `sandbox_tick_ms_p95` | StatsProbe | Guards the ≤1.9 ms sandbox budget at 10 Hz. |
 | `sandbox_render_ms_p95` | StatsProbe | Flags viewport render cost breaching the 1.0 ms target. |
 | `sandbox_render_ms_avg` | StatsProbe | Tracks steady-state renderer cost for trend analysis. |
@@ -66,7 +68,7 @@ godot --headless --path . --script res://tools/replay_headless.gd --duration=300
 - Local dry-runs can use `./tools/nightly_replay.sh` (honours `GODOT_BIN`, `DURATION`, `SEED`, `STRATEGY`) to mirror the CI workflow and snapshot artifacts into `reports/nightly/<timestamp>/`.
 
 ## Instrumentation Fields
-- `service`, `tick_ms`, `pps`, `ci`, `active_cells`, `power_ratio`, `ci_delta`, `storage`, `feed_fraction`, `conveyor_rate`, `conveyor_queue`, `power_state`, `auto_active`, `global_enabled`, `next_remaining`, `minigame_active`, `minigame_duration` sampled at 10 Hz (fields populate per service).
+- `service`, `tick_ms`, `pps`, `ci`, `active_cells`, `power_ratio`, `ci_delta`, `storage`, `feed_fraction`, `conveyor_rate`, `conveyor_queue`, `power_state`, `power_warning_level`, `power_warning_label`, `auto_active`, `global_enabled`, `next_remaining`, `minigame_active`, `minigame_duration` sampled at 10 Hz (fields populate per service).
 - Use `python3 tools/gen_dashboard.py --diff <baseline.json> <candidate.json>` to compare replay summaries (new metrics and alert deltas print to stdout).
 - Offline catch-up emits a single `service=offline` row per session with `elapsed`, `applied`, `grant`, and `passive_multiplier` columns to document capped awards.
 - Renderer stream adds 1 Hz aggregates: `sandbox_render_ms_avg`, `sandbox_render_ms_p95`, `sandbox_render_fallback_ratio`, `belt_anim_ms_avg`, `belt_anim_ms_p95`, `sandbox_render_view_mode`, plus the economy sub-phase metrics (`eco_in_ms_p95`, `eco_apply_ms_p95`, `eco_ship_ms_p95`, `eco_research_ms_p95`, `eco_statbus_ms_p95`, `eco_ui_ms_p95`).

@@ -32,7 +32,7 @@
 | PX-011.3 | Wire conveyor throughput into Economy + StatBus (RM-009, RM-011) | Conveyor manager signals, Economy shipment hooks | Items-per-second -> shipment yield linkage, queue alerts surfaced in HUD | Replay profile showing conveyor and shipment parity, CI baseline check |
 | PX-013.2 | Surface automation scheduling + status UI (RM-013) | Automation Service timers, HUD sheets | Tab exposes mode previews, autoburst queue telemetry, toggle safety rails | Controller pass plus ui_lint scene, automation metrics in nightly dashboards |
 | PX-014.4 | Complete StatsProbe diff dashboards (RM-014) | Telemetry CSV/JSON exports, DocOps pipeline | Dashboard diff script, docs quickstart, PR artifact review checklist | `tools/gen_dashboard.py` diff run in CI, docs lint passes |
-| PX-018.3 | Document and test power warnings (RM-018) | PowerService ratios, EnvPanel bindings | Warning palette and audio hooks, deficit logging, module brief update | Replay showing power deficit -> tint/audio response, StatBus entry updated |
+| PX-018.3 | Document and test power warnings (RM-018) | PowerService ratios, EnvPanel bindings | Warning palette and audio hooks, StatBus + telemetry wiring, module brief update | Replay showing power deficit -> tint/audio response, StatBus entry updated |
 
 **Notes**
 - Update `docs/architecture/Implementation_TODO.md` after each landing.

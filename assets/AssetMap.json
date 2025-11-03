@@ -3,5 +3,7 @@
   "hen_icon": "res://assets/placeholder/hen.svg",
   "grain_particle": "res://assets/placeholder/grain.svg",
   "ui_panel": "res://assets/placeholder/panel.svg",
-  "ui_button": "res://assets/placeholder/button.svg"
+  "ui_button": "res://assets/placeholder/button.svg",
+  "power_warning_low_sfx": "res://assets/placeholder/audio/power_warning_low.wav",
+  "power_warning_critical_sfx": "res://assets/placeholder/audio/power_warning_critical.wav"
 }

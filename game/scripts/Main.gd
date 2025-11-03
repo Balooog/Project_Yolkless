@@ -13,6 +13,10 @@ const SandboxCanvasScene := preload("res://scenes/sandbox/SandboxCanvas.tscn")
 
 const FEED_FLASH_COLOR := Color(1, 0.7, 0.7, 1)
 const DEFAULT_ENV_STAGE_SIZE := Vector2(640, 360)
+const POWER_WARNING_COLOR := Color(0.996, 0.784, 0.318, 1.0)
+const POWER_CRITICAL_COLOR := Color(0.984, 0.412, 0.392, 1.0)
+const POWER_WARNING_CLIP := preload("res://assets/placeholder/audio/power_warning_low.wav")
+const POWER_CRITICAL_CLIP := preload("res://assets/placeholder/audio/power_warning_critical.wav")
 
 @onready var bal: Balance = $Balance
 @onready var res: Research = $Research
@@ -24,6 +28,7 @@ const DEFAULT_ENV_STAGE_SIZE := Vector2(640, 360)
 @onready var root_vbox: VBoxContainer = %VBox
 var environment_panel: EnvPanel
 @onready var deny_sound: AudioStreamPlayer = %DenySound
+@onready var power_warning_sound: AudioStreamPlayer = %PowerWarningSound
 @onready var stats_box: HBoxContainer = %StatsBox
 @onready var lbl_soft: Label = %SoftLabel
 @onready var lbl_conveyor: Label = %ConveyorLabel
@@ -105,6 +110,8 @@ var _comfort_index: float = 0.0
 var _comfort_bonus: float = 0.0
 var factory_viewport: SubViewport
 var env_renderer_mode: String = "legacy"
+var _power_warning_level: StringName = PowerService.WARNING_NORMAL
+var _power_warning_sound_warned := false
 
 func _ready() -> void:
 	_configure_input_actions()
@@ -302,6 +309,8 @@ func _ready() -> void:
 			power_service.power_state_changed.connect(_on_power_state_changed)
 		if not power_service.power_warning.is_connected(_on_power_warning):
 			power_service.power_warning.connect(_on_power_warning)
+		_power_warning_level = power_service.current_warning_level()
+		_apply_power_warning_visuals(_power_warning_level)
 	if sandbox_service and not sandbox_service.ci_changed.is_connected(_on_ci_changed):
 		sandbox_service.ci_changed.connect(_on_ci_changed)
 	if environment_panel and sandbox_service:
@@ -924,13 +933,13 @@ func _automation_info_text() -> String:
 	var lines: Array[String] = []
 	var global_enabled := bool(snapshot.get("global_enabled", true))
 	var power_ok := bool(snapshot.get("power_ok", true))
-	var state_key := global_enabled ? "automation_state_enabled" : "automation_state_disabled"
-	var state_text := _strings_get(state_key, global_enabled ? "Automation enabled" : "Automation paused")
+	var state_key := "automation_state_enabled" if global_enabled else "automation_state_disabled"
+	var state_text := _strings_get(state_key, "Automation enabled" if global_enabled else "Automation paused")
 	if not power_ok:
 		var power_suffix := _strings_get("automation_state_power_limited", " — limited by power")
 		state_text += power_suffix
 	lines.append(state_text)
-	var targets_variant := snapshot.get("targets", {})
+	var targets_variant: Variant = snapshot.get("targets", {})
 	if targets_variant is Dictionary:
 		var targets_dict: Dictionary = targets_variant
 		for key_variant in targets_dict.keys():
@@ -942,7 +951,8 @@ func _automation_info_text() -> String:
 			var mode_label := _automation_mode_label(mode)
 			var line := "%s: %s" % [name, mode_label]
 			if mode == AutomationService.MODE_AUTO and global_enabled and power_ok and interval > 0.0:
-				line += " — " + _strings_get("automation_next_action", "next in {seconds}s").format({"seconds": _format_num(remaining, remaining >= 10.0 ? 0 : 1)})
+				var decimals := 0 if remaining >= 10.0 else 1
+				line += " — " + _strings_get("automation_next_action", "next in {seconds}s").format({"seconds": _format_num(remaining, decimals)})
 			lines.append(line)
 	return "\n".join(lines)
 
@@ -961,7 +971,7 @@ func _automation_mode_label(mode: int) -> String:
 		AutomationService.MODE_OFF:
 			return _strings_get("automation_mode_off", "Off")
 		_:
-			return String(mode)
+			return str(mode)
 
 func _on_prototype_feed_requested() -> void:
 	_attempt_feed_start("prototype")
@@ -1049,11 +1059,19 @@ func _on_power_state_changed(state: float) -> void:
 		automation_service.set_power_state(state)
 
 func _on_power_warning(level: StringName) -> void:
-	_log("WARN", "POWER", "power_warning", {"level": String(level)})
-	if level == StringName("critical"):
+	_log("WARN", "POWER", "power_warning", {"level": str(level)})
+	if level == _power_warning_level:
+		return
+	_power_warning_level = level
+	_apply_power_warning_visuals(level)
+	_update_power_label()
+	_play_power_warning_sound(level)
+	if level == PowerService.WARNING_CRITICAL:
 		_show_toast(_strings_get("power_warning_critical", "Power grid critical!"))
-	elif level == StringName("warning"):
+	elif level == PowerService.WARNING_WARNING:
 		_show_toast(_strings_get("power_warning_low", "Power grid unstable."))
+	else:
+		_show_toast(_strings_get("power_warning_recovered", "Power grid stabilized."))
 
 func _on_visuals_toggled(enabled: bool) -> void:
 	visuals_enabled = enabled
@@ -1068,6 +1086,33 @@ func _on_visuals_toggled(enabled: bool) -> void:
 				fc.belt.clear_items()
 	if not enabled:
 		_conveyor_spawn_accumulator = 0.0
+
+func _apply_power_warning_visuals(level: StringName) -> void:
+	if lbl_power == null:
+		return
+	match level:
+		PowerService.WARNING_CRITICAL:
+			lbl_power.add_theme_color_override("font_color", POWER_CRITICAL_COLOR)
+		PowerService.WARNING_WARNING:
+			lbl_power.add_theme_color_override("font_color", POWER_WARNING_COLOR)
+		_:
+			lbl_power.remove_theme_color_override("font_color")
+
+func _play_power_warning_sound(level: StringName) -> void:
+	if power_warning_sound == null:
+		return
+	var clip: AudioStream = POWER_CRITICAL_CLIP if level == PowerService.WARNING_CRITICAL else POWER_WARNING_CLIP
+	if clip == null:
+		if not _power_warning_sound_warned:
+			_power_warning_sound_warned = true
+			_log("INFO", "AUDIO", "power_warning_sound_missing", {"level": str(level)})
+		return
+	if power_warning_sound.stream != clip:
+		power_warning_sound.stream = clip
+	if power_warning_sound.playing:
+		power_warning_sound.stop()
+	power_warning_sound.pitch_scale = 1.0
+	power_warning_sound.play()
 
 func _on_environment_state_changed(state: Dictionary) -> void:
 	if environment_panel:
@@ -1638,9 +1683,19 @@ func _update_power_label() -> void:
 		lbl_power.text = "Power Load: n/a"
 		lbl_power.tooltip_text = "Power service offline"
 		return
+	var warning_level := _power_warning_level
+	if power_service != null:
+		var service_level := power_service.current_warning_level()
+		if warning_level != service_level:
+			warning_level = service_level
+			_power_warning_level = service_level
 	var ratio: float = clamp(power_service.current_state(), 0.0, 1.3)
 	var ratio_text: String = _format_num(ratio * 100.0, 0)
 	var label: String = "Power Load: %s%%" % ratio_text
+	if warning_level == PowerService.WARNING_CRITICAL:
+		label += " ⚠"
+	elif warning_level == PowerService.WARNING_WARNING:
+		label += " ⚡"
 	if _comfort_bonus > 0.0:
 		var comfort_text: String = _format_num(_comfort_bonus * 100.0, 1)
 		label += " | Comfort +%s%%" % comfort_text
@@ -1648,7 +1703,14 @@ func _update_power_label() -> void:
 	var tooltip_lines: Array[String] = ["Power ratio %.2f" % ratio]
 	if _comfort_bonus > 0.0:
 		tooltip_lines.append("Comfort bonus +%.2f%%" % (_comfort_bonus * 100.0))
+	if warning_level == PowerService.WARNING_CRITICAL:
+		tooltip_lines.append(_strings_get("power_warning_tooltip_critical", "Power deficit critical — expect outages."))
+	elif warning_level == PowerService.WARNING_WARNING:
+		tooltip_lines.append(_strings_get("power_warning_tooltip_warning", "Power grid unstable — efficiency reduced."))
+	else:
+		tooltip_lines.append(_strings_get("power_warning_tooltip_normal", "Power grid stable."))
 	lbl_power.tooltip_text = "\n".join(tooltip_lines)
+	_apply_power_warning_visuals(warning_level)
 
 func _sanitize_log_line(line: String) -> String:
 	var logger := _get_logger()

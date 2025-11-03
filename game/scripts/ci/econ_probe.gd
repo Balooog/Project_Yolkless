@@ -164,7 +164,7 @@ func _run_scenario(name: String, seconds: float, strategy: Callable) -> Dictiona
 		"shipment_count": shipments.size(),
 		"first_shipment_s": shipments[0].get("time", 0.0) if shipments.size() > 0 else -1.0,
 		"comfort_samples": comfort_samples,
-		"comfort_components": sandbox and sandbox.has_method("last_comfort_components") ? sandbox.last_comfort_components() : {},
+		"comfort_components": sandbox.last_comfort_components() if sandbox and sandbox.has_method("last_comfort_components") else {},
 		"constants": {
 			"P0": balance.constants.get("P0", 0.0),
 			"BURST_MULT": balance.constants.get("BURST_MULT", 0.0),

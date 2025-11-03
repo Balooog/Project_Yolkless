@@ -46,15 +46,11 @@ $(bash tools/godot_resolver.sh) --headless --path . --quit
 ## UI Harness
 Baseline capture + compare for the PX-010 UI program.
 ```bash
-# Capture/update baseline PNGs (writes dev/screenshots/ui_baseline/)
-./tools/ui_baseline.sh
+# Generate / refresh placeholder baselines (see docs/ui_baselines/)
+./tools/ui_viewport_matrix.sh --baseline
 
-# Sweep S/M/L viewports and capture screenshots
-# Uses Vulkan (lavapipe) inside WSL to render into the Godot user:// workspace
-./tools/ui_viewport_matrix.sh
-
-# Sync captured PNGs into dev/screenshots/ui_current/
-source .env && ./tools/sync_ui_screenshots.sh
+# Produce the current placeholder matrix for comparison
+./tools/ui_viewport_matrix.sh --out-dir=dev/screenshots/ui_current
 
 # Compare current captures vs baseline; fails on any pixel diff (threshold TBD)
 ./tools/ui_compare.sh dev/screenshots/ui_baseline dev/screenshots/ui_current

@@ -39,7 +39,7 @@
 | ------ | ------------- | ---------- | --------- | ------------- |
 | `environment_changed(factors)` | `/root/EnvironmentService` | 10 | PowerService `/root/PowerService`, SandboxService `/root/SandboxService`, HUD `/root/Main/UI` | HUD throttled to 5 Hz |
 | `ci_changed(ci, bonus)` | `/root/SandboxService` | 2 | StatBus `/root/StatBus`, HUD comfort widget | none |
-| `power_warning(level)` | `/root/PowerService` | burst | HUD `/root/Main/UI`, AutomationService `/root/AutomationService` | debounce 0.5 s |
+| `power_warning(level)` | `/root/PowerService` | burst | HUD `/root/Main/UI`, AutomationService `/root/AutomationService` | Transitions only; service dedupes normal → warning → critical |
 | `throughput_updated(rate, queue)` | `/root/Main/ConveyorManager` | 60 | Economy `/root/Main/Economy`, HUD stats, Telemetry probe | HUD samples at 10 Hz; Economy smooths and clamps |
 | `feed_hold_started/ended` | `/root/Main/UIPrototype` | user input | Main, ConveyorOverlay, AudioService | none; reacts instantly |
 | `feed_burst(mult)` | `/root/Main/UIPrototype` | burst | ConveyorOverlay, AudioService, StatsProbe | clamp burst spam to ≤30 Hz upstream |
@@ -51,6 +51,7 @@
 | `environment_updated` | Main thread | End of EnvironmentService tick | Safe to mutate StatBus/SceneTree. |
 | `ci_changed` | Main thread | After SandboxService smoothing (2 Hz) | Renderer metrics may dispatch separately via StatsProbe worker in future PX-021.3. |
 | `power_state_changed` | Main thread | Immediately after power ledger recompute | Listener must avoid heavy work; throttle in UI. |
+| `power_warning` | Main thread | Immediately after warning level transitions | Levels: `normal`, `warning`, `critical`; StatBus exposes numeric level for dashboards. |
 | `auto_burst_enqueued` | Main thread | Within AutomationService tick | Emits during queue increments; avoid expensive logging. |
 | `throughput_updated` | Main thread | Every frame (60 Hz) | Downstream should sample at ≤10 Hz to avoid UI spam. |
 | `stats_probe_alert` *(future)* | Worker thread | After StatsProbe batch flush | Must `call_deferred` to interact with UI/SceneTree. |

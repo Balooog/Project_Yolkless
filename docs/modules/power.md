@@ -22,8 +22,9 @@
 - Reduce Motion mode still applies power tinting but avoids flicker or rapid pulses.
 
 ## Signals & Metrics
-- Emits `power_state_changed(state: float)` (5 Hz) and optional `power_warning(level: float)` for deficit alerts.
-- StatsProbe gathers `power_tick_ms_avg/p95`, `power_ratio`, and logs deficits for nightly dashboards.
+- Emits `power_state_changed(state: float)` (5 Hz) and `power_warning(level: StringName)` on level transitions (`normal` → `warning` → `critical`).
+- StatBus surfaces `power_state` (ratio) and `power_warning_level` (enum: 0 normal, 1 warning, 2 critical) for HUD/Automation gating.
+- StatsProbe batches include `power_warning_level` and `power_warning_label` so dashboards can chart duration and severity alongside tick timing.
 
 ## Testing
 - Replay scenarios validate power surges keep CA tick constant and tint-only adjustments occur.
@@ -31,7 +32,7 @@
 
 ## Next Steps
 - Model per-building generation/consumption once layout placement (RM-019) lands; document tables here.
-- Coordinate with UI/Audio (RM-020) on calm warning cues and link assets when approved.
+- Coordinate with UI/Audio (RM-020) on calm warning cues and link assets when approved; replace placeholder clips (`power_warning_low/critical.wav`) once final mix lands.
 - Add multi-zone grid design notes and telemetry expectations prior to Alpha→Beta gate per [Release Milestones](../ops/Release_Milestones.md).
 
 See also: [Automation Module](automation.md), [Sandbox Module](sandbox.md), [Telemetry Guide](../quality/Telemetry_Replay.md).
