@@ -71,36 +71,37 @@ def load_summary(summary_path: Path) -> Dict:
 		return json.load(handle)
 
 
+def _collect_numeric_values(source: Dict[str, object], prefix: str = "") -> Dict[str, float]:
+    metrics: Dict[str, float] = {}
+    for key, value in source.items():
+        if isinstance(value, (int, float)):
+            name = f"{prefix}{key}" if prefix else str(key)
+            metrics[name] = float(value)
+    return metrics
+
+
 def collect_metrics(payload: Dict) -> Dict[str, float]:
-	metrics: Dict[str, float] = {}
-	stats = payload.get("stats")
-	if isinstance(stats, dict):
-		for key in (
-			"ci_avg",
-			"pps_avg",
-			"sandbox_tick_ms_p95",
-			"sandbox_render_ms_p95",
-			"sandbox_render_fallback_ratio",
-			"economy_tick_ms_p95",
-			"eco_ship_ms_p95",
-			"power_ratio_avg",
-		):
-			value = stats.get(key)
-			if isinstance(value, (int, float)):
-				metrics[key] = float(value)
-	final_block = payload.get("final")
-	if isinstance(final_block, dict):
-		for raw_key, alias in (("ci", "final_ci"), ("ci_bonus", "final_ci_bonus"), ("pps", "final_pps")):
-			value = final_block.get(raw_key)
-			if isinstance(value, (int, float)):
-				metrics[alias] = float(value)
-	summary_block = payload.get("summary")
-	if isinstance(summary_block, dict):
-		for key in ("final_ci", "final_rate_per_sec", "final_eggs", "ticks"):
-			value = summary_block.get(key)
-			if isinstance(value, (int, float)):
-				metrics[f"summary_{key}"] = float(value)
-	return metrics
+    metrics: Dict[str, float] = {}
+
+    stats = payload.get("stats")
+    if isinstance(stats, dict):
+        metrics.update(_collect_numeric_values(stats))
+
+    final_block = payload.get("final")
+    if isinstance(final_block, dict):
+        for key, value in final_block.items():
+            if isinstance(value, (int, float)):
+                metrics[f"final_{key}"] = float(value)
+
+    summary_block = payload.get("summary")
+    if isinstance(summary_block, dict):
+        metrics.update({f"summary_{k}": v for k, v in _collect_numeric_values(summary_block).items()})
+
+    metadata_block = payload.get("metadata")
+    if isinstance(metadata_block, dict):
+        metrics.update({f"meta_{k}": v for k, v in _collect_numeric_values(metadata_block).items()})
+
+    return metrics
 
 
 def collect_alert_strings(payload: Dict) -> List[str]:

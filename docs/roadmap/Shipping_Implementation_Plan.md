@@ -8,8 +8,8 @@
 | --- | --- | --- | --- | --- |
 | 1 | Sprint 1 | PX-007.1 | Finish offline passive production | Complete 2025-11-02 - catch-up math, snapshot telemetry, and summary popup live. |
 | 2 | Sprint 1 | PX-011.3 | Wire conveyor throughput into Economy and StatBus | Complete 2025-11-02 - StatBus metrics, jam warnings, and delivery telemetry wired. |
-| 3 | Sprint 2 | PX-013.2 | Surface automation scheduling and status UI | Complete 2025-11-02 - Automation sheet shows mode/next burst with telemetry hooks. |
-| 4 | Sprint 2 | PX-014.4 | Complete StatsProbe diff dashboards | Lock in CI artifact review before expansion. |
+| 3 | Sprint 2 | PX-013.2 | Surface automation scheduling and status UI | Expose queue telemetry and control toggles. |
+| 4 | Sprint 2 | PX-014.4 | Complete StatsProbe diff dashboards | Complete 2025-11-02 - `tools/gen_dashboard.py --diff` prints metric deltas for reviewers. |
 | 5 | Sprint 3 | PX-018.3 | Document and test power warnings | Ensure deficits produce calm feedback and logs. |
 | 6 | Sprint 4 | PX-021.4 / PX-021.5 | Ship diorama evolution and map toggle | Establish shared renderer pipeline ahead of beta polish. |
 | 7 | Sprint 4 | PX-021.6 | Author environment milestone profiles and tier swaps | Data must be ready before prestige and layout hooks. |
