@@ -31,5 +31,6 @@ mkdir -p "${CURRENT_DIR}"
 find "${CURRENT_DIR}" -maxdepth 1 -type f -name '*.png' -delete
 find "${CURRENT_DIR}" -maxdepth 1 -type f -name '*.png.import' -delete
 
-"${SCRIPT_DIR}/ui_viewport_matrix.sh" --out-dir="${CURRENT_DIR}"
+BASELINE_SCENES="res://scenes/ui_baseline/hud_blank_reference.tscn,res://scenes/ui_baseline/hud_power_normal.tscn,res://scenes/ui_baseline/hud_power_warning.tscn,res://scenes/ui_baseline/hud_power_critical.tscn"
+"${SCRIPT_DIR}/ui_viewport_matrix.sh" --out-dir="${CURRENT_DIR}" --scenes="${BASELINE_SCENES}" --no-viewport-suffix
 "${SCRIPT_DIR}/ui_compare.sh" "${BASELINE_DIR}" "${CURRENT_DIR}"

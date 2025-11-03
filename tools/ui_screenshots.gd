@@ -11,6 +11,7 @@ var output_dir: String = "user://ui_screenshots"
 
 var _viewport_override: Vector2i = Vector2i(1280, 720)
 var _capture_enabled: bool = false
+var _append_viewport_suffix: bool = true
 
 func _init() -> void:
 	_parse_args()
@@ -25,6 +26,17 @@ func _parse_args() -> void:
 				var height := dims[1].to_int()
 				if width > 0 and height > 0:
 					_viewport_override = Vector2i(width, height)
+		elif arg.begins_with("--scenes="):
+			var list := arg.substr("--scenes=".length()).split(",", false)
+			var filtered: Array[String] = []
+			for entry in list:
+				var trimmed := entry.strip_edges()
+				if trimmed != "":
+					filtered.append(trimmed)
+			if not filtered.is_empty():
+				scenes = filtered
+		elif arg == "--no-viewport-suffix":
+			_append_viewport_suffix = false
 		elif arg.begins_with("--output="):
 			var target := arg.substr("--output=".length())
 			if target != "":
@@ -98,6 +110,8 @@ func _capture_scene(scene_path: String, absolute_output: String) -> void:
 	# We amend orientation handling below once we know which backend is active.
 	var file_base := _scene_basename(scene_path)
 	var filename := "%s_%dx%d.png" % [file_base, _viewport_override.x, _viewport_override.y]
+	if not _append_viewport_suffix:
+		filename = "%s.png" % file_base
 	var file_path := absolute_output.path_join(filename)
 	var save_result := image.save_png(file_path)
 	if save_result != OK:

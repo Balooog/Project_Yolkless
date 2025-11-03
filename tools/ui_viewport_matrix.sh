@@ -13,6 +13,9 @@ export GODOT_BIN
 MODE="godot"
 OUTPUT_DIR=""
 BASELINE_MODE="false"
+BASELINE_SCENES="res://scenes/ui_baseline/hud_blank_reference.tscn,res://scenes/ui_baseline/hud_power_normal.tscn,res://scenes/ui_baseline/hud_power_warning.tscn,res://scenes/ui_baseline/hud_power_critical.tscn"
+SCENE_LIST=""
+APPEND_VIEWPORT_SUFFIX=1
 
 usage() {
 	cat <<'EOF'
@@ -33,10 +36,20 @@ while [[ $# -gt 0 ]]; do
 	--baseline)
 		BASELINE_MODE="true"
 		OUTPUT_DIR="${REPO_ROOT}/dev/screenshots/ui_baseline"
+		SCENE_LIST="${BASELINE_SCENES}"
+		APPEND_VIEWPORT_SUFFIX=0
 		shift
 		;;
 	--out-dir=*)
 		OUTPUT_DIR="${1#*=}"
+		shift
+		;;
+	--scenes=*)
+		SCENE_LIST="${1#*=}"
+		shift
+		;;
+	--no-viewport-suffix)
+		APPEND_VIEWPORT_SUFFIX=0
 		shift
 		;;
 	--placeholders)
@@ -97,6 +110,12 @@ fi
 for vp in "${VIEWPORTS[@]}"; do
 	echo "[ui_viewport_matrix] capturing viewport ${vp}"
 	cmd=("${GODOT_BIN}" --path "${REPO_ROOT}" --rendering-driver vulkan --script "res://tools/ui_screenshots.gd" -- "--viewport=${vp}" "--capture")
+	if [[ -n "${SCENE_LIST}" ]]; then
+		cmd+=("--scenes=${SCENE_LIST}")
+	fi
+	if [[ ${APPEND_VIEWPORT_SUFFIX} -eq 0 ]]; then
+		cmd+=("--no-viewport-suffix")
+	fi
 	if [[ -n "${OUTPUT_DIR}" ]]; then
 		cmd+=("--output=${OUTPUT_DIR}")
 	fi
