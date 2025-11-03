@@ -3,6 +3,8 @@ class_name Economy
 
 const StatBus := preload("res://src/services/StatBus.gd")
 const EnvironmentService := preload("res://src/services/EnvironmentService.gd")
+const AutomationService := preload("res://src/services/AutomationService.gd")
+const PowerService := preload("res://src/services/PowerService.gd")
 const StatsProbe := preload("res://src/services/StatsProbe.gd")
 
 signal soft_changed(value: float)
@@ -11,6 +13,7 @@ signal burst_state(active: bool)
 signal tier_changed(tier: int)
 signal autosave(reason: String)
 signal dump_triggered(amount: float, new_balance: float)
+signal conveyor_metrics_changed(rate: float, queue_len: int, jam_active: bool)
 
 var soft: float = 0.0
 var total_earned: float = 0.0
@@ -42,6 +45,8 @@ const FEED_CONSUMPTION_BASE := 25.0
 const AUTOMATION_ENV_THRESHOLD := 0.75
 const MANUAL_SHIP_EFFICIENCY := 0.75
 const SNAPSHOT_INTERVAL := 20.0
+const CONVEYOR_JAM_QUEUE_THRESHOLD := 40
+const CONVEYOR_JAM_SECONDS := 2.5
 
 var _feed_efficiency_mult := 1.0
 var _feed_reported_empty := false
@@ -72,6 +77,13 @@ var _profiling_sections: Dictionary = {}
 var _profiling_active: bool = false
 var _ship_amortization_enabled: bool = false
 var _pending_shipment_logs: Array[Dictionary] = []
+var _conveyor_manager: Node
+var _conveyor_rate: float = 0.0
+var _conveyor_queue: int = 0
+var _conveyor_delivered_total: int = 0
+var _conveyor_last_update_msec: int = 0
+var _conveyor_jam_timer: float = 0.0
+var _conveyor_jam_active: bool = false
 
 func setup(balance: Balance, research: Research) -> void:
 	_balance = balance
@@ -105,6 +117,33 @@ func simulate_tick(delta: float) -> void:
 
 func set_scheduler_enabled(enabled: bool) -> void:
 	_use_scheduler = enabled
+
+func register_conveyor_manager(manager: Node) -> void:
+	if manager == _conveyor_manager:
+		return
+	if _conveyor_manager and is_instance_valid(_conveyor_manager):
+		_detach_conveyor_signals(_conveyor_manager)
+	_conveyor_manager = manager
+	if _conveyor_manager == null or not is_instance_valid(_conveyor_manager):
+		_conveyor_rate = 0.0
+		_conveyor_queue = 0
+		_conveyor_jam_timer = 0.0
+		_conveyor_jam_active = false
+		_conveyor_last_update_msec = 0
+		_update_conveyor_statbus()
+		conveyor_metrics_changed.emit(_conveyor_rate, _conveyor_queue, _conveyor_jam_active)
+		_conveyor_manager = null
+		return
+	if _conveyor_manager.has_signal("throughput_updated"):
+		var callable := Callable(self, "_on_conveyor_throughput_updated")
+		if not _conveyor_manager.is_connected("throughput_updated", callable):
+			_conveyor_manager.connect("throughput_updated", callable)
+	if _conveyor_manager.has_signal("item_delivered"):
+		var delivered_callable := Callable(self, "_on_conveyor_item_delivered")
+		if not _conveyor_manager.is_connected("item_delivered", delivered_callable):
+			_conveyor_manager.connect("item_delivered", delivered_callable)
+	_update_conveyor_statbus()
+	conveyor_metrics_changed.emit(_conveyor_rate, _conveyor_queue, _conveyor_jam_active)
 
 func _tick(delta: float) -> void:
 	if _balance == null or _research == null:
@@ -830,9 +869,14 @@ func _register_statbus_metrics() -> void:
 	_statbus.register_stat(&"storage", {"stack": "replace", "default": storage})
 	_statbus.register_stat(&"storage_capacity", {"stack": "replace", "default": _current_capacity()})
 	_statbus.register_stat(&"feed_fraction", {"stack": "replace", "default": get_feed_fraction()})
+	_statbus.register_stat(&"conveyor_rate", {"stack": "replace", "default": 0.0})
+	_statbus.register_stat(&"conveyor_queue", {"stack": "replace", "default": 0.0})
+	_statbus.register_stat(&"conveyor_delivered_total", {"stack": "replace", "default": 0.0})
+	_statbus.register_stat(&"conveyor_jam_active", {"stack": "replace", "default": 0.0})
 	_update_statbus_storage(storage, _current_capacity())
 	_update_statbus_pps(_base_pps(), _current_pps())
 	_update_feed_fraction_stat()
+	_update_conveyor_statbus()
 
 func _update_statbus_pps(base_pps: float, pps: float) -> void:
 	var phase_start := Time.get_ticks_usec()
@@ -885,6 +929,48 @@ func _process_deferred_shipments() -> void:
 		_log("INFO", "ECONOMY", "Auto shipment processed", entry)
 	_pending_shipment_logs.clear()
 	_profiling_accumulate(PROFILING_PHASE_SHIP, Time.get_ticks_usec() - start)
+
+func _detach_conveyor_signals(manager: Node) -> void:
+	if manager == null or not is_instance_valid(manager):
+		return
+	var throughput_cb := Callable(self, "_on_conveyor_throughput_updated")
+	if manager.has_signal("throughput_updated") and manager.is_connected("throughput_updated", throughput_cb):
+		manager.disconnect("throughput_updated", throughput_cb)
+	var delivered_cb := Callable(self, "_on_conveyor_item_delivered")
+	if manager.has_signal("item_delivered") and manager.is_connected("item_delivered", delivered_cb):
+		manager.disconnect("item_delivered", delivered_cb)
+
+func _on_conveyor_throughput_updated(rate: float, queue_len: int) -> void:
+	_conveyor_rate = max(rate, 0.0)
+	_conveyor_queue = max(queue_len, 0)
+	var now_msec := Time.get_ticks_msec()
+	var delta_seconds := 0.0
+	if _conveyor_last_update_msec > 0:
+		delta_seconds = max(float(now_msec - _conveyor_last_update_msec) / 1000.0, 0.0)
+	_conveyor_last_update_msec = now_msec
+	if _conveyor_queue >= CONVEYOR_JAM_QUEUE_THRESHOLD:
+		_conveyor_jam_timer += delta_seconds
+	else:
+		_conveyor_jam_timer = max(_conveyor_jam_timer - delta_seconds, 0.0)
+	var jam_active := _conveyor_jam_timer >= CONVEYOR_JAM_SECONDS
+	if jam_active != _conveyor_jam_active:
+		_conveyor_jam_active = jam_active
+	_update_conveyor_statbus()
+	conveyor_metrics_changed.emit(_conveyor_rate, _conveyor_queue, _conveyor_jam_active)
+
+func _on_conveyor_item_delivered(_item_id: int, _destination: Node) -> void:
+	_conveyor_delivered_total += 1
+	_update_conveyor_statbus()
+
+func _update_conveyor_statbus() -> void:
+	var bus := _statbus_ref()
+	if bus == null:
+		return
+	bus.set_stat(&"conveyor_rate", _conveyor_rate, "Economy")
+	bus.set_stat(&"conveyor_queue", float(_conveyor_queue), "Economy")
+	bus.set_stat(&"conveyor_delivered_total", float(_conveyor_delivered_total), "Economy")
+	var jam_value := 1.0 if _conveyor_jam_active else 0.0
+	bus.set_stat(&"conveyor_jam_active", jam_value, "Economy")
 
 func _bind_services() -> void:
 	_power_service = _get_power_service()
@@ -996,6 +1082,10 @@ func _record_stats_probe(tick_ms: float, pps: float, base_pps: float, feed_fract
 		"pps": pps,
 		"storage": storage,
 		"feed_fraction": feed_fraction,
+		"conveyor_rate": _conveyor_rate,
+		"conveyor_queue": _conveyor_queue,
+		"conveyor_jam_active": 1.0 if _conveyor_jam_active else 0.0,
+		"conveyor_delivered_total": _conveyor_delivered_total,
 		"eco_in_ms": float(_profiling_sections.get(PROFILING_PHASE_IN, 0.0)),
 		"eco_apply_ms": float(_profiling_sections.get(PROFILING_PHASE_APPLY, 0.0)),
 		"eco_ship_ms": float(_profiling_sections.get(PROFILING_PHASE_SHIP, 0.0)),

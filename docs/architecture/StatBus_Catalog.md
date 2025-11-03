@@ -9,6 +9,10 @@
 | `ci_bonus` | Comfort Index bonus derived from sandbox serenity; surfaced in EnvPanel summary and applied to Economy. | percent (+/-) | Environment→Sandbox (5 Hz) | additive (capped +5%) | Environment/Sandbox |
 | `storage` | Current storage fill relative to capacity. | credits | Economy tick | last-write | Economy Service |
 | `storage_capacity` | Max credits before auto shipment triggers. | credits | On unlock/reset | last-write | Economy Service |
+| `conveyor_rate` | Smoothed items-per-second delivered by the active conveyor loop. | items/sec | Conveyor manager tick (~60 Hz) | replace | Economy Service |
+| `conveyor_queue` | Current conveyor queue depth (items waiting to exit). | items | Conveyor manager tick | replace | Economy Service |
+| `conveyor_delivered_total` | Total conveyor deliveries since session start. | items | On delivery | additive | Economy Service |
+| `conveyor_jam_active` | 1 when the conveyor queue exceeds the jam threshold for ≥2.5 s. | bool | Conveyor manager tick | replace | Economy Service |
 | `wisdom_mult` | Prestige-derived production multiplier. | multiplier | On prestige/level up | multiplicative | Prestige System |
 | `power_state` | Normalized power load (0-1). | ratio | Power ledger (~5 Hz) | last-write | Power Service |
 | `auto_burst_ready` | Indicates autoburst queue status for UI. | bool | Automation tick (5 Hz) | last-write | Automation Service |
@@ -48,6 +52,9 @@ if statbus:
 | `ci_bonus` | multiplier (add) | additive | ≤ 0.05 | RM-021 / PX-021.1 | StatBus clamp |
 | `event_modifier` | multiplier (add) | additive | ≤ 0.10 | RM-016 | StatBus clamp |
 | `auto_burst_ready` | bool | replace | n/a | RM-013 | `AutomationService.gd` |
+| `conveyor_rate` | items/sec | replace | n/a | PX-011.3 | `Economy.gd` |
+| `conveyor_queue` | items | replace | Jam threshold 40 | PX-011.3 | `Economy.gd` |
+| `conveyor_jam_active` | bool | replace | n/a | PX-011.3 | `Economy.gd` |
 
 - StatBus clamps capped values and logs once per minute: `STATBUS: clamp ci_bonus 0.067→0.050`.
 - New stats must declare owner and enforcement path before registration.
