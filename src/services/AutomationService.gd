@@ -111,6 +111,26 @@ func _process_tick(delta: float) -> void:
 	var tick_ms := float(Time.get_ticks_usec() - tick_start) / 1000.0
 	_record_stats_probe(tick_ms)
 
+func snapshot() -> Dictionary:
+	var result: Dictionary = {
+		"global_enabled": _global_enabled,
+		"power_ok": _power_ok,
+		"targets": {}
+	}
+	for key_variant in _targets.keys():
+		var key: StringName = StringName(key_variant)
+		var target: Dictionary = _targets[key]
+		var interval: float = float(target.get("interval", 0.0))
+		var elapsed: float = float(target.get("elapsed", 0.0))
+		var remaining: float = max(interval - elapsed, 0.0)
+		(result["targets"] as Dictionary)[String(key)] = {
+			"mode": int(target.get("mode", MODE_MANUAL)),
+			"interval": interval,
+			"elapsed": elapsed,
+			"remaining": remaining
+		}
+	return result
+
 func _emit_mode(key: StringName) -> void:
 	mode_changed.emit(key, int(_targets[key]["mode"]))
 
@@ -163,5 +183,22 @@ func _record_stats_probe(tick_ms: float) -> void:
 		"service": "automation",
 		"tick_ms": tick_ms,
 		"auto_active": _active_auto_count(),
-		"power_state": 1.0 if _power_ok else 0.0
+		"power_state": 1.0 if _power_ok else 0.0,
+		"global_enabled": 1.0 if _global_enabled else 0.0,
+		"next_remaining": _next_remaining_time()
 	})
+
+func _next_remaining_time() -> float:
+	var best_remaining := 0.0
+	var found := false
+	for target_variant in _targets.values():
+		var target: Dictionary = target_variant
+		if int(target.get("mode", MODE_MANUAL)) != MODE_AUTO:
+			continue
+		var interval: float = float(target.get("interval", 0.0))
+		var elapsed: float = float(target.get("elapsed", 0.0))
+		var remaining: float = max(interval - elapsed, 0.0)
+		if not found or remaining < best_remaining:
+			best_remaining = remaining
+			found = true
+	return best_remaining if found else 0.0

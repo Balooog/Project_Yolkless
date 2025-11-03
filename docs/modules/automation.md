@@ -14,6 +14,7 @@
 | Economy hooks | Apply throughput changes, never mutating Sandbox or CA buffers. |
 | Power conditioning | Respond to `power_ratio` warnings by adjusting Economy goals, not render cadence. |
 | Telemetry | Emit automation tick metrics, queue lengths, and mode changes. |
+| HUD snapshot | Surface global/mode status and next-fire timers for the Automation sheet. |
 
 ## Guardrails
 - SandboxService cadence is immutable; automation must not slow or speed CA updates or conveyor visuals.
@@ -34,5 +35,6 @@
 - Surface automation mode controls and scheduling previews in the RM-010 sheets; capture UX decisions here.
 - Link conveyor delivery callbacks and power throttling behaviours once RM-009/RM-018 backlog items close.
 - Expand telemetry docs with automation-specific KPI thresholds ahead of Alpha exit (see [Release Milestones](../ops/Release_Milestones.md)).
+- Maintain automation status strings in `game/scripts/Main.gd` when new targets are added so the Automation sheet stays truthful.
 
 See also: [Power Module](power.md), [Sandbox Module](sandbox.md), [Test Strategy](../qa/Test_Strategy.md).
