@@ -116,12 +116,12 @@ func _process_pending_writes() -> void:
 		if file == null:
 			push_warning("StatsProbe: Failed to open %s for writing" % path)
 			continue
-		file.store_line("service,tick_ms,pps,ci,active_cells,power_ratio,ci_delta,storage,feed_fraction,power_state,auto_active,sandbox_render_view_mode,sandbox_render_fallback_active,stage_rebuild_ms,stage_rebuild_source,eco_in_ms,eco_apply_ms,eco_ship_ms,eco_research_ms,eco_statbus_ms,eco_ui_ms")
+		file.store_line("service,tick_ms,pps,ci,active_cells,power_ratio,ci_delta,storage,feed_fraction,power_state,power_warning_level,power_warning_label,auto_active,sandbox_render_view_mode,sandbox_render_fallback_active,stage_rebuild_ms,stage_rebuild_source,eco_in_ms,eco_apply_ms,eco_ship_ms,eco_research_ms,eco_statbus_ms,eco_ui_ms")
 		for row_variant in rows:
 			var row_dict: Dictionary = row_variant
 			var fallback_flag: int = 1 if row_dict.get("sandbox_render_fallback_active", false) else 0
 			var view_mode_value: String = String(row_dict.get("sandbox_render_view_mode", ""))
-			var csv := "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % [
+			var csv := "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % [
 				row_dict.get("service", SERVICE_SANDBOX),
 				row_dict.get("tick_ms", 0.0),
 				row_dict.get("pps", 0.0),
@@ -132,6 +132,8 @@ func _process_pending_writes() -> void:
 				row_dict.get("storage", 0.0),
 				row_dict.get("feed_fraction", 0.0),
 				row_dict.get("power_state", 0.0),
+				row_dict.get("power_warning_level", 0.0),
+				row_dict.get("power_warning_label", ""),
 				row_dict.get("auto_active", 0),
 				view_mode_value,
 				fallback_flag,

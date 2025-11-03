@@ -25,6 +25,10 @@ func _parse_args() -> void:
 				var height := dims[1].to_int()
 				if width > 0 and height > 0:
 					_viewport_override = Vector2i(width, height)
+		elif arg.begins_with("--output="):
+			var target := arg.substr("--output=".length())
+			if target != "":
+				output_dir = target
 		elif arg == "--capture" or arg == "--capture=true":
 			_capture_enabled = true
 

@@ -18,3 +18,18 @@ else
 	echo "❌ Check failed"
 	exit 1
 fi
+
+BASELINE_DIR="${REPO_ROOT}/dev/screenshots/ui_baseline"
+CURRENT_DIR="${REPO_ROOT}/dev/screenshots/ui_current"
+
+if [[ ! -d "${BASELINE_DIR}" ]]; then
+	echo "[ci] Missing UI baseline directory: ${BASELINE_DIR}" >&2
+	exit 1
+fi
+
+mkdir -p "${CURRENT_DIR}"
+find "${CURRENT_DIR}" -maxdepth 1 -type f -name '*.png' -delete
+find "${CURRENT_DIR}" -maxdepth 1 -type f -name '*.png.import' -delete
+
+"${SCRIPT_DIR}/ui_viewport_matrix.sh" --out-dir="${CURRENT_DIR}"
+"${SCRIPT_DIR}/ui_compare.sh" "${BASELINE_DIR}" "${CURRENT_DIR}"

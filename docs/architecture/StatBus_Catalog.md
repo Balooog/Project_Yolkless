@@ -15,6 +15,7 @@
 | `conveyor_jam_active` | 1 when the conveyor queue exceeds the jam threshold for ≥2.5 s. | bool | Conveyor manager tick | replace | Economy Service |
 | `wisdom_mult` | Prestige-derived production multiplier. | multiplier | On prestige/level up | multiplicative | Prestige System |
 | `power_state` | Normalized power load (0-1). | ratio | Power ledger (~5 Hz) | last-write | Power Service |
+| `power_warning_level` | Warning severity (`0` normal, `1` warning, `2` critical). | enum | Power ledger transitions | replace | Power Service |
 | `auto_burst_ready` | Indicates autoburst queue status for UI. | bool | Automation tick (5 Hz) | last-write | Automation Service |
 | `research_points` | Current RP pool for unlocks. | points | Research tick (1 Hz) | additive | Research Service |
 | `comfort_index` | Raw comfort score before conversion to bonus; shown in EnvPanel detail grid. | 0-1 | Sandbox sim (2 Hz) | weighted average | Sandbox Service |
@@ -55,6 +56,7 @@ if statbus:
 | `conveyor_rate` | items/sec | replace | n/a | PX-011.3 | `Economy.gd` |
 | `conveyor_queue` | items | replace | Jam threshold 40 | PX-011.3 | `Economy.gd` |
 | `conveyor_jam_active` | bool | replace | n/a | PX-011.3 | `Economy.gd` |
+| `power_warning_level` | enum (0-2) | replace | n/a | PX-018.3 | `PowerService.gd` |
 
 - StatBus clamps capped values and logs once per minute: `STATBUS: clamp ci_bonus 0.067→0.050`.
 - New stats must declare owner and enforcement path before registration.

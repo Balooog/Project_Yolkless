@@ -236,9 +236,12 @@ func _update_tree_colors(ratio: float) -> void:
 func _update_custom_props_colors(ratio: float) -> void:
 	if _custom_props_state.is_empty():
 		return
-	for entry in _custom_props_state:
-		var node_variant := entry.get("node")
-		var base_color_variant := entry.get("base_color", Color(0.6, 0.6, 0.6, 1.0))
+	for entry_variant in _custom_props_state:
+		if not (entry_variant is Dictionary):
+			continue
+		var entry: Dictionary = entry_variant
+		var node_variant: Variant = entry.get("node")
+		var base_color_variant: Variant = entry.get("base_color", Color(0.6, 0.6, 0.6, 1.0))
 		var base_color: Color = base_color_variant if base_color_variant is Color else Color(base_color_variant)
 		var target_color := base_color.lerp(base_color.darkened(0.35), ratio)
 		if node_variant is Polygon2D:
@@ -258,14 +261,14 @@ func _spawn_custom_props() -> void:
 		if not (config_variant is Dictionary):
 			continue
 		var config: Dictionary = config_variant
-		var type := String(config.get("type", "box")).to_lower()
-		var position: Vector2 = config.get("position", Vector2.ZERO)
-		var size: Vector2 = config.get("size", Vector2(40, 40))
-		var color_variant := config.get("color", Color(0.6, 0.6, 0.6, 1.0))
+		var type: String = String(config.get("type", "box")).to_lower()
+		var position: Vector2 = Vector2(config.get("position", Vector2.ZERO))
+		var size: Vector2 = Vector2(config.get("size", Vector2(40, 40)))
+		var color_variant: Variant = config.get("color", Color(0.6, 0.6, 0.6, 1.0))
 		var color: Color = color_variant if color_variant is Color else Color(color_variant)
 		var rotation_deg: float = float(config.get("rotation_deg", 0.0))
 		var z_index: int = int(config.get("z_index", 5))
-		var points_variant := config.get("points", [])
+		var points_variant: Variant = config.get("points", [])
 		var prop_node := Node2D.new()
 		prop_node.position = position
 		prop_node.rotation = deg_to_rad(rotation_deg)
@@ -282,16 +285,17 @@ func _spawn_custom_props() -> void:
 				shape.position = Vector2(-size.x * 0.5, -size.y)
 			"triangle":
 				shape = _create_triangle(size, color)
-			_: 
+			_:
 				shape = _create_rect_polygon(size, color)
 		if shape == null:
 			continue
 		prop_node.add_child(shape)
-		if shape is CanvasItem:
-			(shape as CanvasItem).z_index = z_index
-		_env_root.add_child(prop_node)
+		add_child(prop_node)
 		_custom_props.append(prop_node)
-		_custom_props_state.append({"node": shape, "base_color": color})
+		_custom_props_state.append({
+			"node": shape,
+			"base_color": color
+		})
 
 func _create_rect_polygon(size: Vector2, color: Color) -> Polygon2D:
 	var poly := Polygon2D.new()
