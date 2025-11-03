@@ -5,76 +5,156 @@
 [node name="TopBanner" type="Control"]
 script = ExtResource("1")
 size_flags_horizontal = 3
-size_flags_vertical = 3
+size_flags_vertical = 0
+custom_minimum_size = Vector2(0, 96)
 
 [node name="BannerContainer" type="HBoxContainer" parent="."]
 unique_name_in_owner = true
 size_flags_horizontal = 3
-size_flags_vertical = 3
+size_flags_vertical = 1
 theme_override_constants/separation = 24
 
-[node name="CreditsBox" type="VBoxContainer" parent="BannerContainer"]
+[node name="MetricsCluster" type="HBoxContainer" parent="BannerContainer"]
+unique_name_in_owner = true
+size_flags_horizontal = 1
+size_flags_vertical = 1
+theme_override_constants/separation = 24
+
+[node name="CreditsBox" type="VBoxContainer" parent="BannerContainer/MetricsCluster"]
 unique_name_in_owner = true
 size_flags_horizontal = 1
 size_flags_vertical = 3
 theme_override_constants/separation = 4
 
-[node name="CreditsLabel" type="Label" parent="BannerContainer/CreditsBox"]
+[node name="CreditsLabel" type="Label" parent="BannerContainer/MetricsCluster/CreditsBox"]
 unique_name_in_owner = true
 text = "Credits"
 
-[node name="CreditsValue" type="Label" parent="BannerContainer/CreditsBox"]
+[node name="CreditsValue" type="Label" parent="BannerContainer/MetricsCluster/CreditsBox"]
 unique_name_in_owner = true
 text = "₡ 0"
 
-[node name="StorageBox" type="VBoxContainer" parent="BannerContainer"]
+[node name="StorageBox" type="VBoxContainer" parent="BannerContainer/MetricsCluster"]
 unique_name_in_owner = true
 size_flags_horizontal = 1
 size_flags_vertical = 3
 theme_override_constants/separation = 4
 
-[node name="StorageLabel" type="Label" parent="BannerContainer/StorageBox"]
+[node name="StorageLabel" type="Label" parent="BannerContainer/MetricsCluster/StorageBox"]
 unique_name_in_owner = true
 text = "Storage"
 
-[node name="StorageValue" type="Label" parent="BannerContainer/StorageBox"]
+[node name="StorageValue" type="Label" parent="BannerContainer/MetricsCluster/StorageBox"]
 unique_name_in_owner = true
 text = "0 / 0"
 
-[node name="PpsBox" type="VBoxContainer" parent="BannerContainer"]
+[node name="PpsBox" type="VBoxContainer" parent="BannerContainer/MetricsCluster"]
 unique_name_in_owner = true
 size_flags_horizontal = 1
 size_flags_vertical = 3
 theme_override_constants/separation = 4
 
-[node name="PpsLabel" type="Label" parent="BannerContainer/PpsBox"]
+[node name="PpsLabel" type="Label" parent="BannerContainer/MetricsCluster/PpsBox"]
 unique_name_in_owner = true
 text = "PPS"
 
-[node name="PpsValue" type="Label" parent="BannerContainer/PpsBox"]
+[node name="PpsValue" type="Label" parent="BannerContainer/MetricsCluster/PpsBox"]
 unique_name_in_owner = true
 text = "0 PPS"
 
-[node name="ResearchBox" type="VBoxContainer" parent="BannerContainer"]
+[node name="ResearchBox" type="VBoxContainer" parent="BannerContainer/MetricsCluster"]
 unique_name_in_owner = true
 size_flags_horizontal = 1
 size_flags_vertical = 3
 theme_override_constants/separation = 4
 
-[node name="ResearchLabel" type="Label" parent="BannerContainer/ResearchBox"]
+[node name="ResearchLabel" type="Label" parent="BannerContainer/MetricsCluster/ResearchBox"]
 unique_name_in_owner = true
 text = "Research"
 
-[node name="ResearchValue" type="Label" parent="BannerContainer/ResearchBox"]
+[node name="ResearchValue" type="Label" parent="BannerContainer/MetricsCluster/ResearchBox"]
 unique_name_in_owner = true
 text = "0 RP"
 
-[node name="AlertSpacer" type="Control" parent="BannerContainer"]
-unique_name_in_owner = true
+[node name="StatusSpacer" type="Control" parent="BannerContainer"]
 size_flags_horizontal = 3
+size_flags_vertical = 1
+
+[node name="StatusDock" type="VBoxContainer" parent="BannerContainer"]
+unique_name_in_owner = true
+size_flags_horizontal = 0
+size_flags_vertical = 1
+theme_override_constants/separation = 8
+
+[node name="PowerRow" type="HBoxContainer" parent="BannerContainer/StatusDock"]
+size_flags_horizontal = 0
+size_flags_vertical = 1
+theme_override_constants/separation = 8
+
+[node name="PowerIcon" type="ColorRect" parent="BannerContainer/StatusDock/PowerRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(18, 18)
+color = Color(0.92, 0.39, 0.0, 1)
+
+[node name="PowerText" type="VBoxContainer" parent="BannerContainer/StatusDock/PowerRow"]
+size_flags_horizontal = 1
+theme_override_constants/separation = 2
+
+[node name="PowerTitle" type="Label" parent="BannerContainer/StatusDock/PowerRow/PowerText"]
+unique_name_in_owner = true
+text = "Power"
+
+[node name="PowerValue" type="Label" parent="BannerContainer/StatusDock/PowerRow/PowerText"]
+unique_name_in_owner = true
+text = "Load Stable"
+
+[node name="EconomyRow" type="HBoxContainer" parent="BannerContainer/StatusDock"]
+size_flags_horizontal = 0
+size_flags_vertical = 1
+theme_override_constants/separation = 8
+
+[node name="EconomyIcon" type="ColorRect" parent="BannerContainer/StatusDock/EconomyRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(18, 18)
+color = Color(0.84, 0.66, 0.26, 1)
+
+[node name="EconomyText" type="VBoxContainer" parent="BannerContainer/StatusDock/EconomyRow"]
+size_flags_horizontal = 1
+theme_override_constants/separation = 2
+
+[node name="EconomyTitle" type="Label" parent="BannerContainer/StatusDock/EconomyRow/EconomyText"]
+unique_name_in_owner = true
+text = "Economy"
+
+[node name="EconomyValue" type="Label" parent="BannerContainer/StatusDock/EconomyRow/EconomyText"]
+unique_name_in_owner = true
+text = "₡ 0"
+
+[node name="PopulationRow" type="HBoxContainer" parent="BannerContainer/StatusDock"]
+size_flags_horizontal = 0
+size_flags_vertical = 1
+theme_override_constants/separation = 8
+
+[node name="PopulationIcon" type="ColorRect" parent="BannerContainer/StatusDock/PopulationRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(18, 18)
+color = Color(0.36, 0.69, 0.55, 1)
+
+[node name="PopulationText" type="VBoxContainer" parent="BannerContainer/StatusDock/PopulationRow"]
+size_flags_horizontal = 1
+theme_override_constants/separation = 2
+
+[node name="PopulationTitle" type="Label" parent="BannerContainer/StatusDock/PopulationRow/PopulationText"]
+unique_name_in_owner = true
+text = "Population"
+
+[node name="PopulationValue" type="Label" parent="BannerContainer/StatusDock/PopulationRow/PopulationText"]
+unique_name_in_owner = true
+text = "0 hens"
 
 [node name="AlertPill" type="Label" parent="BannerContainer"]
 unique_name_in_owner = true
+visible = false
 size_flags_vertical = 1
 text = "All Clear"
 horizontal_alignment = 1

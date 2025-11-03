@@ -39,6 +39,11 @@ var _metrics := {
 	"pps": "0 PPS",
 	"research": "0 RP"
 }
+var _status := {
+	StringName("power"): {"value": "Load n/a", "tone": StringName("normal")},
+	StringName("economy"): {"value": "₡ 0", "tone": StringName("normal")},
+	StringName("population"): {"value": "0 hens", "tone": StringName("normal")}
+}
 var _home_feed_default_text := "Hold to Feed"
 var _is_desktop_layout := false
 
@@ -160,6 +165,7 @@ func _ready() -> void:
 		_canvas_panel.resized.connect(_sync_factory_viewport_size)
 	_home_feed_default_text = _home_feed_button.text
 	set_metrics(_metrics)
+	set_status(_status)
 	_sync_factory_viewport_size()
 	_update_layout()
 	_setup_focus_modes()
@@ -232,6 +238,22 @@ func set_metrics(metrics: Dictionary) -> void:
 				if label:
 					label.text = value
 					label.tooltip_text = value
+
+func set_status(status: Dictionary) -> void:
+	for key in _status.keys():
+		if status.has(key):
+			var status_key := StringName(key)
+			var entry_variant: Variant = status[key]
+			var entry_dict: Dictionary
+			if entry_variant is Dictionary:
+				entry_dict = (entry_variant as Dictionary).duplicate(true)
+			else:
+				entry_dict = {"value": String(entry_variant), "tone": StringName("normal")}
+			var tone_variant: Variant = entry_dict.get("tone", StringName("normal"))
+			entry_dict["tone"] = StringName(tone_variant)
+			_status[status_key] = entry_dict
+	if _top_banner_component:
+		_top_banner_component.set_status(_status)
 
 func set_alert_message(message: String) -> void:
 	if _top_banner_component:
