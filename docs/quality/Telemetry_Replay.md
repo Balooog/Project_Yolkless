@@ -35,6 +35,7 @@ godot --headless --path . --script res://tools/replay_headless.gd --duration=300
 | `conveyor_jam_active` | StatBus / Economy | Flags sustained queue overflow so UI and alerts stay honest. |
 | `environment_tick_ms_p95` | StatsProbe | Confirms EnvironmentService stays under the 0.5 ms budget while updating curves. |
 | `automation_tick_ms_p95` | StatsProbe | Tracks AutomationService scheduling cost vs the 1.0 ms target. |
+| `automation_next_remaining` | StatsProbe | Shows time until the next scheduled automation action. |
 | `power_tick_ms_p95` | StatsProbe | Ensures PowerService updates remain beneath the 0.8 ms threshold. |
 | `economy_tick_ms_p95` | StatsProbe | Verifies the Economy loop respects the 1.5 ms budget (see `economy_pps_avg` for pacing). |
 | `eco_ship_ms_p95` / `_avg` | StatsProbe | Attributes shipment/auto-dump work; alerts when p95 exceeds 7 ms. |

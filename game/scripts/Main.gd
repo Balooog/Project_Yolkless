@@ -91,6 +91,7 @@ var _conveyor_colors: Array[Color] = [
 	Color(1.0, 0.753, 0.275, 1.0),
 	Color(0.757, 0.486, 0.455, 1.0)
 ]
+var _automation_refresh_timer: float = 0.0
 var _prototype_metrics := {
 	"credits": "₡ 0",
 	"storage": "Storage 0 / 0",
@@ -339,6 +340,10 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	_update_feed_ui()
 	_update_conveyor_spawn(delta)
+	_automation_refresh_timer += delta
+	if _automation_refresh_timer >= 0.5:
+		_automation_refresh_timer = 0.0
+		_refresh_prototype_automation_sheet()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
@@ -903,11 +908,60 @@ func _refresh_prototype_automation_sheet() -> void:
 	if not _prototype_available():
 		return
 	var payload := {
+		"info": _automation_info_text(),
 		"buttons": {
 			"auto_1": _prototype_button_state(btn_auto)
 		}
 	}
 	ui_prototype.update_automation(payload)
+
+func _automation_info_text() -> String:
+	if automation_service == null or not is_instance_valid(automation_service):
+		automation_service = _get_automation_service()
+	if automation_service == null:
+		return _strings_get("automation_info_unavailable", "Automation service unavailable")
+	var snapshot: Dictionary = automation_service.snapshot()
+	var lines: Array[String] = []
+	var global_enabled := bool(snapshot.get("global_enabled", true))
+	var power_ok := bool(snapshot.get("power_ok", true))
+	var state_key := global_enabled ? "automation_state_enabled" : "automation_state_disabled"
+	var state_text := _strings_get(state_key, global_enabled ? "Automation enabled" : "Automation paused")
+	if not power_ok:
+		var power_suffix := _strings_get("automation_state_power_limited", " — limited by power")
+		state_text += power_suffix
+	lines.append(state_text)
+	var targets_variant := snapshot.get("targets", {})
+	if targets_variant is Dictionary:
+		var targets_dict: Dictionary = targets_variant
+		for key_variant in targets_dict.keys():
+			var target_data: Dictionary = targets_dict[key_variant]
+			var name := _automation_target_label(String(key_variant))
+			var mode := int(target_data.get("mode", AutomationService.MODE_MANUAL))
+			var interval := float(target_data.get("interval", 0.0))
+			var remaining := float(target_data.get("remaining", interval))
+			var mode_label := _automation_mode_label(mode)
+			var line := "%s: %s" % [name, mode_label]
+			if mode == AutomationService.MODE_AUTO and global_enabled and power_ok and interval > 0.0:
+				line += " — " + _strings_get("automation_next_action", "next in {seconds}s").format({"seconds": _format_num(remaining, remaining >= 10.0 ? 0 : 1)})
+			lines.append(line)
+	return "\n".join(lines)
+
+func _automation_target_label(key: String) -> String:
+	var mapping := {
+		"economy_feed_autoburst": _strings_get("automation_target_autoburst", "Auto-feed bursts")
+	}
+	return String(mapping.get(key, key.capitalize()))
+
+func _automation_mode_label(mode: int) -> String:
+	match mode:
+		AutomationService.MODE_AUTO:
+			return _strings_get("automation_mode_auto", "Auto")
+		AutomationService.MODE_MANUAL:
+			return _strings_get("automation_mode_manual", "Manual")
+		AutomationService.MODE_OFF:
+			return _strings_get("automation_mode_off", "Off")
+		_:
+			return String(mode)
 
 func _on_prototype_feed_requested() -> void:
 	_attempt_feed_start("prototype")
