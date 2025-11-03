@@ -201,7 +201,7 @@ func apply_offline_rewards() -> Dictionary:
 	summary["saved_timestamp"] = last_timestamp
 	var now_timestamp := Time.get_unix_time_from_system()
 	summary["current_timestamp"] = now_timestamp
-	var elapsed := max(now_timestamp - last_timestamp, 0)
+	var elapsed: int = max(now_timestamp - last_timestamp, 0)
 	summary["elapsed_seconds"] = float(elapsed)
 	summary["comfort_before"] = before_snapshot.get("comfort", {})
 	summary["automation_before"] = before_snapshot.get("automation", {})
@@ -211,7 +211,7 @@ func apply_offline_rewards() -> Dictionary:
 		summary["automation_after"] = _current_automation_snapshot()
 		summary["economy_after"] = _current_economy_snapshot()
 		return summary
-	var params := {
+	var params: Dictionary = {
 		"economy": _eco,
 		"elapsed_seconds": float(elapsed),
 		"base_pps": _eco.current_base_pps()
@@ -256,7 +256,7 @@ func apply_offline_rewards() -> Dictionary:
 			"applied": summary["applied_seconds"],
 			"grant": summary["grant"],
 			"passive_multiplier": summary["passive_multiplier"],
-			"clamped": summary["clamped"] ? 1.0 : 0.0,
+			"clamped": 1.0 if bool(summary.get("clamped", false)) else 0.0,
 			"storage": storage_after,
 			"pps": float(economy_after.get("pps", 0.0)),
 			"ci": float(summary["comfort_after"].get("ci", 0.0)),

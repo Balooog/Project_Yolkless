@@ -58,6 +58,7 @@ The manager tracks live throughput and exposes `average_travel_time` for dashboa
 
 - The primary game scene instantiates `game/scenes/modules/conveyor/FactoryConveyor.tscn`, which registers its belt with the shared `ConveyorManager`.
 - `Main.gd` spawns conveyor items in proportion to `eco.current_pps()`, so visual flow mirrors production rate while keeping metrics in sync with the HUD.
+- `Economy` binds to `ConveyorManager` signals (`throughput_updated`, `item_delivered`) to publish StatBus keys (`conveyor_rate`, `conveyor_queue`, `conveyor_jam_active`) and surface jam warnings to the HUD.
 - Toggling the Visual Effects setting hides the belt and clears spawned items; conveyors resume once visuals are re-enabled.
 
 ## 2025-10-25 Benchmark Snapshot

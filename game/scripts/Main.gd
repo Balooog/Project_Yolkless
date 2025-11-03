@@ -83,6 +83,7 @@ var _toast_tween: Tween
 var _show_cap_pulse := true
 var _conveyor_rate: float = 0.0
 var _conveyor_queue: int = 0
+var _conveyor_jam: bool = false
 var _conveyor_spawn_accumulator: float = 0.0
 var _conveyor_color_index: int = 0
 var _conveyor_colors: Array[Color] = [
@@ -217,15 +218,17 @@ func _ready() -> void:
 		sandbox_renderer = null
 
 	if conveyor_manager:
-		if not conveyor_manager.throughput_updated.is_connected(_on_conveyor_throughput_updated):
-			conveyor_manager.throughput_updated.connect(_on_conveyor_throughput_updated)
+		eco.register_conveyor_manager(conveyor_manager)
+		if not eco.conveyor_metrics_changed.is_connected(_on_conveyor_metrics_changed):
+			eco.conveyor_metrics_changed.connect(_on_conveyor_metrics_changed)
 		var initial_queue := 0
 		for belt in conveyor_manager.belts:
 			if belt:
 				initial_queue += belt.get_queue_length()
-		_update_conveyor_view(conveyor_manager.items_per_second, initial_queue)
+		_update_conveyor_view(conveyor_manager.items_per_second, initial_queue, false)
 	else:
-		_update_conveyor_view(0.0, 0)
+		eco.register_conveyor_manager(null)
+		_update_conveyor_view(0.0, 0, false)
 
 	settings_panel = SETTINGS_PANEL_SCENE.instantiate()
 	add_child(settings_panel)
@@ -409,7 +412,7 @@ func _apply_strings() -> void:
 	var strings := _get_strings()
 	if strings and environment_panel:
 		environment_panel.set_strings(strings)
-	_update_conveyor_view(_conveyor_rate, _conveyor_queue)
+	_update_conveyor_view(_conveyor_rate, _conveyor_queue, _conveyor_jam)
 
 func _apply_hud_flags() -> void:
 	if bal == null:
@@ -436,7 +439,7 @@ func _update_all_views() -> void:
 	_update_factory_view()
 	_update_research_view()
 	_update_feed_ui()
-	_update_conveyor_view(_conveyor_rate, _conveyor_queue)
+	_update_conveyor_view(_conveyor_rate, _conveyor_queue, _conveyor_jam)
 	_update_power_label()
 
 func _update_soft_view(value: float) -> void:
@@ -490,16 +493,26 @@ func _update_factory_view() -> void:
 		btn_promote.disabled = eco.soft + 1e-6 < next_cost
 	_refresh_prototype_home_sheet()
 
-func _update_conveyor_view(rate: float, queue_len: int) -> void:
+func _update_conveyor_view(rate: float, queue_len: int, jam_active: bool = false) -> void:
 	_conveyor_rate = rate
 	_conveyor_queue = queue_len
+	_conveyor_jam = jam_active
 	if lbl_conveyor == null:
 		return
-	var template := _strings_get("conveyor_label", "Conveyor: {rate}/s | Queue {queue}")
+	var template_key := "conveyor_label"
+	var fallback := "Conveyor: {rate}/s | Queue {queue}"
+	if jam_active:
+		template_key = "conveyor_label_warning"
+		fallback = "Conveyor: {rate}/s | Queue {queue} ⚠"
+	var template := _strings_get(template_key, fallback)
 	lbl_conveyor.text = template.format({
 		"rate": _format_num(rate, 1),
 		"queue": queue_len
 	})
+	if jam_active:
+		lbl_conveyor.add_theme_color_override("font_color", Color(1.0, 0.5, 0.0))
+	else:
+		lbl_conveyor.remove_theme_color_override("font_color")
 	_update_power_label()
 
 func _update_conveyor_spawn(delta: float) -> void:
@@ -944,8 +957,8 @@ func _on_color_palette_selected(palette: StringName) -> void:
 func _on_feed_state_changed(_active: bool) -> void:
 	_update_feed_ui()
 
-func _on_conveyor_throughput_updated(rate: float, queue_len: int) -> void:
-	_update_conveyor_view(rate, queue_len)
+func _on_conveyor_metrics_changed(rate: float, queue_len: int, jam_active: bool) -> void:
+	_update_conveyor_view(rate, queue_len, jam_active)
 
 func _on_ci_changed(ci: float, bonus: float) -> void:
 	_comfort_index = clamp(ci, 0.0, 1.0)
@@ -1278,10 +1291,10 @@ func _format_num(value: float, decimals: int = 0) -> String:
 	return String.num(value, decimals)
 
 func _format_duration(seconds: float) -> String:
-	var total := max(int(round(seconds)), 0)
-	var hours := total / 3600
-	var minutes := (total % 3600) / 60
-	var secs := total % 60
+	var total: int = max(int(round(seconds)), 0)
+	var hours: int = total / 3600
+	var minutes: int = (total % 3600) / 60
+	var secs: int = total % 60
 	var parts: Array[String] = []
 	if hours > 0:
 		parts.append("%dh" % hours)

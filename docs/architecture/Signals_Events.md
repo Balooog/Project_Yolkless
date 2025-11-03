@@ -23,7 +23,7 @@
 | `EventDirector` | `event_ended(event_id: StringName)` | `{ id }` | UI popups, telemetry | event completion |
 | `ShopService` | `state_changed(id: StringName)` | `{ id, state }` | UI buttons, ShopDebug | on price/lock change |
 | `Research` | `changed()` | `{}` | UI sheets, telemetry | on RP spend |
-| `ConveyorManager` | `throughput_updated(rate: float, queue_len: int)` | `{ rate, queue }` | HUD, StatBus | per frame |
+| `ConveyorManager` | `throughput_updated(rate: float, queue_len: int)` | `{ rate, queue }` | Economy, HUD, StatBus | per frame |
 | `Save` | `autosave_started()` | `{}` | UI toast | on autosave |
 | `Save` | `autosave_completed(result: bool)` | `{ ok }` | UI toast | on autosave |
 
@@ -40,7 +40,7 @@
 | `environment_changed(factors)` | `/root/EnvironmentService` | 10 | PowerService `/root/PowerService`, SandboxService `/root/SandboxService`, HUD `/root/Main/UI` | HUD throttled to 5 Hz |
 | `ci_changed(ci, bonus)` | `/root/SandboxService` | 2 | StatBus `/root/StatBus`, HUD comfort widget | none |
 | `power_warning(level)` | `/root/PowerService` | burst | HUD `/root/Main/UI`, AutomationService `/root/AutomationService` | debounce 0.5 s |
-| `throughput_updated(rate, queue)` | `/root/Main/ConveyorManager` | 60 | HUD stats, Telemetry probe | HUD samples at 10 Hz |
+| `throughput_updated(rate, queue)` | `/root/Main/ConveyorManager` | 60 | Economy `/root/Main/Economy`, HUD stats, Telemetry probe | HUD samples at 10 Hz; Economy smooths and clamps |
 | `feed_hold_started/ended` | `/root/Main/UIPrototype` | user input | Main, ConveyorOverlay, AudioService | none; reacts instantly |
 | `feed_burst(mult)` | `/root/Main/UIPrototype` | burst | ConveyorOverlay, AudioService, StatsProbe | clamp burst spam to ≤30 Hz upstream |
 
