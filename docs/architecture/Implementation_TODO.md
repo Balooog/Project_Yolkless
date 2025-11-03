@@ -7,7 +7,7 @@ Track items required to bring the current codebase in line with the high-level d
   - [x] PX-007.1 offline passive production flow and summary popup.
   - [x] PX-011.3 conveyor throughput integration with Economy and StatBus.
   - [ ] PX-013.2 automation HUD exposure plus scheduling preview.
-  - [ ] PX-014.4 telemetry diff dashboards in CI.
+  - [x] PX-014.4 telemetry diff dashboards in CI.
   - [ ] PX-018.3 power warning feedback loop (tint, audio, telemetry).
 - [ ] **Phase 1 — Stabilize Simulation Backbone** *(RM-021, docs/architecture/Overview.md, docs/design/Environment_Playbook.md)*
   - [x] Complete `SandboxService` CA implementation, telemetry mapping, and StatBus integration so comfort bonuses flow end-to-end (see `docs/prompts/PX-021.1.md`). *(Comfort bonus now hooked through EnvPanel and StatBus clamps in Economy.)*
