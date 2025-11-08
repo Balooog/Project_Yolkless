@@ -311,7 +311,7 @@ func _print_hud_labels_if_needed(force: bool = false) -> void:
 	var backlog_details := "%s (tone=%s)" % [
 		_hud_conveyor_backlog_label,
 		String(_hud_conveyor_backlog_tone)
-	])
+	]
 	var rate_details := "%s (%.3f/s)" % [
 		_hud_economy_rate_label,
 		_hud_economy_rate_value

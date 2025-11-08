@@ -26,7 +26,7 @@ func register_stat(key: Variant, config: Dictionary = {}) -> void:
 func get_stat(key: Variant, default_value: float = 0.0) -> float:
 	var stat_key: StringName = StringName(key)
 	if _values.has(stat_key):
-		var stored := _values[stat_key]
+		var stored: Variant = _values[stat_key]
 		if stored is float or stored is int:
 			return float(stored)
 	return default_value
@@ -63,7 +63,7 @@ func reset_stat(key: Variant) -> void:
 	var stat_key: StringName = StringName(key)
 	if not _registry.has(stat_key):
 		return
-	var default_value := _registry[stat_key].get("default", 0.0)
+	var default_value: Variant = _registry[stat_key].get("default", 0.0)
 	set_stat(stat_key, default_value, "reset")
 
 func all_stats() -> Dictionary:

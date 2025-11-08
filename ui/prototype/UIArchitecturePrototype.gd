@@ -109,6 +109,7 @@ var _is_desktop_layout := false
 	"r_auto_1": $RootMargin/RootStack/MainStack/CanvasWrapper/MobileSheetAnchor/SheetOverlay/ResearchSheet/ResearchMargin/ResearchColumn/ResearchAutoButton
 }
 @onready var _automation_info_label: Label = $RootMargin/RootStack/MainStack/CanvasWrapper/MobileSheetAnchor/SheetOverlay/AutomationSheet/AutomationMargin/AutomationColumn/AutomationInfoLabel
+@onready var _automation_title_label: Label = $RootMargin/RootStack/MainStack/CanvasWrapper/MobileSheetAnchor/SheetOverlay/AutomationSheet/AutomationMargin/AutomationColumn/AutomationTitle
 @onready var _automation_buttons: Dictionary = {
 	"auto_1": $RootMargin/RootStack/MainStack/CanvasWrapper/MobileSheetAnchor/SheetOverlay/AutomationSheet/AutomationMargin/AutomationColumn/AutomationAutoButton
 }
@@ -177,6 +178,7 @@ func _ready() -> void:
 	_setup_focus_modes()
 	_initialize_focus_map()
 	_show_tab(_current_tab)
+	_apply_automation_copy()
 
 func _initialize_banner_references() -> void:
 	_banner_content = null
@@ -260,6 +262,16 @@ func set_status(status: Dictionary) -> void:
 			_status[status_key] = entry_dict
 	if _top_banner_component:
 		_top_banner_component.set_status(_status)
+	else:
+		for key in _status.keys():
+			var row: Dictionary = _status_rows.get(key, {})
+			var entry: Dictionary = _status[key]
+			var value_label := row.get("value", null) as Label
+			if value_label:
+				var display_value := String(entry.get("value", value_label.text))
+				value_label.text = display_value
+				var tooltip_text := String(entry.get("tooltip", display_value))
+				value_label.tooltip_text = tooltip_text
 
 func set_alert_message(message: String) -> void:
 	if _top_banner_component:
@@ -1174,6 +1186,32 @@ func _on_automation_button_pressed(action_id: String) -> void:
 	var target := StringName(action_id)
 	automation_target_changed.emit(target)
 
+func _strings_catalog() -> Node:
+	if _strings_cache and is_instance_valid(_strings_cache):
+		return _strings_cache
+	var node := get_node_or_null("/root/Strings")
+	if node and node.has_method("get_text"):
+		_strings_cache = node
+		return node
+	return null
+
+func _apply_automation_copy() -> void:
+	var catalog := _strings_catalog()
+	if catalog == null:
+		return
+	if _automation_title_label:
+		var title_text := String(catalog.call("get_text", "automation_panel_title", _automation_title_label.text))
+		_automation_title_label.text = title_text
+		_automation_title_label.tooltip_text = String(catalog.call("get_text", "automation_panel_title_tooltip", title_text))
+	for key in _automation_buttons.keys():
+		var button := _automation_buttons[key] as Button
+		if button == null:
+			continue
+		if key == "auto_1":
+			var button_text := String(catalog.call("get_text", "automation_target_autoburst", button.text))
+			button.text = button_text
+			button.tooltip_text = String(catalog.call("get_text", "automation_target_autoburst_tooltip", button.tooltip_text))
+
 func _on_research_button_pressed(action_id: String) -> void:
 	research_requested.emit(action_id)
 
@@ -1517,3 +1555,4 @@ func _refresh_canvas_message_visibility() -> void:
 		_canvas_message.visible = false
 	else:
 		_canvas_message.visible = not _is_desktop_layout
+var _strings_cache: Node

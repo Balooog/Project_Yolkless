@@ -17,6 +17,7 @@ const POWER_WARNING_COLOR := Color(0.996, 0.784, 0.318, 1.0)
 const POWER_CRITICAL_COLOR := Color(0.984, 0.412, 0.392, 1.0)
 const POWER_WARNING_CLIP := preload("res://assets/placeholder/audio/power_warning_low.wav")
 const POWER_CRITICAL_CLIP := preload("res://assets/placeholder/audio/power_warning_critical.wav")
+const CONVEYOR_JAM_WARNING_THRESHOLD := 40
 const AUTOMATION_BUTTON_TARGETS := {
 	StringName("auto_1"): StringName("economy_feed_autoburst")
 }
@@ -851,10 +852,12 @@ func _commit_prototype_status() -> void:
 		return
 	ui_prototype.set_status(_prototype_status)
 
-func _set_prototype_status(key: String, value: String, tone: String = "normal") -> void:
+
+func _set_prototype_status(key: String, value: String, tone: String = "normal", tooltip: String = "") -> void:
 	_prototype_status[key] = {
 		"value": value,
-		"tone": StringName(tone)
+		"tone": StringName(tone),
+		"tooltip": tooltip
 	}
 	_commit_prototype_status()
 
@@ -1077,11 +1080,23 @@ func _on_feed_state_changed(_active: bool) -> void:
 func _on_conveyor_metrics_changed(rate: float, queue_len: int, jam_active: bool) -> void:
 	_update_conveyor_view(rate, queue_len, jam_active)
 
-func _on_economy_rate_changed(_rate: float, label: String) -> void:
-	_set_prototype_status("economy_rate", label)
+func _on_economy_rate_changed(rate: float, label: String) -> void:
+	var decimals := 0 if abs(rate) >= 10.0 else 1
+	var formatted_value := _format_num(rate, decimals)
+	var slot_label: String = _strings_get("hud_slot_d_economy_rate", label).format({"value": formatted_value})
+	var tooltip: String = _strings_get("hud_slot_d_tooltip", slot_label)
+	_set_prototype_status("economy_rate", slot_label, "normal", tooltip)
 
-func _on_conveyor_backlog_changed(_queue_len: int, label: String, tone: StringName) -> void:
-	_set_prototype_status("conveyor_backlog", label, String(tone))
+func _on_conveyor_backlog_changed(queue_len: int, label: String, tone: StringName) -> void:
+	var tone_string := String(tone)
+	var value_key := "hud_slot_f_backlog_warning" if tone_string == "warning" else "hud_slot_f_backlog_normal"
+	var tooltip_key := "hud_slot_f_tooltip_warning" if tone_string == "warning" else "hud_slot_f_tooltip"
+	var slot_label: String = _strings_get(value_key, label).format({"count": queue_len})
+	var tooltip: String = _strings_get(tooltip_key, label).format({
+		"count": queue_len,
+		"threshold": CONVEYOR_JAM_WARNING_THRESHOLD
+	})
+	_set_prototype_status("conveyor_backlog", slot_label, tone_string, tooltip)
 
 func _on_ci_changed(ci: float, bonus: float) -> void:
 	_comfort_index = clamp(ci, 0.0, 1.0)
