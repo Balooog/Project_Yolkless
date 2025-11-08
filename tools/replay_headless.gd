@@ -41,6 +41,9 @@ var _alerts: Array[Dictionary] = []
 var _current_time: float = 0.0
 var _hud_economy_rate_label: String = ""
 var _hud_conveyor_backlog_label: String = ""
+var _hud_economy_rate_value: float = 0.0
+var _hud_conveyor_backlog_count: int = 0
+var _hud_conveyor_backlog_tone: StringName = StringName()
 var _next_hud_label_print: float = 0.0
 
 func _initialize() -> void:
@@ -281,12 +284,15 @@ func _on_stats_probe_alert(metric: StringName, value: float, threshold: float) -
 		"threshold": threshold
 	})
 
-func _on_replay_economy_rate_changed(_rate: float, label: String) -> void:
+func _on_replay_economy_rate_changed(rate: float, label: String) -> void:
+	_hud_economy_rate_value = rate
 	_hud_economy_rate_label = label
 	_print_hud_labels_if_needed()
 
-func _on_replay_conveyor_backlog_changed(_queue_len: int, label: String, _tone: StringName) -> void:
+func _on_replay_conveyor_backlog_changed(queue_len: int, label: String, tone: StringName) -> void:
+	_hud_conveyor_backlog_count = queue_len
 	_hud_conveyor_backlog_label = label
+	_hud_conveyor_backlog_tone = tone
 	_print_hud_labels_if_needed()
 
 func _print_hud_labels_if_needed(force: bool = false) -> void:
@@ -294,8 +300,17 @@ func _print_hud_labels_if_needed(force: bool = false) -> void:
 		return
 	if _hud_economy_rate_label == "" and _hud_conveyor_backlog_label == "":
 		return
-	print("[hud] economy_rate=%s | conveyor_backlog=%s" % [
+	var backlog_details := "%s (tone=%s)" % [
+		_hud_conveyor_backlog_label,
+		String(_hud_conveyor_backlog_tone)
+	])
+	var rate_details := "%s (%.3f/s)" % [
 		_hud_economy_rate_label,
-		_hud_conveyor_backlog_label
+		_hud_economy_rate_value
+	]
+	print("[hud] economy_rate=%s | conveyor_backlog=%s (%d items)" % [
+		rate_details,
+		backlog_details,
+		_hud_conveyor_backlog_count
 	])
 	_next_hud_label_print = _current_time + HUD_LABEL_PRINT_INTERVAL
