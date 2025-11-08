@@ -4,6 +4,7 @@ const DEFAULT_DURATION := 300.0
 const DEFAULT_DT := 0.1
 const DEFAULT_STRATEGY := "normal"
 const OUTPUT_DIR := "user://logs/telemetry"
+const HUD_LABEL_PRINT_INTERVAL := 10.0
 
 const CONFIG_SCRIPT := preload("res://game/scripts/Config.gd")
 const LOGGER_SCRIPT := preload("res://game/scripts/Logger.gd")
@@ -38,6 +39,9 @@ var _shipments: Array[Dictionary] = []
 var _samples: Array[Dictionary] = []
 var _alerts: Array[Dictionary] = []
 var _current_time: float = 0.0
+var _hud_economy_rate_label: String = ""
+var _hud_conveyor_backlog_label: String = ""
+var _next_hud_label_print: float = 0.0
 
 func _initialize() -> void:
 	_parse_args()
@@ -60,6 +64,7 @@ func _initialize() -> void:
 			float(stats.get("eco_ui_ms_p95", 0.0))
 		]
 		print(eco_line)
+	_print_hud_labels_if_needed(true)
 	print(JSON.stringify(summary))
 	_cleanup_context(ctx)
 	if _logger:
@@ -144,6 +149,10 @@ func _create_simulation_context() -> Dictionary:
 			"wallet": wallet
 		})
 	)
+	if not economy.economy_rate_changed.is_connected(_on_replay_economy_rate_changed):
+		economy.economy_rate_changed.connect(_on_replay_economy_rate_changed)
+	if not economy.conveyor_backlog_changed.is_connected(_on_replay_conveyor_backlog_changed):
+		economy.conveyor_backlog_changed.connect(_on_replay_conveyor_backlog_changed)
 	return {
 		"balance": balance,
 		"research": research,
@@ -271,3 +280,22 @@ func _on_stats_probe_alert(metric: StringName, value: float, threshold: float) -
 		"value": value,
 		"threshold": threshold
 	})
+
+func _on_replay_economy_rate_changed(_rate: float, label: String) -> void:
+	_hud_economy_rate_label = label
+	_print_hud_labels_if_needed()
+
+func _on_replay_conveyor_backlog_changed(_queue_len: int, label: String, _tone: StringName) -> void:
+	_hud_conveyor_backlog_label = label
+	_print_hud_labels_if_needed()
+
+func _print_hud_labels_if_needed(force: bool = false) -> void:
+	if not force and _current_time < _next_hud_label_print:
+		return
+	if _hud_economy_rate_label == "" and _hud_conveyor_backlog_label == "":
+		return
+	print("[hud] economy_rate=%s | conveyor_backlog=%s" % [
+		_hud_economy_rate_label,
+		_hud_conveyor_backlog_label
+	])
+	_next_hud_label_print = _current_time + HUD_LABEL_PRINT_INTERVAL

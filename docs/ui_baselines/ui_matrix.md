@@ -25,10 +25,11 @@
 |  A   | Power Status         | `(992, 24, 224, 32)`  | top-right     |  2 | `hud_label_{tier}`      |
 |  B   | Economy Indicator    | `(992, 64, 224, 32)`  | top-right     |  2 | `hud_label_normal`      |
 |  C   | Population Indicator | `(992, 104, 224, 32)` | top-right     |  2 | `hud_label_normal`      |
-|  D   | Center Toast         | `(340, 624, 600, 72)` | bottom-center |  3 | `toast_bg` (hidden)     |
+|  D   | Economy Rate         | `(992, 144, 224, 32)` | top-right     |  2 | `hud_label_normal`      |
 |  E   | Modal Buttons Row    | `(440, 560, 400, 48)` | bottom-center |  5 | Hidden baseline         |
+|  F   | Conveyor Backlog     | `(992, 184, 224, 32)` | top-right     |  2 | `hud_label_normal`      |
 
-Spacing between stacked HUD rows (A→B→C) is 8 px. Text is right-aligned to slot bounds.
+Spacing between stacked HUD rows (A→D→F) is 8 px vertical (32 px rows on 40 px centers). Text is right-aligned to slot bounds. Toast coordinates remain defined under **Regions** and stay hidden in baselines.
 
 ## 4 · Typography
 
@@ -54,18 +55,19 @@ colors:
   "viewport": { "w": 1280, "h": 720 },
   "safe_area": { "left": 32, "top": 24, "right": 1248, "bottom": 696 },
   "regions": {
-    "hud_dock": { "x": 928, "y": 24, "w": 288, "h": 128, "z": 2 },
+    "hud_dock": { "x": 928, "y": 24, "w": 288, "h": 208, "z": 2 },
     "toast":    { "x": 340, "y": 624, "w": 600, "h": 72,  "z": 3 },
     "tooltip":  { "x": 32,  "y": 24,  "w": 1216,"h": 672, "z": 4 },
     "modal":    { "x": 240, "y": 120, "w": 800, "h": 480, "z": 5 },
     "fx":       { "x": 0,   "y": 0,   "w": 1280,"h": 720, "z": 6 }
   },
   "slots": {
-    "A": { "name": "power",     "x": 992, "y": 24,  "w": 224, "h": 32,  "anchor": "tr", "z": 2 },
-    "B": { "name": "economy",   "x": 992, "y": 64,  "w": 224, "h": 32,  "anchor": "tr", "z": 2 },
-    "C": { "name": "population","x": 992, "y": 104, "w": 224, "h": 32,  "anchor": "tr", "z": 2 },
-    "D": { "name": "toast",     "x": 340, "y": 624, "w": 600, "h": 72,  "anchor": "bc", "z": 3 },
-    "E": { "name": "modal_row", "x": 440, "y": 560, "w": 400, "h": 48,  "anchor": "bc", "z": 5 }
+    "A": { "name": "power",             "x": 992, "y": 24,  "w": 224, "h": 32,  "anchor": "tr", "z": 2 },
+    "B": { "name": "economy",           "x": 992, "y": 64,  "w": 224, "h": 32,  "anchor": "tr", "z": 2 },
+    "C": { "name": "population",        "x": 992, "y": 104, "w": 224, "h": 32,  "anchor": "tr", "z": 2 },
+    "D": { "name": "economy_rate",      "x": 992, "y": 144, "w": 224, "h": 32,  "anchor": "tr", "z": 2 },
+    "E": { "name": "modal_row",         "x": 440, "y": 560, "w": 400, "h": 48,  "anchor": "bc", "z": 5 },
+    "F": { "name": "conveyor_backlog",  "x": 992, "y": 184, "w": 224, "h": 32,  "anchor": "tr", "z": 2 }
   },
   "tokens": {
     "font": { "family": "YolkHUD Sans", "size": 14, "shadow": { "px": 1, "alpha": 0.6 } },

@@ -26,13 +26,17 @@ class_name TopBanner
 @onready var _status_rows: Dictionary[StringName, Dictionary] = {
 	&"power": {"title": %PowerTitle, "value": %PowerValue, "icon": %PowerIcon},
 	&"economy": {"title": %EconomyTitle, "value": %EconomyValue, "icon": %EconomyIcon},
-	&"population": {"title": %PopulationTitle, "value": %PopulationValue, "icon": %PopulationIcon}
+	&"population": {"title": %PopulationTitle, "value": %PopulationValue, "icon": %PopulationIcon},
+	&"economy_rate": {"title": %EconomyRateTitle, "value": %EconomyRateValue, "icon": %EconomyRateIcon},
+	&"conveyor_backlog": {"title": %ConveyorTitle, "value": %ConveyorValue, "icon": %ConveyorIcon}
 }
 
 var _status_state: Dictionary[StringName, Dictionary] = {
 	&"power": {"value": "Load Stable", "tone": StringName("normal")},
 	&"economy": {"value": "₡ 0", "tone": StringName("normal")},
-	&"population": {"value": "0 hens", "tone": StringName("normal")}
+	&"population": {"value": "0 hens", "tone": StringName("normal")},
+	&"economy_rate": {"value": "0.0/s", "tone": StringName("normal")},
+	&"conveyor_backlog": {"value": "Queue 0", "tone": StringName("normal")}
 }
 
 const STATUS_TONE_TOKENS := {

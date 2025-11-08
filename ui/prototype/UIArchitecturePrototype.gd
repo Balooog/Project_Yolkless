@@ -42,7 +42,9 @@ var _metrics := {
 var _status := {
 	StringName("power"): {"value": "Load n/a", "tone": StringName("normal")},
 	StringName("economy"): {"value": "₡ 0", "tone": StringName("normal")},
-	StringName("population"): {"value": "0 hens", "tone": StringName("normal")}
+	StringName("population"): {"value": "0 hens", "tone": StringName("normal")},
+	StringName("economy_rate"): {"value": "0.0/s", "tone": StringName("normal")},
+	StringName("conveyor_backlog"): {"value": "Queue 0", "tone": StringName("normal")}
 }
 var _home_feed_default_text := "Hold to Feed"
 var _is_desktop_layout := false

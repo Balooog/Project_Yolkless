@@ -14,6 +14,8 @@ signal tier_changed(tier: int)
 signal autosave(reason: String)
 signal dump_triggered(amount: float, new_balance: float)
 signal conveyor_metrics_changed(rate: float, queue_len: int, jam_active: bool)
+signal economy_rate_changed(rate: float, label: String)
+signal conveyor_backlog_changed(queue_len: int, label: String, tone: StringName)
 
 var soft: float = 0.0
 var total_earned: float = 0.0
@@ -84,6 +86,11 @@ var _conveyor_delivered_total: int = 0
 var _conveyor_last_update_msec: int = 0
 var _conveyor_jam_timer: float = 0.0
 var _conveyor_jam_active: bool = false
+var _last_economy_rate: float = -1.0
+var _last_economy_rate_label: String = "0.0/s"
+var _last_conveyor_backlog: int = -1
+var _last_conveyor_backlog_label: String = "Queue 0"
+var _last_conveyor_backlog_tone: StringName = StringName("normal")
 
 func setup(balance: Balance, research: Research) -> void:
 	_balance = balance
@@ -106,6 +113,8 @@ func setup(balance: Balance, research: Research) -> void:
 	_stats_probe = _get_stats_probe()
 	_profiling_init()
 	_refresh_config_flags()
+	_update_economy_rate_signal(_current_pps())
+	_update_conveyor_backlog_signal()
 
 func _process(delta: float) -> void:
 	if _use_scheduler:
@@ -132,6 +141,7 @@ func register_conveyor_manager(manager: Node) -> void:
 		_conveyor_last_update_msec = 0
 		_update_conveyor_statbus()
 		conveyor_metrics_changed.emit(_conveyor_rate, _conveyor_queue, _conveyor_jam_active)
+		_update_conveyor_backlog_signal()
 		_conveyor_manager = null
 		return
 	if _conveyor_manager.has_signal("throughput_updated"):
@@ -144,6 +154,8 @@ func register_conveyor_manager(manager: Node) -> void:
 			_conveyor_manager.connect("item_delivered", delivered_callable)
 	_update_conveyor_statbus()
 	conveyor_metrics_changed.emit(_conveyor_rate, _conveyor_queue, _conveyor_jam_active)
+	_update_conveyor_backlog_signal()
+	_update_conveyor_backlog_signal()
 
 func _tick(delta: float) -> void:
 	if _balance == null or _research == null:
@@ -201,6 +213,7 @@ func _tick(delta: float) -> void:
 	var feed_fraction := 0.0
 	if feed_capacity > 0.0:
 		feed_fraction = clamp(feed_current / feed_capacity, 0.0, 1.0)
+	_update_economy_rate_signal(pps)
 	_record_stats_probe(tick_ms, pps, base_pps, feed_fraction)
 	_profiling_finish()
 
@@ -961,6 +974,7 @@ func _on_conveyor_throughput_updated(rate: float, queue_len: int) -> void:
 func _on_conveyor_item_delivered(_item_id: int, _destination: Node) -> void:
 	_conveyor_delivered_total += 1
 	_update_conveyor_statbus()
+	_update_conveyor_backlog_signal()
 
 func _update_conveyor_statbus() -> void:
 	var bus := _statbus_ref()
@@ -971,6 +985,37 @@ func _update_conveyor_statbus() -> void:
 	bus.set_stat(&"conveyor_delivered_total", float(_conveyor_delivered_total), "Economy")
 	var jam_value := 1.0 if _conveyor_jam_active else 0.0
 	bus.set_stat(&"conveyor_jam_active", jam_value, "Economy")
+
+func _update_conveyor_backlog_signal() -> void:
+	var tone := StringName("warning") if _conveyor_jam_active else StringName("normal")
+	var label := _format_backlog_label(_conveyor_queue, _conveyor_jam_active)
+	if _conveyor_queue == _last_conveyor_backlog and label == _last_conveyor_backlog_label and tone == _last_conveyor_backlog_tone:
+		return
+	_last_conveyor_backlog = _conveyor_queue
+	_last_conveyor_backlog_label = label
+	_last_conveyor_backlog_tone = tone
+	conveyor_backlog_changed.emit(_conveyor_queue, label, tone)
+
+func _format_backlog_label(queue_len: int, jam_active: bool) -> String:
+	var label := "Queue %d" % queue_len
+	if jam_active:
+		label += " ⚠"
+	return label
+
+func _update_economy_rate_signal(rate: float) -> void:
+	var label := _format_rate_label(rate)
+	if is_equal_approx(rate, _last_economy_rate) and label == _last_economy_rate_label:
+		return
+	_last_economy_rate = rate
+	_last_economy_rate_label = label
+	economy_rate_changed.emit(rate, label)
+
+func _format_rate_label(rate: float) -> String:
+	var abs_rate := abs(rate)
+	var decimals := 1
+	if abs_rate >= 10.0:
+		decimals = 0
+	return "%s/s" % String.num(rate, decimals)
 
 func _bind_services() -> void:
 	_power_service = _get_power_service()
@@ -1086,6 +1131,10 @@ func _record_stats_probe(tick_ms: float, pps: float, base_pps: float, feed_fract
 		"conveyor_queue": _conveyor_queue,
 		"conveyor_jam_active": 1.0 if _conveyor_jam_active else 0.0,
 		"conveyor_delivered_total": _conveyor_delivered_total,
+		"economy_rate": pps,
+		"economy_rate_label": _last_economy_rate_label,
+		"conveyor_backlog": float(_conveyor_queue),
+		"conveyor_backlog_label": _last_conveyor_backlog_label,
 		"eco_in_ms": float(_profiling_sections.get(PROFILING_PHASE_IN, 0.0)),
 		"eco_apply_ms": float(_profiling_sections.get(PROFILING_PHASE_APPLY, 0.0)),
 		"eco_ship_ms": float(_profiling_sections.get(PROFILING_PHASE_SHIP, 0.0)),

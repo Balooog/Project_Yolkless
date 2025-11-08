@@ -152,6 +152,50 @@ text = "Population"
 unique_name_in_owner = true
 text = "0 hens"
 
+[node name="EconomyRateRow" type="HBoxContainer" parent="BannerContainer/StatusDock"]
+size_flags_horizontal = 0
+size_flags_vertical = 1
+theme_override_constants/separation = 8
+
+[node name="EconomyRateIcon" type="ColorRect" parent="BannerContainer/StatusDock/EconomyRateRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(18, 18)
+color = Color(0.6, 0.6, 0.6, 1)
+
+[node name="EconomyRateText" type="VBoxContainer" parent="BannerContainer/StatusDock/EconomyRateRow"]
+size_flags_horizontal = 1
+theme_override_constants/separation = 2
+
+[node name="EconomyRateTitle" type="Label" parent="BannerContainer/StatusDock/EconomyRateRow/EconomyRateText"]
+unique_name_in_owner = true
+text = "Economy Rate"
+
+[node name="EconomyRateValue" type="Label" parent="BannerContainer/StatusDock/EconomyRateRow/EconomyRateText"]
+unique_name_in_owner = true
+text = "0.0/s"
+
+[node name="ConveyorRow" type="HBoxContainer" parent="BannerContainer/StatusDock"]
+size_flags_horizontal = 0
+size_flags_vertical = 1
+theme_override_constants/separation = 8
+
+[node name="ConveyorIcon" type="ColorRect" parent="BannerContainer/StatusDock/ConveyorRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(18, 18)
+color = Color(0.56, 0.66, 0.9, 1)
+
+[node name="ConveyorText" type="VBoxContainer" parent="BannerContainer/StatusDock/ConveyorRow"]
+size_flags_horizontal = 1
+theme_override_constants/separation = 2
+
+[node name="ConveyorTitle" type="Label" parent="BannerContainer/StatusDock/ConveyorRow/ConveyorText"]
+unique_name_in_owner = true
+text = "Conveyor Backlog"
+
+[node name="ConveyorValue" type="Label" parent="BannerContainer/StatusDock/ConveyorRow/ConveyorText"]
+unique_name_in_owner = true
+text = "Queue 0"
+
 [node name="AlertPill" type="Label" parent="BannerContainer"]
 unique_name_in_owner = true
 visible = false

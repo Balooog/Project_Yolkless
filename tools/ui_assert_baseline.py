@@ -21,6 +21,10 @@ PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 EXPECTED_SIZE = (1280, 720)
 SAFE_AREA = (32, 24, 1248, 696)  # left, top, right, bottom (exclusive)
 TOAST_RECT = (340, 624, 600, 72)  # x, y, width, height
+HUD_SLOT_RECTS = {
+	"D": (992, 144, 224, 32),
+	"F": (992, 184, 224, 32)
+}
 
 
 class BaselineError(Exception):
@@ -153,7 +157,17 @@ def assert_safe_area(image: ImageData) -> None:
 		raise BaselineError(
 			f"HUD dock exceeds safe area: bounds=({min_x},{min_y})-({max_x},{max_y}), "
 			f"expected within ({left},{top})-({right - 1},{bottom - 1})."
-	)
+		)
+
+
+def assert_slot_rects_within_safe_area() -> None:
+	left, top, right, bottom = SAFE_AREA
+	for slot, rect in HUD_SLOT_RECTS.items():
+		x, y, w, h = rect
+		if not (left <= x and top <= y and x + w <= right and y + h <= bottom):
+			raise BaselineError(
+				f"Slot {slot} rect {rect} exceeds safe area bounds ({left},{top})-({right},{bottom})."
+			)
 
 
 def validate_image(path: Path) -> None:
@@ -162,6 +176,7 @@ def validate_image(path: Path) -> None:
 		raise BaselineError(f"Expected 1280x720 image, found {image.width}x{image.height}.")
 	assert_toast_empty(image)
 	assert_safe_area(image)
+	assert_slot_rects_within_safe_area()
 
 
 def parse_args(argv: Sequence[str]) -> argparse.Namespace:

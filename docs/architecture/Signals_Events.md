@@ -8,6 +8,8 @@
 | `Economy` | `storage_changed(value: float, capacity: float)` | `{ storage, capacity }` | HUD storage bar, StatBus | on storage delta |
 | `Economy` | `dump_triggered(amount: float, new_balance: float)` | `{ amount, balance }` | HUD pulse, telemetry, analytics | when auto shipment fires |
 | `Economy` | `burst_state(active: bool)` | `{ active }` | VisualDirector, AutomationService | on feed start/stop |
+| `Economy` | `economy_rate_changed(rate: float, label: String)` | `{ rate, label }` | HUD Slot D, telemetry probes | on PPS delta (≤10 Hz) |
+| `Economy` | `conveyor_backlog_changed(queue_len: int, label: String, tone: StringName)` | `{ queue, label, tone }` | HUD Slot F, StatBus dashboards, Alerts | on conveyor queue delta |
 | `EnvironmentService` | `environment_updated(state: Dictionary)` | `{ temperature, light, humidity, modifiers, ci }` | SandboxService, UI EnvPanel, StatBus | 5 Hz |
 | `EnvironmentService` | `day_phase_changed(phase: StringName)` | `{ phase }` | Lighting, Audio | phase transitions |
 | `EnvironmentService` | `preset_changed(preset: StringName)` | `{ preset }` | UI dropdown, telemetry | on preset swap |

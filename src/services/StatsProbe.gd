@@ -116,12 +116,12 @@ func _process_pending_writes() -> void:
 		if file == null:
 			push_warning("StatsProbe: Failed to open %s for writing" % path)
 			continue
-		file.store_line("service,tick_ms,pps,ci,active_cells,power_ratio,ci_delta,storage,feed_fraction,power_state,power_warning_level,power_warning_label,auto_active,sandbox_render_view_mode,sandbox_render_fallback_active,stage_rebuild_ms,stage_rebuild_source,eco_in_ms,eco_apply_ms,eco_ship_ms,eco_research_ms,eco_statbus_ms,eco_ui_ms")
+		file.store_line("service,tick_ms,pps,ci,active_cells,power_ratio,ci_delta,storage,feed_fraction,power_state,power_warning_level,power_warning_label,auto_active,sandbox_render_view_mode,sandbox_render_fallback_active,stage_rebuild_ms,stage_rebuild_source,eco_in_ms,eco_apply_ms,eco_ship_ms,eco_research_ms,eco_statbus_ms,eco_ui_ms,economy_rate,economy_rate_label,conveyor_backlog,conveyor_backlog_label")
 		for row_variant in rows:
 			var row_dict: Dictionary = row_variant
 			var fallback_flag: int = 1 if row_dict.get("sandbox_render_fallback_active", false) else 0
 			var view_mode_value: String = String(row_dict.get("sandbox_render_view_mode", ""))
-			var csv := "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % [
+			var csv := "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % [
 				row_dict.get("service", SERVICE_SANDBOX),
 				row_dict.get("tick_ms", 0.0),
 				row_dict.get("pps", 0.0),
@@ -144,7 +144,11 @@ func _process_pending_writes() -> void:
 				row_dict.get("eco_ship_ms", 0.0),
 				row_dict.get("eco_research_ms", 0.0),
 				row_dict.get("eco_statbus_ms", 0.0),
-				row_dict.get("eco_ui_ms", 0.0)
+				row_dict.get("eco_ui_ms", 0.0),
+				row_dict.get("economy_rate", row_dict.get("pps", 0.0)),
+				row_dict.get("economy_rate_label", ""),
+				row_dict.get("conveyor_backlog", row_dict.get("conveyor_queue", 0.0)),
+				row_dict.get("conveyor_backlog_label", "")
 			]
 			file.store_line(csv)
 		file.close()
@@ -182,7 +186,11 @@ func summarize() -> Dictionary:
 				"eco_ship_values": [],
 				"eco_research_values": [],
 				"eco_statbus_values": [],
-				"eco_ui_values": []
+				"eco_ui_values": [],
+				"economy_rate_values": [],
+				"conveyor_backlog_values": [],
+				"economy_rate_label_last": "",
+				"conveyor_backlog_label_last": ""
 			}
 		var group: Dictionary = grouped[service]
 		var tick_value: float = float(entry.get("tick_ms", 0.0))
@@ -206,6 +214,10 @@ func summarize() -> Dictionary:
 			group["pps_accum"] += entry.get("pps", 0.0)
 			group["storage_accum"] += entry.get("storage", 0.0)
 			group["feed_fraction_accum"] += entry.get("feed_fraction", 0.0)
+			(group["economy_rate_values"] as Array).append(float(entry.get("economy_rate", entry.get("pps", 0.0))))
+			(group["conveyor_backlog_values"] as Array).append(float(entry.get("conveyor_backlog", entry.get("conveyor_queue", 0.0))))
+			group["economy_rate_label_last"] = String(entry.get("economy_rate_label", group.get("economy_rate_label_last", "")))
+			group["conveyor_backlog_label_last"] = String(entry.get("conveyor_backlog_label", group.get("conveyor_backlog_label_last", "")))
 			(group["eco_in_values"] as Array).append(float(entry.get("eco_in_ms", 0.0)))
 			(group["eco_apply_values"] as Array).append(float(entry.get("eco_apply_ms", 0.0)))
 			(group["eco_ship_values"] as Array).append(float(entry.get("eco_ship_ms", 0.0)))
@@ -281,6 +293,10 @@ func summarize() -> Dictionary:
 				summary["eco_statbus_ms_avg"] = _profiling_avg(eco_statbus_values)
 				summary["eco_ui_ms_p95"] = _profiling_p95(eco_ui_values)
 				summary["eco_ui_ms_avg"] = _profiling_avg(eco_ui_values)
+				summary["economy_rate_avg"] = _profiling_avg(group["economy_rate_values"])
+				summary["economy_rate_label_last"] = String(group.get("economy_rate_label_last", ""))
+				summary["conveyor_backlog_avg"] = _profiling_avg(group["conveyor_backlog_values"])
+				summary["conveyor_backlog_label_last"] = String(group.get("conveyor_backlog_label_last", ""))
 			SERVICE_SANDBOX_RENDER:
 				summary["sandbox_render_ms_p95"] = p95
 				summary["sandbox_render_ms_avg"] = avg

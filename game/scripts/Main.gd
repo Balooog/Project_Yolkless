@@ -106,7 +106,9 @@ var _prototype_metrics := {
 var _prototype_status := {
 	"power": {"value": "Load n/a", "tone": StringName("normal")},
 	"economy": {"value": "₡ 0", "tone": StringName("normal")},
-	"population": {"value": "0 hens", "tone": StringName("normal")}
+	"population": {"value": "0 hens", "tone": StringName("normal")},
+	"economy_rate": {"value": "0.0/s", "tone": StringName("normal")},
+	"conveyor_backlog": {"value": "Queue 0", "tone": StringName("normal")}
 }
 var _prototype_feed_status := "Feed silo ready"
 var _prototype_feed_fraction := 0.0
@@ -141,6 +143,10 @@ func _ready() -> void:
 	eco.tier_changed.connect(func(_tier: int) -> void: _update_factory_view())
 	eco.burst_state.connect(_on_feed_state_changed)
 	eco.dump_triggered.connect(_on_dump_triggered)
+	if not eco.economy_rate_changed.is_connected(_on_economy_rate_changed):
+		eco.economy_rate_changed.connect(_on_economy_rate_changed)
+	if not eco.conveyor_backlog_changed.is_connected(_on_conveyor_backlog_changed):
+		eco.conveyor_backlog_changed.connect(_on_conveyor_backlog_changed)
 	btn_burst.button_down.connect(_on_feed_button_down)
 	btn_burst.button_up.connect(_on_feed_button_up)
 	btn_prod.pressed.connect(func(): _attempt_upgrade("prod_1"))
@@ -1044,6 +1050,12 @@ func _on_feed_state_changed(_active: bool) -> void:
 
 func _on_conveyor_metrics_changed(rate: float, queue_len: int, jam_active: bool) -> void:
 	_update_conveyor_view(rate, queue_len, jam_active)
+
+func _on_economy_rate_changed(_rate: float, label: String) -> void:
+	_set_prototype_status("economy_rate", label)
+
+func _on_conveyor_backlog_changed(_queue_len: int, label: String, tone: StringName) -> void:
+	_set_prototype_status("conveyor_backlog", label, String(tone))
 
 func _on_ci_changed(ci: float, bonus: float) -> void:
 	_comfort_index = clamp(ci, 0.0, 1.0)

@@ -18,8 +18,8 @@ unique_name_in_owner = true
 offset_left = 928.0
 offset_top = 24.0
 offset_right = 1216.0
-offset_bottom = 152.0
-custom_minimum_size = Vector2(288, 128)
+offset_bottom = 232.0
+custom_minimum_size = Vector2(288, 208)
 
 [node name="DockMargin" type="MarginContainer" parent="DockPanel"]
 anchor_right = 1.0
@@ -32,7 +32,7 @@ theme_override_constants/margin_right = 0
 theme_override_constants/margin_bottom = 0
 
 [node name="StatusColumn" type="VBoxContainer" parent="DockPanel/DockMargin"]
-custom_minimum_size = Vector2(224, 96)
+custom_minimum_size = Vector2(224, 192)
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 8
@@ -130,5 +130,69 @@ size_flags_horizontal = 3
 [node name="PopulationValue" type="Label" parent="DockPanel/DockMargin/StatusColumn/PopulationRow/PopulationText"]
 unique_name_in_owner = true
 text = "0 hens"
+horizontal_alignment = 2
+size_flags_horizontal = 3
+
+[node name="EconomyRateRow" type="HBoxContainer" parent="DockPanel/DockMargin/StatusColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(224, 32)
+size_flags_horizontal = 0
+theme_override_constants/separation = 8
+
+[node name="EconomyRateIcon" type="ColorRect" parent="DockPanel/DockMargin/StatusColumn/EconomyRateRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(24, 24)
+size_flags_vertical = 4
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
+
+[node name="EconomyRateText" type="VBoxContainer" parent="DockPanel/DockMargin/StatusColumn/EconomyRateRow"]
+custom_minimum_size = Vector2(192, 32)
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="EconomyRateTitle" type="Label" parent="DockPanel/DockMargin/StatusColumn/EconomyRateRow/EconomyRateText"]
+unique_name_in_owner = true
+text = "Economy Rate"
+horizontal_alignment = 2
+size_flags_horizontal = 3
+
+[node name="EconomyRateValue" type="Label" parent="DockPanel/DockMargin/StatusColumn/EconomyRateRow/EconomyRateText"]
+unique_name_in_owner = true
+text = "0.0/s"
+horizontal_alignment = 2
+size_flags_horizontal = 3
+
+[node name="ConveyorRow" type="HBoxContainer" parent="DockPanel/DockMargin/StatusColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(224, 32)
+size_flags_horizontal = 0
+theme_override_constants/separation = 8
+
+[node name="ConveyorIcon" type="ColorRect" parent="DockPanel/DockMargin/StatusColumn/ConveyorRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(24, 24)
+size_flags_vertical = 4
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
+
+[node name="ConveyorText" type="VBoxContainer" parent="DockPanel/DockMargin/StatusColumn/ConveyorRow"]
+custom_minimum_size = Vector2(192, 32)
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="ConveyorTitle" type="Label" parent="DockPanel/DockMargin/StatusColumn/ConveyorRow/ConveyorText"]
+unique_name_in_owner = true
+text = "Conveyor Backlog"
+horizontal_alignment = 2
+size_flags_horizontal = 3
+
+[node name="ConveyorValue" type="Label" parent="DockPanel/DockMargin/StatusColumn/ConveyorRow/ConveyorText"]
+unique_name_in_owner = true
+text = "Queue 0"
 horizontal_alignment = 2
 size_flags_horizontal = 3

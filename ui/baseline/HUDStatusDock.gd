@@ -22,6 +22,14 @@ const STATUS_TONES := {
 @export var population_value: String = "0 hens"
 @export var population_tone: String = "normal"
 
+@export var economy_rate_visible: bool = true
+@export var economy_rate_value: String = "0.0/s"
+@export var economy_rate_tone: String = "normal"
+
+@export var conveyor_visible: bool = true
+@export var conveyor_value: String = "Queue 0"
+@export var conveyor_tone: String = "normal"
+
 @onready var _background: ColorRect = %Background
 @onready var _panel: PanelContainer = %DockPanel
 @onready var _power_row: HBoxContainer = %PowerRow
@@ -36,6 +44,14 @@ const STATUS_TONES := {
 @onready var _population_title: Label = %PopulationTitle
 @onready var _population_value_label: Label = %PopulationValue
 @onready var _population_icon: ColorRect = %PopulationIcon
+@onready var _economy_rate_row: HBoxContainer = %EconomyRateRow
+@onready var _economy_rate_title: Label = %EconomyRateTitle
+@onready var _economy_rate_value_label: Label = %EconomyRateValue
+@onready var _economy_rate_icon: ColorRect = %EconomyRateIcon
+@onready var _conveyor_row: HBoxContainer = %ConveyorRow
+@onready var _conveyor_title: Label = %ConveyorTitle
+@onready var _conveyor_value_label: Label = %ConveyorValue
+@onready var _conveyor_icon: ColorRect = %ConveyorIcon
 
 func _ready() -> void:
 	_apply_background()
@@ -68,6 +84,24 @@ func _ready() -> void:
 		population_value,
 		population_tone
 	)
+	_apply_status_row(
+		_economy_rate_row,
+		_economy_rate_title,
+		_economy_rate_value_label,
+		_economy_rate_icon,
+		economy_rate_visible,
+		economy_rate_value,
+		economy_rate_tone
+	)
+	_apply_status_row(
+		_conveyor_row,
+		_conveyor_title,
+		_conveyor_value_label,
+		_conveyor_icon,
+		conveyor_visible,
+		conveyor_value,
+		conveyor_tone
+	)
 
 func _apply_background() -> void:
 	if _background:
@@ -95,7 +129,9 @@ func _apply_static_tokens() -> void:
 	var titles := [
 		_power_title,
 		_economy_title,
-		_population_title
+		_population_title,
+		_economy_rate_title,
+		_conveyor_title
 	]
 	for title in titles:
 		UIHelpers.apply_label_tokens(title, TOKENS, &"font_s", &"text_muted")
@@ -103,7 +139,9 @@ func _apply_static_tokens() -> void:
 	var values := [
 		_power_value_label,
 		_economy_value_label,
-		_population_value_label
+		_population_value_label,
+		_economy_rate_value_label,
+		_conveyor_value_label
 	]
 	for value_label in values:
 		UIHelpers.apply_label_tokens(value_label, TOKENS, &"font_l", &"hud_label_normal")
