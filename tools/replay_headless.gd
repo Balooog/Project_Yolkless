@@ -67,6 +67,14 @@ func _initialize() -> void:
 			float(stats.get("eco_ui_ms_p95", 0.0))
 		]
 		print(eco_line)
+	if stats.has("automation_tick_ms_p95"):
+		var auto_line := "[automation] p95=%.3f active_avg=%.2f target=%s panel_vis=%.2f" % [
+			float(stats.get("automation_tick_ms_p95", 0.0)),
+			float(stats.get("automation_auto_active_avg", 0.0)),
+			String(stats.get("automation_target_last", "")),
+			float(stats.get("automation_panel_visible_ratio", 0.0))
+		]
+		print(auto_line)
 	_print_hud_labels_if_needed(true)
 	print(JSON.stringify(summary))
 	_cleanup_context(ctx)
