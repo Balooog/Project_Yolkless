@@ -1,7 +1,7 @@
 extends Node
 class_name StatBus
 
-signal stat_changed(key: StringName, value: float, previous: Variant, source: StringName)
+signal stat_changed(key: StringName, value: Variant, previous: Variant, source: StringName)
 
 const DEFAULT_STACK := "replace"
 const CLAMP_LOG_INTERVAL := 60.0
@@ -19,30 +19,34 @@ func register_stat(key: Variant, config: Dictionary = {}) -> void:
 		merged["stack"] = DEFAULT_STACK
 	_registry[stat_key] = merged
 	if merged.has("default") and not _values.has(stat_key):
-		_values[stat_key] = float(merged["default"])
+		_values[stat_key] = merged["default"]
 	elif not _values.has(stat_key):
 		_values[stat_key] = 0.0
 
 func get_stat(key: Variant, default_value: float = 0.0) -> float:
 	var stat_key: StringName = StringName(key)
 	if _values.has(stat_key):
-		return _values[stat_key]
+		var stored := _values[stat_key]
+		if stored is float or stored is int:
+			return float(stored)
 	return default_value
 
-func set_stat(key: Variant, value: float, source: Variant = StringName()) -> float:
+func set_stat(key: Variant, value: Variant, source: Variant = StringName()) -> Variant:
 	var stat_key: StringName = StringName(key)
 	if not _registry.has(stat_key):
 		register_stat(stat_key, {})
 	var config: Dictionary = _registry[stat_key]
-	var target_value: float = float(value)
-	if config.has("cap"):
+	var target_value: Variant = value
+	if config.has("cap") and (target_value is float or target_value is int):
 		var cap_value: float = float(config["cap"])
-		if target_value > cap_value:
+		var numeric_value: float = float(target_value)
+		if numeric_value > cap_value:
 			if _should_log_clamp(stat_key):
-				_log("INFO", "STATBUS", "clamp %s %.3f→%.3f" % [String(stat_key), target_value, cap_value], {
+				_log("INFO", "STATBUS", "clamp %s %.3f→%.3f" % [String(stat_key), numeric_value, cap_value], {
 					"source": String(source)
 				})
-			target_value = cap_value
+			numeric_value = cap_value
+		target_value = numeric_value
 	var previous: Variant = _values.get(stat_key, null)
 	if previous == target_value:
 		return target_value
@@ -59,7 +63,7 @@ func reset_stat(key: Variant) -> void:
 	var stat_key: StringName = StringName(key)
 	if not _registry.has(stat_key):
 		return
-	var default_value := float(_registry[stat_key].get("default", 0.0))
+	var default_value := _registry[stat_key].get("default", 0.0)
 	set_stat(stat_key, default_value, "reset")
 
 func all_stats() -> Dictionary:

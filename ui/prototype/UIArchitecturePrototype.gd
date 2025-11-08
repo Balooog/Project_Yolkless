@@ -13,6 +13,9 @@ signal save_export_requested
 signal save_import_requested
 signal settings_requested
 signal layout_changed
+signal automation_panel_opened
+signal automation_panel_closed
+signal automation_target_changed(target_id: StringName)
 
 const PHONE_BREAKPOINT := 600.0
 const TABLET_BREAKPOINT := 900.0
@@ -159,6 +162,7 @@ func _ready() -> void:
 		var a_button := _automation_buttons[id] as Button
 		if a_button:
 			a_button.pressed.connect(_on_upgrade_button_pressed.bind(id))
+			a_button.pressed.connect(_on_automation_button_pressed.bind(id))
 	_prestige_button.pressed.connect(func(): prestige_requested.emit())
 	resized.connect(_update_layout)
 	_initialize_banner_references()
@@ -1166,11 +1170,20 @@ func _on_feed_hold_button_up() -> void:
 func _on_upgrade_button_pressed(action_id: String) -> void:
 	upgrade_requested.emit(action_id)
 
+func _on_automation_button_pressed(action_id: String) -> void:
+	var target := StringName(action_id)
+	automation_target_changed.emit(target)
+
 func _on_research_button_pressed(action_id: String) -> void:
 	research_requested.emit(action_id)
 
 func _show_tab(tab_id: String) -> void:
+	var previous := _current_tab
 	_current_tab = tab_id
+	if tab_id == "automation" and previous != "automation":
+		automation_panel_opened.emit()
+	elif previous == "automation" and tab_id != "automation":
+		automation_panel_closed.emit()
 	for button in _tab_buttons:
 		button.button_pressed = _button_tab_id(button) == tab_id
 	for button in _dock_buttons:

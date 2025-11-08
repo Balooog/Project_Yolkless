@@ -10,6 +10,9 @@ const MODE_AUTO := 2
 
 const StatBus := preload("res://src/services/StatBus.gd")
 const StatsProbe := preload("res://src/services/StatsProbe.gd")
+const PANEL_TARGET_VALUES := {
+	StringName("economy_feed_autoburst"): 1.0
+}
 
 var _statbus: StatBus
 var _targets: Dictionary = {}
@@ -17,6 +20,8 @@ var _global_enabled := true
 var _power_ok := true
 var _use_scheduler := false
 var _stats_probe: StatsProbe
+var _panel_target: StringName = StringName()
+var _panel_visible := false
 
 func _ready() -> void:
 	_statbus = _get_statbus()
@@ -139,6 +144,7 @@ func _register_stat() -> void:
 	if _statbus == null:
 		return
 	_statbus.register_stat(&"auto_burst_ready", {"stack": "replace", "default": 0.0})
+	_statbus.register_stat(&"automation_target", {"stack": "replace", "default": ""})
 
 func _update_statbus() -> void:
 	_statbus = _get_statbus()
@@ -147,6 +153,15 @@ func _update_statbus() -> void:
 	var active_auto: int = _active_auto_count()
 	var value: float = 1.0 if _global_enabled and _power_ok and active_auto > 0 else 0.0
 	_statbus.set_stat(&"auto_burst_ready", value, "AutomationService")
+	_update_statbus_target()
+
+func _update_statbus_target() -> void:
+	if _statbus == null:
+		return
+	var target_value := ""
+	if _panel_target != StringName():
+		target_value = String(_panel_target)
+	_statbus.set_stat(&"automation_target", target_value, "AutomationService")
 
 func _get_statbus() -> StatBus:
 	if _statbus and is_instance_valid(_statbus):
@@ -185,7 +200,10 @@ func _record_stats_probe(tick_ms: float) -> void:
 		"auto_active": _active_auto_count(),
 		"power_state": 1.0 if _power_ok else 0.0,
 		"global_enabled": 1.0 if _global_enabled else 0.0,
-		"next_remaining": _next_remaining_time()
+		"next_remaining": _next_remaining_time(),
+		"automation_target": _panel_target_value(),
+		"automation_target_label": _panel_target_label(),
+		"automation_panel_visible": 1.0 if _panel_visible else 0.0
 	})
 
 func _next_remaining_time() -> float:
@@ -202,3 +220,22 @@ func _next_remaining_time() -> float:
 			best_remaining = remaining
 			found = true
 	return best_remaining if found else 0.0
+
+func set_panel_target(target: StringName) -> void:
+	if _panel_target == target:
+		return
+	_panel_target = target
+	_update_statbus_target()
+
+func set_panel_visible(visible: bool) -> void:
+	if _panel_visible == visible:
+		return
+	_panel_visible = visible
+
+func _panel_target_value() -> float:
+	return float(PANEL_TARGET_VALUES.get(_panel_target, 0.0))
+
+func _panel_target_label() -> String:
+	if _panel_target == StringName():
+		return ""
+	return String(_panel_target)

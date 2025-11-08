@@ -16,9 +16,9 @@
 | `UIPrototype` | `feed_hold_started()` | `{}` | Main, Sandbox ConveyorOverlay, AudioService | user input press |
 | `UIPrototype` | `feed_hold_ended()` | `{}` | Main, Sandbox ConveyorOverlay, AudioService | user input release |
 | `UIPrototype` | `feed_burst(mult: float)` | `{ mult }` | ConveyorOverlay, AudioService, StatsProbe (planned) | per Economy burst |
-| `AutomationPanel` | `automation_panel_opened()` | `{}` | AutomationService, UIPrototype, telemetry | on panel open |
-| `AutomationPanel` | `automation_panel_closed()` | `{}` | AutomationService, UIPrototype | on panel close |
-| `AutomationPanel` | `automation_target_changed(target_id: StringName)` | `{ target }` | AutomationService, Economy, StatBus | on target swap |
+| `AutomationPanel` | `automation_panel_opened()` | `{}` | AutomationService, UIPrototype, telemetry | on panel open (tab switches into Automation sheet) |
+| `AutomationPanel` | `automation_panel_closed()` | `{}` | AutomationService, UIPrototype | on panel close (tab leaves Automation sheet) |
+| `AutomationPanel` | `automation_target_changed(target_id: StringName)` | `{ target }` | AutomationService, StatBus/Telemetry | on target swap |
 | `SandboxService` | `ci_changed(ci: float, bonus: float)` | `{ ci, bonus }` | Economy StatBus, Telemetry | 2 Hz |
 | `SandboxRenderer` | `fallback_state_changed(active: bool)` | `{ active }` | Telemetry, EnvPanel tooltip, debug overlay | on fallback enter/exit |
 | `AutomationService` | `mode_changed(building_id: StringName, mode: int)` | `{ building_id, mode }` | UI overlays, save system | when automation toggles |
