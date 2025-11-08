@@ -13,20 +13,25 @@ layout: default
 ---
 
 ## 📘 PX Series Roadmap
-| PX ID | Title | Status |
-|:------|:------|:------:|
-| PX-018 | HUD Baseline / Power Warnings | ✅ Complete |
-| PX-019 | Sandbox Visual Integration | 🟡 In Progress |
-| PX-020 | Economy / Conveyor + GUI Integration | 🧭 Drafting *(see table below)* |
 
-#### PX-020 Navigation
-| PX | Focus | Link |
-| --- | --- | --- |
-| PX-020.0 | Series overview & flow | [PX-020.0 Overview](px/PX-020.0_Overview.md) |
-| PX-020.1 | GUI wiring (HUD Slot D/F) | [PX-020.1 GUI Wiring](px/PX-020.1_GUI_Wiring.md) |
-| PX-020.2 | Automation Panel interaction | [PX-020.2 Automation Panel](px/PX-020.2_Interaction_AutomationPanel.md) |
-| PX-020.3 | Tooltips & copy | [PX-020.3 Tooltips & Copy](px/PX-020.3_Tooltips_Copy.md) |
-| PX-020.4 | Telemetry & replay coverage | [PX-020.4 Telemetry Replay](px/PX-020.4_Telemetry_Replay.md) |
+| PX ID | Focus | Status | Link |
+|:------|:------|:-------:|:-----|
+| **PX-018** | HUD Baseline / Power Warnings | ✅ Complete | [PX-018 Overview](px/PX-018.0_Overview.md) |
+| **PX-019** | Sandbox Visual Integration | 🟡 In Progress | [PX-019 Overview](px/PX-019.0_Overview.md) |
+| **PX-020.0** | Economy / Conveyor + GUI Integration Overview | 🧭 Drafting | [PX-020.0 Overview](px/PX-020.0_Overview.md) |
+| **PX-020.1** | GUI Wiring (HUD Slots D / F) | ✅ Implemented | [PX-020.1 GUI Wiring](px/PX-020.1_GUI_Wiring.md) |
+| **PX-020.2** | Automation Panel Interaction | 🧭 Drafting | [PX-020.2 Automation Panel](px/PX-020.2_Interaction_AutomationPanel.md) |
+| **PX-020.3** | Tooltips & Copy | 🧭 Drafting | [PX-020.3 Tooltips & Copy](px/PX-020.3_Tooltips_Copy.md) |
+| **PX-020.4** | Telemetry & Replay Coverage | 🧭 Drafting | [PX-020.4 Telemetry Replay](px/PX-020.4_Telemetry_Replay.md) |
+
+---
+
+### 🔍 PX-020 Navigation
+[PX-020.0 Overview](px/PX-020.0_Overview.md) | 
+[PX-020.1 GUI Wiring](px/PX-020.1_GUI_Wiring.md) | 
+[PX-020.2 Automation Panel](px/PX-020.2_Interaction_AutomationPanel.md) | 
+[PX-020.3 Tooltips & Copy](px/PX-020.3_Tooltips_Copy.md) | 
+[PX-020.4 Telemetry Replay](px/PX-020.4_Telemetry_Replay.md)
 
 ---
 
