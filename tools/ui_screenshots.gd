@@ -53,7 +53,9 @@ func _execute() -> void:
 		printerr("ui_screenshots.gd: failed to create output directory %s" % [absolute_output])
 
 	for scene_path in scenes:
+		print("ui_screenshots.gd: capturing ", scene_path)
 		await _capture_scene(scene_path, absolute_output)
+		print("ui_screenshots.gd: finished ", scene_path)
 
 	quit()
 
@@ -67,10 +69,6 @@ func _capture_scene(scene_path: String, absolute_output: String) -> void:
 		print("ui_screenshots.gd: capture disabled; skipping %s" % scene_path)
 		return
 
-	if OS.has_feature("headless"):
-		print("ui_screenshots.gd: headless renderer, skipping capture for %s" % scene_path)
-		return
-
 	var instance := packed.instantiate()
 	if instance == null:
 		printerr("ui_screenshots.gd: cannot instantiate %s" % scene_path)
@@ -82,8 +80,9 @@ func _capture_scene(scene_path: String, absolute_output: String) -> void:
 	# Allow layout to settle across a couple of frames.
 	await process_frame
 	await process_frame
-	RenderingServer.force_draw(true, 0.0)
-	await RenderingServer.frame_post_draw
+	if not OS.has_feature("headless"):
+		RenderingServer.force_draw(true, 0.0)
+		await RenderingServer.frame_post_draw
 
 	var viewport := get_root()
 	var texture := viewport.get_texture()

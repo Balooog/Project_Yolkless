@@ -48,12 +48,16 @@ Baseline capture + compare for the PX-010 UI program.
 ```bash
 # Generate / refresh placeholder baselines (see docs/ui_baselines/)
 ./tools/ui_viewport_matrix.sh --baseline
+# Headless fallback (synthetic baseline PNGs only)
+UI_BASELINE_PLACEHOLDER=1 ./tools/ui_baseline.sh
 
 # Produce the current placeholder matrix for comparison
 ./tools/ui_viewport_matrix.sh --out-dir=dev/screenshots/ui_current
 
 # Compare current captures vs baseline; fails on any pixel diff (threshold TBD)
 ./tools/ui_compare.sh dev/screenshots/ui_baseline dev/screenshots/ui_current
+# Confirm toast/safe-area contract before pushing
+python3 tools/ui_assert_baseline.py --images dev/screenshots/ui_baseline
 ```
 
 ## UILint

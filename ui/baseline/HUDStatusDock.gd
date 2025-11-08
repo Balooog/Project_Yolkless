@@ -83,10 +83,10 @@ func _apply_panel_style() -> void:
 	style.corner_radius_top_right = radius
 	style.corner_radius_bottom_left = radius
 	style.corner_radius_bottom_right = radius
-	style.content_margin_left = int(round(TOKENS.spacing_value(&"space_lg")))
-	style.content_margin_right = int(round(TOKENS.spacing_value(&"space_lg")))
-	style.content_margin_top = int(round(TOKENS.spacing_value(&"space_md")))
-	style.content_margin_bottom = int(round(TOKENS.spacing_value(&"space_md")))
+	style.content_margin_left = 0
+	style.content_margin_right = 0
+	style.content_margin_top = 0
+	style.content_margin_bottom = 0
 	_panel.add_theme_stylebox_override("panel", style)
 
 func _apply_static_tokens() -> void:

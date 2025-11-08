@@ -85,10 +85,14 @@ docs/
 4. New HUD elements require a matching baseline PNG before merge.
 5. Toast and Tooltip regions remain hidden in baseline.
 
+Use `python3 tools/ui_assert_baseline.py --images dev/screenshots/ui_baseline` before committing to ensure the toast region stays empty and the HUD dock remains inside the safe area; CI runs the same check.
+
 ## 9 · Capture Workflow
 
 ```bash
 ./tools/ui_viewport_matrix.sh --baseline
+# If you need a headless fallback, use the synthetic generator:
+UI_BASELINE_PLACEHOLDER=1 ./tools/ui_baseline.sh
 ```
 
 ## 10 · Notes
