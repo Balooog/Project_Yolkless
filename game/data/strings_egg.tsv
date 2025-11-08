@@ -26,6 +26,12 @@ research_available	{label} ({cost} 🌟)
 offline_title	Offline Egg Credits
 offline_summary_title	While you were away…
 offline_summary_body	Your farm produced {amount} at {pct}% passive efficiency. Feed to boost output!
+hud_slot_d_economy_rate	Egg Flow: {value}/s
+hud_slot_d_tooltip	Live production after comfort, power, and automation modifiers.
+hud_slot_f_backlog_normal	Queue {count}
+hud_slot_f_backlog_warning	Queue {count} ⚠
+hud_slot_f_tooltip	Conveyor backlog shows how many shipments await packing.
+hud_slot_f_tooltip_warning	Queue above {threshold} stalls automation. Check power or automation settings.
 capacity_bar_label	Storage: {value} / {capacity}
 storage_label	Storage: {storage} / {capacity} ({percent}%)
 storage_dump_message	Shipment sent! +{amount}
@@ -62,6 +68,15 @@ reset_save_dialog_title	Delete Save Data?
 reset_save_dialog_body	This will delete your local save and restart the session. This cannot be undone.
 reset_save_dialog_confirm	Delete Save
 reset_save_dialog_cancel	Cancel
+automation_panel_title	Automation
+automation_panel_title_tooltip	Configure routines that auto-feed bursts or manage helpers.
+automation_info_unavailable	Automation service unavailable
+automation_state_enabled	Automation enabled
+automation_state_disabled	Automation paused
+automation_state_power_limited	 — limited by power
+automation_next_action	next in {seconds}s
+automation_target_autoburst	Auto-feed bursts
+automation_target_autoburst_tooltip	Automatically trigger Feed bursts when production dips below the sweet spot.
 toast_upgrade_prod	Production +10%
 toast_upgrade_cap	Storage +10%
 toast_upgrade_feed_storage	Feed Tank +10

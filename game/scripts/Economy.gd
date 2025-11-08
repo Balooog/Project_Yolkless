@@ -997,13 +997,13 @@ func _update_conveyor_backlog_signal() -> void:
 	conveyor_backlog_changed.emit(_conveyor_queue, label, tone)
 
 func _format_backlog_label(queue_len: int, jam_active: bool) -> String:
-	var label := "Queue %d" % queue_len
+	var label: String = "Queue %d" % queue_len
 	if jam_active:
 		label += " ⚠"
 	return label
 
 func _update_economy_rate_signal(rate: float) -> void:
-	var label := _format_rate_label(rate)
+	var label: String = _format_rate_label(rate)
 	if is_equal_approx(rate, _last_economy_rate) and label == _last_economy_rate_label:
 		return
 	_last_economy_rate = rate
@@ -1011,7 +1011,7 @@ func _update_economy_rate_signal(rate: float) -> void:
 	economy_rate_changed.emit(rate, label)
 
 func _format_rate_label(rate: float) -> String:
-	var abs_rate := abs(rate)
+	var abs_rate: float = abs(rate)
 	var decimals := 1
 	if abs_rate >= 10.0:
 		decimals = 0
