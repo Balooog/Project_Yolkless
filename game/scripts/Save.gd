@@ -20,6 +20,7 @@ const CURRENT_VERSION := SaveMigrator.CURRENT_VERSION
 var _migrator: SaveMigrator = SaveMigrator.new()
 var _offline_service: OfflineService = OfflineService.new()
 var _last_snapshot: Dictionary = {}
+var tier_progress: int = 0
 
 func setup(
 		eco: Economy,
@@ -52,6 +53,7 @@ func save(reason: String = "manual") -> void:
 			"prod_rank": _eco.prod_rank,
 			"factory_tier": _eco.factory_tier,
 			"feed": _eco.feed_current,
+			"automation_threshold": _eco.automation_feed_threshold()
 		},
 		"snapshot": snapshot,
 		"upgrades": _eco._upgrade_levels,
@@ -59,6 +61,7 @@ func save(reason: String = "manual") -> void:
 			"owned": _res.owned.keys(),
 			"pp": _res.prestige_points,
 		},
+		"tier_progress": tier_progress
 	}
 	var payload := JSON.stringify(payload_dict)
 	var hash := _hash_md5(payload)
@@ -123,6 +126,8 @@ func load_state() -> void:
 		_eco.feed_current = float(eco_data.get("feed", _eco.feed_current))
 	else:
 		_eco.feed_current = _eco.feed_capacity
+	if eco_data.has("automation_threshold"):
+		_eco.set_automation_feed_threshold(float(eco_data.get("automation_threshold", 0.5)))
 	_res.owned.clear()
 	var research_variant: Variant = save_data.get("research", {})
 	var research_data: Dictionary = research_variant if research_variant is Dictionary else {}
@@ -136,6 +141,7 @@ func load_state() -> void:
 	_eco.refresh_after_load()
 	_eco.soft_changed.emit(_eco.soft)
 	_eco.tier_changed.emit(_eco.factory_tier)
+	tier_progress = int(save_data.get("tier_progress", tier_progress))
 	_log("INFO", "SAVE", "Save loaded", {
 		"soft": _eco.soft,
 		"storage": _eco.storage,

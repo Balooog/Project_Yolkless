@@ -28,7 +28,7 @@ Run a deterministic headless session, collect StatBus metrics, and publish artif
 2. **StatsProbe CSV columns**  
    Ensure the newest `tick_*.csv` includes the PX-020 columns appended to the header:
    ```
-   ...,eco_statbus_ms,eco_ui_ms,economy_rate,economy_rate_label,conveyor_backlog,conveyor_backlog_label,automation_target,automation_target_label,automation_panel_visible
+   ...,eco_statbus_ms,eco_ui_ms,economy_rate,economy_rate_label,conveyor_backlog,conveyor_backlog_label,automation_target,automation_target_label,automation_panel_visible,tier,event_id
    ```
    Spot-check a few rows (`tail -n 3 <file>.csv`) to confirm labels and counts are populated (labels default to the last seen HUD strings if the service supplied an empty string).
 3. **JSON summary fields**  

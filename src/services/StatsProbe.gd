@@ -116,7 +116,7 @@ func _process_pending_writes() -> void:
 		if file == null:
 			push_warning("StatsProbe: Failed to open %s for writing" % path)
 			continue
-		file.store_line("service,tick_ms,pps,ci,active_cells,power_ratio,ci_delta,storage,feed_fraction,power_state,power_warning_level,power_warning_label,auto_active,sandbox_render_view_mode,sandbox_render_fallback_active,stage_rebuild_ms,stage_rebuild_source,eco_in_ms,eco_apply_ms,eco_ship_ms,eco_research_ms,eco_statbus_ms,eco_ui_ms,economy_rate,economy_rate_label,conveyor_backlog,conveyor_backlog_label,automation_target,automation_target_label,automation_panel_visible")
+		file.store_line("service,tick_ms,pps,ci,active_cells,power_ratio,ci_delta,storage,feed_fraction,power_state,power_warning_level,power_warning_label,auto_active,sandbox_render_view_mode,sandbox_render_fallback_active,stage_rebuild_ms,stage_rebuild_source,eco_in_ms,eco_apply_ms,eco_ship_ms,eco_research_ms,eco_statbus_ms,eco_ui_ms,economy_rate,economy_rate_label,conveyor_backlog,conveyor_backlog_label,automation_target,automation_target_label,automation_panel_visible,tier,event_id")
 		for row_variant in rows:
 			var row_dict: Dictionary = row_variant
 			var fallback_flag: int = 1 if row_dict.get("sandbox_render_fallback_active", false) else 0
@@ -132,7 +132,9 @@ func _process_pending_writes() -> void:
 			var automation_target_value: float = float(row_dict.get("automation_target", 0.0))
 			var automation_target_label_value: String = String(row_dict.get("automation_target_label", ""))
 			var automation_panel_visible_value: float = float(row_dict.get("automation_panel_visible", 0.0))
-			var csv := "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % [
+			var tier_value: int = int(row_dict.get("tier", 0))
+			var event_id_value: String = String(row_dict.get("event_id", ""))
+			var csv := "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % [
 				row_dict.get("service", SERVICE_SANDBOX),
 				row_dict.get("tick_ms", 0.0),
 				row_dict.get("pps", 0.0),
@@ -162,7 +164,9 @@ func _process_pending_writes() -> void:
 				backlog_label_value,
 				automation_target_value,
 				automation_target_label_value,
-				automation_panel_visible_value
+				automation_panel_visible_value,
+				tier_value,
+				event_id_value
 			]
 			file.store_line(csv)
 		file.close()
@@ -207,7 +211,9 @@ func summarize() -> Dictionary:
 				"conveyor_backlog_label_last": "",
 				"automation_target_values": [],
 				"automation_target_label_last": "",
-				"automation_panel_visible_samples": 0
+				"automation_panel_visible_samples": 0,
+				"tier_last": 0,
+				"event_id_last": ""
 			}
 		var group: Dictionary = grouped[service]
 		var tick_value: float = float(entry.get("tick_ms", 0.0))
@@ -249,6 +255,8 @@ func summarize() -> Dictionary:
 			(group["eco_research_values"] as Array).append(float(entry.get("eco_research_ms", 0.0)))
 			(group["eco_statbus_values"] as Array).append(float(entry.get("eco_statbus_ms", 0.0)))
 			(group["eco_ui_values"] as Array).append(float(entry.get("eco_ui_ms", 0.0)))
+			group["tier_last"] = int(entry.get("tier", group.get("tier_last", 0)))
+			group["event_id_last"] = String(entry.get("event_id", group.get("event_id_last", "")))
 		elif service == SERVICE_POWER:
 			group["power_state_accum"] += entry.get("power_state", entry.get("power_ratio", 0.0))
 		elif service == SERVICE_AUTOMATION:
@@ -336,6 +344,8 @@ func summarize() -> Dictionary:
 				summary["economy_rate_label_last"] = String(group.get("economy_rate_label_last", ""))
 				summary["conveyor_backlog_avg"] = _profiling_avg(group["conveyor_backlog_values"])
 				summary["conveyor_backlog_label_last"] = String(group.get("conveyor_backlog_label_last", ""))
+				summary["tier_progress_last"] = int(group.get("tier_last", 0))
+				summary["event_id_last"] = String(group.get("event_id_last", ""))
 			SERVICE_SANDBOX_RENDER:
 				summary["sandbox_render_ms_p95"] = p95
 				summary["sandbox_render_ms_avg"] = avg

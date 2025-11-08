@@ -21,6 +21,28 @@ const CONVEYOR_JAM_WARNING_THRESHOLD := 40
 const AUTOMATION_BUTTON_TARGETS := {
 	StringName("auto_1"): StringName("economy_feed_autoburst")
 }
+const StatBus := preload("res://src/services/StatBus.gd")
+const TOOLTIP_SCENE := preload("res://ui/components/Tooltip.tscn")
+const TIER1_POWER_SECONDS := 90.0
+const TIER1_RATE_THRESHOLD := 1.2
+const TIER1_CONVEYOR_BONUS := 0.10
+const MICRO_EVENT_STAT_KEY := StringName("micro_event_id")
+const MICRO_EVENTS := [
+	{
+		"id": "overcast_day",
+		"title_key": "event_overcast_day_title",
+		"body_key": "event_overcast_day_body",
+		"duration": 45.0,
+		"cooldown": 90.0
+	},
+	{
+		"id": "bulk_order",
+		"title_key": "event_bulk_order_title",
+		"body_key": "event_bulk_order_body",
+		"duration": 50.0,
+		"cooldown": 110.0
+	}
+]
 
 @onready var bal: Balance = $Balance
 @onready var res: Research = $Research
@@ -72,6 +94,14 @@ var environment_panel: EnvPanel
 @onready var conveyor_manager: ConveyorManager = %ConveyorManager
 @onready var conveyor_layer := %ConveyorLayer
 @onready var ui_prototype := %PrototypeUI as UIArchitecturePrototype
+@onready var ui_layer: CanvasLayer = $UI
+@onready var btn_automation_panel: Button = %AutomationPanelButton
+@onready var automation_panel_ui: AutomationPanelUI = %AutomationPanel
+@onready var micro_event_card: PanelContainer = %MicroEventCard
+@onready var micro_event_title: Label = %MicroEventTitle
+@onready var micro_event_body: Label = %MicroEventBody
+@onready var micro_event_timer_label: Label = %MicroEventTimer
+@onready var micro_event_dismiss: Button = %MicroEventDismiss
 
 var text_scale := 1.0
 var shop_service: ShopService
@@ -123,6 +153,20 @@ var factory_viewport: SubViewport
 var env_renderer_mode: String = "legacy"
 var _power_warning_level: StringName = PowerService.WARNING_NORMAL
 var _power_warning_sound_warned := false
+var _statbus: StatBus
+var _power_tooltip: UITooltip
+var _economy_tooltip: UITooltip
+var _backlog_tooltip: UITooltip
+var _economy_tone: StringName = StringName("normal")
+var _backlog_tone_runtime: StringName = StringName("normal")
+var _tier_one_unlocked := false
+var _stable_power_seconds := 0.0
+var _economy_rate_avg := 0.0
+var _tier_rate_samples := 0
+var _micro_event_timer := 45.0
+var _micro_event_active_id: String = ""
+var _micro_event_time_left := 0.0
+var _micro_event_queue_index := 0
 
 func _ready() -> void:
 	_configure_input_actions()
@@ -167,6 +211,13 @@ func _ready() -> void:
 	btn_r_auto.pressed.connect(func(): _attempt_research("r_auto_1"))
 	offline_close.pressed.connect(func(): offline_popup.hide())
 	btn_ship_now.pressed.connect(_on_ship_now_pressed)
+	if btn_automation_panel:
+		btn_automation_panel.pressed.connect(_on_automation_panel_button_pressed)
+	_setup_status_tooltips()
+	if micro_event_card:
+		micro_event_card.visible = false
+	if micro_event_dismiss:
+		micro_event_dismiss.pressed.connect(_on_micro_event_dismissed)
 
 	var config_node := get_node_or_null("/root/Config")
 	var logging_enabled := true
@@ -304,6 +355,14 @@ func _ready() -> void:
 	power_service = _get_power_service()
 	automation_service = _get_automation_service()
 	sandbox_service = _get_sandbox_service()
+	if automation_panel_ui:
+		automation_panel_ui.attach_services(eco, conveyor_manager, automation_service)
+		if not automation_panel_ui.automation_panel_opened.is_connected(_on_prototype_automation_panel_opened):
+			automation_panel_ui.automation_panel_opened.connect(_on_prototype_automation_panel_opened)
+		if not automation_panel_ui.automation_panel_closed.is_connected(_on_prototype_automation_panel_closed):
+			automation_panel_ui.automation_panel_closed.connect(_on_prototype_automation_panel_closed)
+		if not automation_panel_ui.automation_target_changed.is_connected(_on_prototype_automation_target_changed):
+			automation_panel_ui.automation_target_changed.connect(_on_prototype_automation_target_changed)
 	if environment_service:
 		environment_service.set_strings(strings)
 		var env_root := environment_root_node
@@ -341,6 +400,10 @@ func _ready() -> void:
 		_sync_prototype_all()
 
 	sav.load_state()
+	_tier_one_unlocked = sav.tier_progress >= 1
+	_apply_tier_progression()
+	_sync_automation_panel_from_economy()
+	_update_telemetry_context()
 	var offline_summary: Dictionary = sav.apply_offline_rewards()
 	if float(offline_summary.get("grant", 0.0)) > 0.0:
 		_show_offline_popup(offline_summary)
@@ -370,6 +433,8 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	_update_feed_ui()
 	_update_conveyor_spawn(delta)
+	_update_tier_progress(delta)
+	_update_micro_events(delta)
 	_automation_refresh_timer += delta
 	if _automation_refresh_timer >= 0.5:
 		_automation_refresh_timer = 0.0
@@ -439,6 +504,8 @@ func _apply_strings() -> void:
 	btn_export.text = _strings_get("export_button", btn_export.text)
 	btn_import.text = _strings_get("import_button", btn_import.text)
 	btn_ship_now.text = _strings_get("ship_now_button", btn_ship_now.text)
+	if btn_automation_panel:
+		btn_automation_panel.text = _strings_get("automation_panel_open_button", btn_automation_panel.text)
 	research_header_label.text = _strings_get("research_header_title", research_header_label.text)
 	var close_text := _strings_get("close_button", offline_close.text)
 	offline_close.text = close_text
@@ -1043,10 +1110,17 @@ func _on_prototype_layout_changed() -> void:
 	_update_factory_viewport_bounds()
 	_center_environment_root()
 
+func _on_automation_panel_button_pressed() -> void:
+	if automation_panel_ui:
+		automation_panel_ui.show_panel()
+
 func _on_prototype_automation_panel_opened() -> void:
 	var service := _get_automation_service()
 	if service:
 		service.set_panel_visible(true)
+		if automation_panel_ui:
+			automation_panel_ui.set_toggle_state(service.is_global_enabled())
+	_sync_automation_panel_from_economy()
 
 func _on_prototype_automation_panel_closed() -> void:
 	var service := _get_automation_service()
@@ -1085,7 +1159,25 @@ func _on_economy_rate_changed(rate: float, label: String) -> void:
 	var formatted_value := _format_num(rate, decimals)
 	var slot_label: String = _strings_get("hud_slot_d_economy_rate", label).format({"value": formatted_value})
 	var tooltip: String = _strings_get("hud_slot_d_tooltip", slot_label)
-	_set_prototype_status("economy_rate", slot_label, "normal", tooltip)
+	var tone := StringName("normal")
+	if rate < 0.1:
+		tone = StringName("critical")
+	elif rate < 0.5:
+		tone = StringName("warning")
+	_economy_tone = tone
+	_set_prototype_status("economy_rate", slot_label, String(tone), tooltip)
+	if lbl_pps:
+		lbl_pps.text = slot_label
+		lbl_pps.tooltip_text = tooltip
+	if ui_prototype:
+		ui_prototype.set_status(StringName("economy_rate"), slot_label, tooltip)
+	if automation_panel_ui:
+		automation_panel_ui.update_economy_rate(slot_label)
+	if _tier_rate_samples == 0:
+		_economy_rate_avg = rate
+	else:
+		_economy_rate_avg = lerp(_economy_rate_avg, rate, 0.1)
+	_tier_rate_samples = min(_tier_rate_samples + 1, 100000)
 
 func _on_conveyor_backlog_changed(queue_len: int, label: String, tone: StringName) -> void:
 	var tone_string := String(tone)
@@ -1097,6 +1189,12 @@ func _on_conveyor_backlog_changed(queue_len: int, label: String, tone: StringNam
 		"threshold": CONVEYOR_JAM_WARNING_THRESHOLD
 	})
 	_set_prototype_status("conveyor_backlog", slot_label, tone_string, tooltip)
+	_backlog_tone_runtime = tone
+	if lbl_conveyor:
+		lbl_conveyor.text = slot_label
+		lbl_conveyor.tooltip_text = tooltip
+	if automation_panel_ui:
+		automation_panel_ui.update_backlog(slot_label, tone)
 
 func _on_ci_changed(ci: float, bonus: float) -> void:
 	_comfort_index = clamp(ci, 0.0, 1.0)
@@ -1749,6 +1847,164 @@ func _get_strings() -> StringsCatalog:
 		return node as StringsCatalog
 	return null
 
+func _get_statbus() -> StatBus:
+	if _statbus and is_instance_valid(_statbus):
+		return _statbus
+	var node := get_node_or_null("/root/StatBusSingleton")
+	if node is StatBus:
+		_statbus = node as StatBus
+		return _statbus
+	return null
+
+func _apply_tier_progression() -> void:
+	var multiplier := 1.0
+	if _tier_one_unlocked:
+		multiplier += TIER1_CONVEYOR_BONUS
+	if conveyor_manager:
+		conveyor_manager.set_speed_multiplier(multiplier)
+
+func _sync_automation_panel_from_economy() -> void:
+	if automation_panel_ui and eco:
+		var ratio := eco.automation_feed_threshold()
+		automation_panel_ui.set_slider_ratio(ratio)
+		automation_panel_ui.set_hint_percent(ratio * 100.0)
+		automation_panel_ui.set_toggle_state(automation_service.is_global_enabled() if automation_service else true)
+	if conveyor_manager and eco:
+		conveyor_manager.set_user_speed_bias(eco.automation_feed_threshold())
+
+func _update_telemetry_context() -> void:
+	if eco:
+		eco.set_telemetry_context(sav.tier_progress, _micro_event_active_id)
+
+func _setup_status_tooltips() -> void:
+	if ui_layer == null:
+		return
+	if _power_tooltip == null:
+		_power_tooltip = _create_tooltip()
+	if _economy_tooltip == null:
+		_economy_tooltip = _create_tooltip()
+	if _backlog_tooltip == null:
+		_backlog_tooltip = _create_tooltip()
+	if lbl_power and not lbl_power.mouse_entered.is_connected(_on_power_label_hovered):
+		lbl_power.mouse_entered.connect(_on_power_label_hovered)
+		lbl_power.mouse_exited.connect(func(): _hide_tooltip(_power_tooltip))
+	if lbl_pps and not lbl_pps.mouse_entered.is_connected(_on_economy_label_hovered):
+		lbl_pps.mouse_entered.connect(_on_economy_label_hovered)
+		lbl_pps.mouse_exited.connect(func(): _hide_tooltip(_economy_tooltip))
+	if lbl_conveyor and not lbl_conveyor.mouse_entered.is_connected(_on_backlog_label_hovered):
+		lbl_conveyor.mouse_entered.connect(_on_backlog_label_hovered)
+		lbl_conveyor.mouse_exited.connect(func(): _hide_tooltip(_backlog_tooltip))
+
+func _create_tooltip() -> UITooltip:
+	if ui_layer == null:
+		return null
+	var tooltip := TOOLTIP_SCENE.instantiate() as UITooltip
+	if tooltip == null:
+		return null
+	ui_layer.add_child(tooltip)
+	tooltip.visible = false
+	return tooltip
+
+func _on_power_label_hovered() -> void:
+	if _power_tooltip == null or lbl_power == null:
+		return
+	var text := _tooltip_copy("tooltip_power", _power_warning_level, lbl_power.tooltip_text)
+	_show_tooltip(_power_tooltip, text, lbl_power)
+
+func _on_economy_label_hovered() -> void:
+	if _economy_tooltip == null or lbl_pps == null:
+		return
+	var text := _tooltip_copy("tooltip_economy", _economy_tone, lbl_pps.tooltip_text)
+	_show_tooltip(_economy_tooltip, text, lbl_pps)
+
+func _on_backlog_label_hovered() -> void:
+	if _backlog_tooltip == null or lbl_conveyor == null:
+		return
+	var text := _tooltip_copy("tooltip_backlog", _backlog_tone_runtime, lbl_conveyor.tooltip_text)
+	_show_tooltip(_backlog_tooltip, text, lbl_conveyor)
+
+func _tooltip_copy(prefix: String, tone: StringName, fallback: String) -> String:
+	var key := "%s_%s" % [prefix, String(tone)]
+	return _strings_get(key, fallback)
+
+func _show_tooltip(tooltip: UITooltip, text: String, anchor: Control) -> void:
+	if tooltip == null or anchor == null:
+		return
+	tooltip.set_text(text)
+	var anchor_pos := anchor.get_global_position()
+	var offset := Vector2(0, anchor.size.y + 8.0)
+	var pos := anchor_pos + offset
+	tooltip.position = Vector2(round(pos.x), round(pos.y))
+	tooltip.visible = true
+
+func _hide_tooltip(tooltip: UITooltip) -> void:
+	if tooltip:
+		tooltip.visible = false
+
+func _update_micro_events(delta: float) -> void:
+	if MICRO_EVENTS.is_empty():
+		return
+	if _micro_event_active_id != "":
+		_micro_event_time_left = max(_micro_event_time_left - delta, 0.0)
+		_update_micro_event_timer_label()
+		if _micro_event_time_left <= 0.0:
+			_complete_micro_event()
+	else:
+		_micro_event_timer = max(_micro_event_timer - delta, 0.0)
+		if _micro_event_timer <= 0.0:
+			_start_next_micro_event()
+
+func _start_next_micro_event() -> void:
+	if MICRO_EVENTS.is_empty():
+		return
+	var event_data: Dictionary = MICRO_EVENTS[_micro_event_queue_index % MICRO_EVENTS.size()]
+	_micro_event_queue_index += 1
+	_micro_event_active_id = String(event_data.get("id", ""))
+	_micro_event_time_left = float(event_data.get("duration", 45.0))
+	_micro_event_timer = float(event_data.get("cooldown", 90.0))
+	_show_micro_event_card(event_data)
+	_set_statbus_event(_micro_event_active_id)
+	_update_telemetry_context()
+
+func _show_micro_event_card(event_data: Dictionary) -> void:
+	if micro_event_card == null:
+		return
+	var title_key := String(event_data.get("title_key", ""))
+	var body_key := String(event_data.get("body_key", ""))
+	if micro_event_title:
+		micro_event_title.text = _strings_get(title_key, title_key)
+	if micro_event_body:
+		micro_event_body.text = _strings_get(body_key, body_key)
+	if micro_event_dismiss:
+		micro_event_dismiss.text = _strings_get("event_dismiss_button", micro_event_dismiss.text)
+	micro_event_card.visible = true
+	_update_micro_event_timer_label()
+
+func _update_micro_event_timer_label() -> void:
+	if micro_event_timer_label:
+		var remaining := int(ceil(_micro_event_time_left))
+		var text := "%ds" % max(remaining, 0)
+		micro_event_timer_label.text = text
+
+func _complete_micro_event() -> void:
+	if _micro_event_active_id == "":
+		return
+	_micro_event_active_id = ""
+	_micro_event_time_left = 0.0
+	if micro_event_card:
+		micro_event_card.visible = false
+	_set_statbus_event("")
+	_update_telemetry_context()
+
+func _on_micro_event_dismissed() -> void:
+	_complete_micro_event()
+
+func _set_statbus_event(event_id: String) -> void:
+	var bus := _get_statbus()
+	if bus:
+		bus.register_stat(MICRO_EVENT_STAT_KEY, {"stack": "replace", "default": ""})
+		bus.set_stat(MICRO_EVENT_STAT_KEY, event_id, "MicroEvents")
+
 
 func _update_power_label() -> void:
 	if lbl_power == null:
@@ -1791,6 +2047,31 @@ func _update_power_label() -> void:
 		tooltip_lines.append(_strings_get("power_warning_tooltip_normal", "Power grid stable."))
 	lbl_power.tooltip_text = "\n".join(tooltip_lines)
 	_apply_power_warning_visuals(warning_level)
+	if automation_panel_ui:
+		automation_panel_ui.set_power_limited(warning_level != PowerService.WARNING_NORMAL)
+
+func _update_tier_progress(delta: float) -> void:
+	if _tier_one_unlocked:
+		return
+	if _power_warning_level == PowerService.WARNING_NORMAL:
+		_stable_power_seconds += delta
+	else:
+		_stable_power_seconds = max(_stable_power_seconds - delta, 0.0)
+	if _tier_one_unlocked:
+		return
+	if _stable_power_seconds >= TIER1_POWER_SECONDS and _economy_rate_avg >= TIER1_RATE_THRESHOLD:
+		_complete_tier_one_unlock()
+
+func _complete_tier_one_unlock() -> void:
+	if _tier_one_unlocked:
+		return
+	_tier_one_unlocked = true
+	if sav:
+		sav.tier_progress = max(sav.tier_progress, 1)
+	_apply_tier_progression()
+	_update_telemetry_context()
+	_show_toast(_strings_get("toast_tier_one_unlock", "Tier I unlocked — conveyor efficiency boosted!"))
+	sav.save("tier_progress")
 
 func _sanitize_log_line(line: String) -> String:
 	var logger := _get_logger()
