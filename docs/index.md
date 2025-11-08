@@ -33,6 +33,8 @@ layout: default
 [PX-020.3 Tooltips & Copy](px/PX-020.3_Tooltips_Copy.md) | 
 [PX-020.4 Telemetry Replay](px/PX-020.4_Telemetry_Replay.md)
 
+> **PX-020 Validation:** Every PX-020 PR must attach the output from `python3 tools/docs_lint/check_structure.py`, `python3 tools/ui_assert_baseline.py`, `source .env && ./tools/check_only_ci.sh`, and the replay checklist in [PX-020.4](px/PX-020.4_Telemetry_Replay.md).  See the matrix in [PX-020.0 Overview](px/PX-020.0_Overview.md#validation--telemetry-matrix) for per-phase expectations.
+
 ---
 
 ### 📄 Key Documents
