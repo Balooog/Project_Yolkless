@@ -116,7 +116,7 @@ func _process_pending_writes() -> void:
 		if file == null:
 			push_warning("StatsProbe: Failed to open %s for writing" % path)
 			continue
-		file.store_line("service,tick_ms,pps,ci,active_cells,power_ratio,ci_delta,storage,feed_fraction,power_state,power_warning_level,power_warning_label,auto_active,sandbox_render_view_mode,sandbox_render_fallback_active,stage_rebuild_ms,stage_rebuild_source,eco_in_ms,eco_apply_ms,eco_ship_ms,eco_research_ms,eco_statbus_ms,eco_ui_ms,economy_rate,economy_rate_label,conveyor_backlog,conveyor_backlog_label")
+		file.store_line("service,tick_ms,pps,ci,active_cells,power_ratio,ci_delta,storage,feed_fraction,power_state,power_warning_level,power_warning_label,auto_active,sandbox_render_view_mode,sandbox_render_fallback_active,stage_rebuild_ms,stage_rebuild_source,eco_in_ms,eco_apply_ms,eco_ship_ms,eco_research_ms,eco_statbus_ms,eco_ui_ms,economy_rate,economy_rate_label,conveyor_backlog,conveyor_backlog_label,automation_target,automation_target_label,automation_panel_visible")
 		for row_variant in rows:
 			var row_dict: Dictionary = row_variant
 			var fallback_flag: int = 1 if row_dict.get("sandbox_render_fallback_active", false) else 0
@@ -129,7 +129,10 @@ func _process_pending_writes() -> void:
 			var backlog_label_value: String = String(row_dict.get("conveyor_backlog_label", ""))
 			if backlog_label_value == "":
 				backlog_label_value = _format_backlog_label(backlog_value)
-			var csv := "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % [
+			var automation_target_value: float = float(row_dict.get("automation_target", 0.0))
+			var automation_target_label_value: String = String(row_dict.get("automation_target_label", ""))
+			var automation_panel_visible_value: float = float(row_dict.get("automation_panel_visible", 0.0))
+			var csv := "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % [
 				row_dict.get("service", SERVICE_SANDBOX),
 				row_dict.get("tick_ms", 0.0),
 				row_dict.get("pps", 0.0),
@@ -156,7 +159,10 @@ func _process_pending_writes() -> void:
 				economy_rate_value,
 				economy_rate_label_value,
 				backlog_value,
-				backlog_label_value
+				backlog_label_value,
+				automation_target_value,
+				automation_target_label_value,
+				automation_panel_visible_value
 			]
 			file.store_line(csv)
 		file.close()
@@ -198,7 +204,10 @@ func summarize() -> Dictionary:
 				"economy_rate_values": [],
 				"conveyor_backlog_values": [],
 				"economy_rate_label_last": "",
-				"conveyor_backlog_label_last": ""
+				"conveyor_backlog_label_last": "",
+				"automation_target_values": [],
+				"automation_target_label_last": "",
+				"automation_panel_visible_samples": 0
 			}
 		var group: Dictionary = grouped[service]
 		var tick_value: float = float(entry.get("tick_ms", 0.0))
@@ -244,6 +253,12 @@ func summarize() -> Dictionary:
 			group["power_state_accum"] += entry.get("power_state", entry.get("power_ratio", 0.0))
 		elif service == SERVICE_AUTOMATION:
 			group["auto_active_accum"] += entry.get("auto_active", 0)
+			var target_value: float = float(entry.get("automation_target", 0.0))
+			(group["automation_target_values"] as Array).append(target_value)
+			var target_label: String = String(entry.get("automation_target_label", group.get("automation_target_label_last", "")))
+			group["automation_target_label_last"] = target_label
+			if float(entry.get("automation_panel_visible", 0.0)) > 0.5:
+				group["automation_panel_visible_samples"] = int(group.get("automation_panel_visible_samples", 0)) + 1
 		elif service == SERVICE_SANDBOX_RENDER:
 			group["fallback_samples"] = int(group["fallback_samples"]) + 1
 			if entry.get("sandbox_render_fallback_active", false):
@@ -281,6 +296,14 @@ func summarize() -> Dictionary:
 				summary["automation_tick_ms_p95"] = p95
 				summary["automation_tick_ms_avg"] = avg
 				summary["automation_auto_active_avg"] = float(group["auto_active_accum"]) / count_float
+				var target_values := group["automation_target_values"] as Array
+				if target_values.is_empty():
+					summary["automation_target_value_last"] = 0.0
+				else:
+					summary["automation_target_value_last"] = float(target_values[target_values.size() - 1])
+				summary["automation_target_last"] = String(group.get("automation_target_label_last", ""))
+				var visible_samples := float(group.get("automation_panel_visible_samples", 0))
+				summary["automation_panel_visible_ratio"] = visible_samples / count_float
 			SERVICE_POWER:
 				summary["power_tick_ms_p95"] = p95
 				summary["power_tick_ms_avg"] = avg

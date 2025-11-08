@@ -26,7 +26,7 @@
 | `offline_multiplier` | Passive production multiplier during offline calc. | multiplier | On save/load | multiplicative | Save/Offline Manager |
 | `economy_rate` | PPS after all modifiers, smoothed for HUD Slot D. | credits/sec | Economy tick (≤10 Hz) | replace | Economy Service |
 | `economy_rate_label` | Localized HUD copy for Slot D (e.g., `\"3.4/s\"`). | string | Economy tick | replace | UI Prototype |
-| `automation_target` | Current automation mode/target selected in the Automation Panel. | enum (string) | On selection | replace | Automation Service |
+| `automation_target` | Current automation mode/target selected in the Automation Panel (string enum). | string | On selection | replace | Automation Service |
 
 ## Usage Notes
 

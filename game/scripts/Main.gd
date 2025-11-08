@@ -17,6 +17,9 @@ const POWER_WARNING_COLOR := Color(0.996, 0.784, 0.318, 1.0)
 const POWER_CRITICAL_COLOR := Color(0.984, 0.412, 0.392, 1.0)
 const POWER_WARNING_CLIP := preload("res://assets/placeholder/audio/power_warning_low.wav")
 const POWER_CRITICAL_CLIP := preload("res://assets/placeholder/audio/power_warning_critical.wav")
+const AUTOMATION_BUTTON_TARGETS := {
+	StringName("auto_1"): StringName("economy_feed_autoburst")
+}
 
 @onready var bal: Balance = $Balance
 @onready var res: Research = $Research
@@ -201,6 +204,12 @@ func _ready() -> void:
 			ui_prototype.settings_requested.connect(_on_settings_pressed)
 		if not ui_prototype.layout_changed.is_connected(_on_prototype_layout_changed):
 			ui_prototype.layout_changed.connect(_on_prototype_layout_changed)
+		if not ui_prototype.automation_panel_opened.is_connected(_on_prototype_automation_panel_opened):
+			ui_prototype.automation_panel_opened.connect(_on_prototype_automation_panel_opened)
+		if not ui_prototype.automation_panel_closed.is_connected(_on_prototype_automation_panel_closed):
+			ui_prototype.automation_panel_closed.connect(_on_prototype_automation_panel_closed)
+		if not ui_prototype.automation_target_changed.is_connected(_on_prototype_automation_target_changed):
+			ui_prototype.automation_target_changed.connect(_on_prototype_automation_target_changed)
 		var proto_env := ui_prototype.get_environment_panel()
 		if proto_env is EnvPanel:
 			environment_panel = proto_env
@@ -1030,6 +1039,23 @@ func _on_prototype_import_requested() -> void:
 func _on_prototype_layout_changed() -> void:
 	_update_factory_viewport_bounds()
 	_center_environment_root()
+
+func _on_prototype_automation_panel_opened() -> void:
+	var service := _get_automation_service()
+	if service:
+		service.set_panel_visible(true)
+
+func _on_prototype_automation_panel_closed() -> void:
+	var service := _get_automation_service()
+	if service:
+		service.set_panel_visible(false)
+
+func _on_prototype_automation_target_changed(button_id: StringName) -> void:
+	var target_variant := AUTOMATION_BUTTON_TARGETS.get(button_id, button_id)
+	var target := StringName(target_variant)
+	var service := _get_automation_service()
+	if service:
+		service.set_panel_target(target)
 
 func _on_high_contrast_toggled(enabled: bool) -> void:
 	high_contrast_enabled = enabled
