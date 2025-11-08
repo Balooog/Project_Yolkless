@@ -1,6 +1,14 @@
-# 🐣 Project Yolkless Documentation
+---
+title: Project Yolkless Docs
+layout: default
+---
 
-Welcome to the live documentation for **Project Yolkless**.
+# 🐣 Project Yolkless Documentation · v19.1 (Baseline Stable)
+
+> **Build:** `{{ site.github.build_revision | slice:0,7 }}`  
+> **Last Updated:** {{ site.time | date: "%Y-%m-%d %H:%M UTC" }}  
+> **Branch:** {{ site.github.branch }}  
+> **Maintainer:** Alex Balog · Lead Geophysicist · THG Geophysics
 
 ---
 
@@ -35,4 +43,16 @@ Welcome to the live documentation for **Project Yolkless**.
 
 ---
 
-_Last updated {{ "now" | date ("%Y-%m-%d") }}_
+## 🧭 Version History
+| Version | Date | Summary |
+|:--------|:------|:---------|
+| 19.1 | {{ site.time | date: "%Y-%m-%d" }} | Baseline stable · headless captures · CI linter added |
+| 19.0 | 2025-10-?? | HUD baseline established · PX-018 complete |
+| 18.x | 2025-?? | Early prototype builds |
+
+---
+
+<footer style="font-size:0.9em;opacity:0.75;margin-top:2em;">
+© {{ "now" | date: "%Y" }} THG Geophysics · Project Yolkless Docs · Built from commit {{ site.github.build_revision | slice:0,7 }} on branch {{ site.github.branch }}.  
+Powered by GitHub Pages + Jekyll.
+</footer>
