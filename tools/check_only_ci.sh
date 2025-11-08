@@ -71,5 +71,6 @@ find "${current_dir}" -maxdepth 1 -type f -name '*.png.import' -delete
 
 run_step "ui_baseline_capture" "${SCRIPT_DIR}/run_headless_godot.sh" "--output=${current_dir}"
 run_step "ui_compare" "${SCRIPT_DIR}/ui_compare.sh" "${baseline_dir}" "${current_dir}"
+run_step "replay_smoke" "${GODOT_BIN}" "--headless" "--path" "${REPO_ROOT}" "--script" "res://tools/replay_headless.gd" "--duration=60" "--seed=42"
 
 echo "[check_only] all steps passed"
