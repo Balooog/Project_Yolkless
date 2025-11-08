@@ -3,9 +3,14 @@ set -euo pipefail
 
 REPO_ROOT="$(cd -- "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 GODOT_BIN="${REPO_ROOT}/bin/Godot_v4.5.1-stable_linux.x86_64"
-OUT_DIR="${REPO_ROOT}/dev/screenshots/ui_baseline"
+DEFAULT_OUTPUT="${REPO_ROOT}/dev/screenshots/ui_baseline"
+if [[ $# -gt 0 ]]; then
+	EXTRA_ARGS=("$@")
+else
+	EXTRA_ARGS=("--output=${DEFAULT_OUTPUT}")
+fi
 
-mkdir -p "${OUT_DIR}"
+mkdir -p "${DEFAULT_OUTPUT}"
 
 export XDG_DATA_HOME="${REPO_ROOT}/.xdg-data"
 export XDG_CACHE_HOME="${REPO_ROOT}/.xdg-cache"
@@ -18,7 +23,8 @@ run_with_vulkan() {
 		--headless \
 		--path "${REPO_ROOT}" \
 		--rendering-driver vulkan \
-		--script "res://tools/ui_capture_baseline.gd"
+		--script "res://tools/ui_capture_baseline.gd" \
+		-- "${EXTRA_ARGS[@]}"
 }
 
 run_with_xvfb() {
@@ -28,7 +34,8 @@ run_with_xvfb() {
 		--display-driver x11 \
 		--rendering-driver opengl3 \
 		--path "${REPO_ROOT}" \
-		--script "res://tools/ui_capture_baseline.gd"
+		--script "res://tools/ui_capture_baseline.gd" \
+		-- "${EXTRA_ARGS[@]}"
 }
 
 if vulkaninfo 2>/dev/null | grep -q "Lavapipe"; then

@@ -39,6 +39,7 @@ var _shipments: Array[Dictionary] = []
 var _samples: Array[Dictionary] = []
 var _alerts: Array[Dictionary] = []
 var _current_time: float = 0.0
+var _hud_label_log: Array[Dictionary] = []
 var _hud_economy_rate_label: String = ""
 var _hud_conveyor_backlog_label: String = ""
 var _hud_economy_rate_value: float = 0.0
@@ -243,6 +244,7 @@ func _build_summary(ctx: Dictionary) -> Dictionary:
 		"preset": String(_environment.get_preset()) if _environment else "",
 		"shipments": _shipments,
 		"samples": _samples,
+		"hud_labels": _hud_label_log,
 		"stats": stats,
 		"alerts": _alerts,
 		"final": {
@@ -321,4 +323,17 @@ func _print_hud_labels_if_needed(force: bool = false) -> void:
 		backlog_details,
 		_hud_conveyor_backlog_count
 	])
+
+	_hud_label_log.append({
+		"time": _current_time,
+		"economy_rate": {
+			"value": _hud_economy_rate_value,
+			"label": _hud_economy_rate_label
+		},
+		"conveyor_backlog": {
+			"count": _hud_conveyor_backlog_count,
+			"label": _hud_conveyor_backlog_label,
+			"tone": String(_hud_conveyor_backlog_tone)
+		}
+	})
 	_next_hud_label_print = _current_time + HUD_LABEL_PRINT_INTERVAL

@@ -22,7 +22,7 @@ layout: default
 | **PX-020.1** | GUI Wiring (HUD Slots D / F) | ✅ Implemented | [PX-020.1 GUI Wiring](px/PX-020.1_GUI_Wiring.md) |
 | **PX-020.2** | Automation Panel Interaction | 🧭 Drafting | [PX-020.2 Automation Panel](px/PX-020.2_Interaction_AutomationPanel.md) |
 | **PX-020.3** | Tooltips & Copy | 🧭 Drafting | [PX-020.3 Tooltips & Copy](px/PX-020.3_Tooltips_Copy.md) |
-| **PX-020.4** | Telemetry & Replay Coverage | 🧭 Drafting | [PX-020.4 Telemetry Replay](px/PX-020.4_Telemetry_Replay.md) |
+| **PX-020.4** | Telemetry & Replay Coverage | ✅ Implemented | [PX-020.4 Telemetry Replay](px/PX-020.4_Telemetry_Replay.md) |
 
 ---
 

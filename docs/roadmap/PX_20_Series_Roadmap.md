@@ -9,7 +9,7 @@
 | PX-020.1 | HUD wiring (Slots D/F + StatBus) | Systems | ✅ Complete | HUD layout, signals, StatBus, replay logging documented. |
 | PX-020.2 | Automation Panel interaction | UI / Systems | 🟡 In Progress | Need to finalize automation panel signals + StatBus mirroring. |
 | PX-020.3 | Tooltip + copy alignment | Narrative | 🧭 Drafting | Copy catalog + tooltip guidelines pending review. |
-| PX-020.4 | Telemetry & replay coverage | QA / Systems | 🧭 Drafting | Replay steps + CI gating doc, ties to Telemetry Replay spec. |
+| PX-020.4 | Telemetry & replay coverage | QA / Systems | ✅ Complete | Replay checklist, HUD label samples in JSON, CI gating doc ties to Telemetry Replay spec. |
 
 ## Milestones & Cross-Refs
 - **UI Contracts:** Slots D/F documented in [UI Matrix](../ui_baselines/ui_matrix.md) with links back to [PX-020.1](../px/PX-020.1_GUI_Wiring.md).

@@ -13,6 +13,7 @@ const SAFE_AREA := Rect2i(Vector2i(32, 24), Vector2i(1216, 672))
 
 var _output_dir := DEFAULT_OUTPUT
 var _root_viewport: Viewport
+var _preserve_pixels := false
 
 func _init() -> void:
 	_parse_args()
@@ -35,6 +36,8 @@ func _parse_args() -> void:
 			var custom := arg.substr("--output=".length())
 			if custom != "":
 				_output_dir = custom
+		elif arg == "--preserve-pixels":
+			_preserve_pixels = true
 
 func _log(message: String) -> void:
 	print("[baseline]", message)
@@ -58,8 +61,9 @@ func _clear_scene(instance: Node) -> void:
 	await process_frame
 
 func _save_png(image: Image, filename: String) -> void:
-	_mask_toast(image)
-	_mask_outside_safe_area(image)
+	if not _preserve_pixels:
+		_mask_toast(image)
+		_mask_outside_safe_area(image)
 	var absolute := _absolute_output_dir()
 	var full_path := absolute.path_join(filename)
 	var err := image.save_png(full_path)
