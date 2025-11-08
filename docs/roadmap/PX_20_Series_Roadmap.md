@@ -16,8 +16,10 @@
 - **Signals & Stats:** `docs/architecture/Signals_Events.md` and `docs/architecture/StatBus_Catalog.md` enumerate all PX-020 additions; reference these before editing runtime scripts.
 - **Modules:** [Economy](../modules/economy.md) and [Conveyor](../modules/conveyor.md) capture the smoothing/backlog semantics required by both HUD and automation flows.
 - **Telemetry:** [PX-020.4 Telemetry Replay](../px/PX-020.4_Telemetry_Replay.md) ties into `docs/quality/Telemetry_Replay.md` for CI-ready guidance.
+- **Validation:** Every PX-020 PR must attach the outputs from `python3 tools/docs_lint/check_structure.py`, `python3 tools/ui_assert_baseline.py`, `source .env && ./tools/check_only_ci.sh`, and the replay checklist in [PX-020.4](../px/PX-020.4_Telemetry_Replay.md).  See the matrix in [PX-020.0 Overview](../px/PX-020.0_Overview.md#validation--telemetry-matrix) for per-PX expectations.
 
 ## Acceptance Checklist
 - Table above stays in sync with the individual PX docs and the [Shipping Implementation Plan](Shipping_Implementation_Plan.md).
 - Each PX doc links back here (see “Key Documents” on the site index) so contributors can navigate without opening PR-020 manually.
 - Status emojis match roadmap conventions (`✅`, `🟡`, `🧭`) and are updated when work lands.
+- Validation evidence (command output + replay artifacts) is attached to PX-020 PRs before status flips to 🟡/✅, ensuring telemetry stays auditable.
