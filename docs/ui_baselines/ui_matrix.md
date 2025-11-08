@@ -12,7 +12,7 @@
 
 | Region        | Rect (x,y,w,h)         |  Z | Notes                                        |
 | ------------- | ---------------------- | -: | -------------------------------------------- |
-| HUD Dock      | `(928, 24, 288, 128)`  |  2 | Right column dock for slots A–C.             |
+| HUD Dock      | `(928, 24, 288, 208)`  |  2 | Right column dock for slots A–F (PX-020).    |
 | Toast         | `(340, 624, 600, 72)`  |  3 | Centered bottom; hidden baseline.            |
 | Tooltip Clamp | `(32, 24, 1216, 672)`  |  4 | Tooltip bounds.                              |
 | Modal         | `(240, 120, 800, 480)` |  5 | Hidden baseline.                             |
@@ -25,11 +25,11 @@
 |  A   | Power Status         | `(992, 24, 224, 32)`  | top-right     |  2 | `hud_label_{tier}`      |
 |  B   | Economy Indicator    | `(992, 64, 224, 32)`  | top-right     |  2 | `hud_label_normal`      |
 |  C   | Population Indicator | `(992, 104, 224, 32)` | top-right     |  2 | `hud_label_normal`      |
-|  D   | Economy Rate         | `(992, 144, 224, 32)` | top-right     |  2 | `hud_label_normal`      |
+|  D   | Economy Rate *(PX-020.1)* | `(992, 144, 224, 32)` | top-right     |  2 | `hud_label_normal`      |
 |  E   | Modal Buttons Row    | `(440, 560, 400, 48)` | bottom-center |  5 | Hidden baseline         |
-|  F   | Conveyor Backlog     | `(992, 184, 224, 32)` | top-right     |  2 | `hud_label_normal`      |
+|  F   | Conveyor Backlog *(PX-020.1)* | `(992, 184, 224, 32)` | top-right     |  2 | `hud_label_normal`      |
 
-Spacing between stacked HUD rows (A→D→F) is 8 px vertical (32 px rows on 40 px centers). Text is right-aligned to slot bounds. Toast coordinates remain defined under **Regions** and stay hidden in baselines.
+Spacing between stacked HUD rows (A→D→F) is 8 px vertical (32 px rows on 40 px centers).  Text is right-aligned to slot bounds.  Toast coordinates remain defined under **Regions** and stay hidden in baselines.  Slots D and F are governed by [PX-020.1 GUI Wiring](../px/PX-020.1_GUI_Wiring.md) and inherit tooltip/copy constraints from the [UI Baseline Layout Spec](README_UI_BASELINE_LAYOUT.md).
 
 ## 4 · Typography
 

@@ -16,6 +16,9 @@
 | `UIPrototype` | `feed_hold_started()` | `{}` | Main, Sandbox ConveyorOverlay, AudioService | user input press |
 | `UIPrototype` | `feed_hold_ended()` | `{}` | Main, Sandbox ConveyorOverlay, AudioService | user input release |
 | `UIPrototype` | `feed_burst(mult: float)` | `{ mult }` | ConveyorOverlay, AudioService, StatsProbe (planned) | per Economy burst |
+| `AutomationPanel` | `automation_panel_opened()` | `{}` | AutomationService, UIPrototype, telemetry | on panel open |
+| `AutomationPanel` | `automation_panel_closed()` | `{}` | AutomationService, UIPrototype | on panel close |
+| `AutomationPanel` | `automation_target_changed(target_id: StringName)` | `{ target }` | AutomationService, Economy, StatBus | on target swap |
 | `SandboxService` | `ci_changed(ci: float, bonus: float)` | `{ ci, bonus }` | Economy StatBus, Telemetry | 2 Hz |
 | `SandboxRenderer` | `fallback_state_changed(active: bool)` | `{ active }` | Telemetry, EnvPanel tooltip, debug overlay | on fallback enter/exit |
 | `AutomationService` | `mode_changed(building_id: StringName, mode: int)` | `{ building_id, mode }` | UI overlays, save system | when automation toggles |
@@ -45,6 +48,8 @@
 | `throughput_updated(rate, queue)` | `/root/Main/ConveyorManager` | 60 | Economy `/root/Main/Economy`, HUD stats, Telemetry probe | HUD samples at 10 Hz; Economy smooths and clamps |
 | `feed_hold_started/ended` | `/root/Main/UIPrototype` | user input | Main, ConveyorOverlay, AudioService | none; reacts instantly |
 | `feed_burst(mult)` | `/root/Main/UIPrototype` | burst | ConveyorOverlay, AudioService, StatsProbe | clamp burst spam to ≤30 Hz upstream |
+| `automation_panel_opened/closed` | `/root/Main/UIPrototype/AutomationPanel` | user input | AutomationService, UIPrototype, telemetry logger | telemetry logs only once per open/close pair |
+| `automation_target_changed(target)` | `/root/Main/UIPrototype/AutomationPanel` | per selection | AutomationService, Economy | emit immediately; StatBus uses replace stacking |
 
 ## Signal Lifetimes & Context
 
@@ -59,3 +64,6 @@
 | `stats_probe_alert` *(future)* | Worker thread | After StatsProbe batch flush | Must `call_deferred` to interact with UI/SceneTree. |
 | `feed_burst` | Main thread | After Economy confirms burst multiplier | Deterministic timing; overlay applies EMA before anim kicks. |
 | `feed_hold_started/ended` | Main thread | Immediate on input press/release | Keep work lightweight to avoid UI hitching; use deferred audio triggers if needed. |
+| `automation_panel_opened` | Main thread | On Automation Panel show animation start | Use for StatBus/telemetry; do not block UI transitions. |
+| `automation_panel_closed` | Main thread | After panel exits and focus returns | Fired even if no target changed to keep telemetry balanced. |
+| `automation_target_changed` | Main thread | When user selects a new automation target | Economy should debounce costly recomputations; StatBus writes replace data. |

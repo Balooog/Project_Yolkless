@@ -61,6 +61,19 @@ The manager tracks live throughput and exposes `average_travel_time` for dashboa
 - `Economy` binds to `ConveyorManager` signals (`throughput_updated`, `item_delivered`) to publish StatBus keys (`conveyor_rate`, `conveyor_queue`, `conveyor_jam_active`) and surface jam warnings to the HUD.
 - Toggling the Visual Effects setting hides the belt and clears spawned items; conveyors resume once visuals are re-enabled.
 
+## Backlog & Stall Semantics (PX-020)
+
+| Concept | Definition | Notes |
+| --- | --- | --- |
+| **Backlog** | Integer queue length reported via `throughput_updated(rate, queue_len)` | Written to StatBus as `conveyor_backlog` and mirrored in HUD Slot F. |
+| **Backlog Label** | Copy such as `\"Queue 12\"` or `\"Queue 45 ⚠\"` | Produced by Economy and logged via `conveyor_backlog_changed(queue, label, tone)`. |
+| **Jam Threshold** | Queue ≥40 for ≥2.5 s | Marks `_conveyor_jam_active` true and upgrades tone to `warning`. |
+| **Stall Condition** | Jam state persists while throughput <2 items/s for 5 s | Trigger automation panel tooltip + future PX-020.3 copy escalation. |
+
+- Slot F coordinates + tokens live in the [UI Matrix](../ui_baselines/ui_matrix.md) and [PX-020.1 GUI Wiring](../px/PX-020.1_GUI_Wiring.md).  Keep backlog copy within that neutral tone until the jam threshold flips `tone = warning`.
+- Tooltips for backlog warnings follow the clamp rules in [PX-020.3 Tooltips & Copy](../px/PX-020.3_Tooltips_Copy.md); always reference the Automation Panel when queue pressure originates from automation targets.
+- Telemetry requires both numeric (`conveyor_backlog`) and label (`conveyor_backlog_label`) columns so dashboards can render precise counts while designers get human-readable snapshots.
+
 ## 2025-10-25 Benchmark Snapshot
 
 Automated telemetry (`$GODOT_BIN --headless --script res://tools/replay_headless.gd --duration=20 --seed=42 --strategy=normal`) surfaced the following:

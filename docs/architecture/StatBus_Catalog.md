@@ -13,6 +13,8 @@
 | `conveyor_queue` | Current conveyor queue depth (items waiting to exit). | items | Conveyor manager tick | replace | Economy Service |
 | `conveyor_delivered_total` | Total conveyor deliveries since session start. | items | On delivery | additive | Economy Service |
 | `conveyor_jam_active` | 1 when the conveyor queue exceeds the jam threshold for ≥2.5 s. | bool | Conveyor manager tick | replace | Economy Service |
+| `conveyor_backlog` | Mirror of current queue depth used for HUD Slot F. | items | Economy tick (≤10 Hz) | replace | Economy Service |
+| `conveyor_backlog_label` | Localized copy for backlog status (e.g., `\"Queue 12\"`). | string | Economy tick | replace | UI Prototype |
 | `wisdom_mult` | Prestige-derived production multiplier. | multiplier | On prestige/level up | multiplicative | Prestige System |
 | `power_state` | Normalized power load (0-1). | ratio | Power ledger (~5 Hz) | last-write | Power Service |
 | `power_warning_level` | Warning severity (`0` normal, `1` warning, `2` critical). | enum | Power ledger transitions | replace | Power Service |
@@ -22,6 +24,9 @@
 | `feed_fraction` | Feed tank percentage for HUD and VFX. | percent | Economy tick | last-write | Economy/Eco Feed |
 | `event_modifier` | Aggregate modifier from temporary events. | multiplier | Event Director updates | multiplicative | Event Director |
 | `offline_multiplier` | Passive production multiplier during offline calc. | multiplier | On save/load | multiplicative | Save/Offline Manager |
+| `economy_rate` | PPS after all modifiers, smoothed for HUD Slot D. | credits/sec | Economy tick (≤10 Hz) | replace | Economy Service |
+| `economy_rate_label` | Localized HUD copy for Slot D (e.g., `\"3.4/s\"`). | string | Economy tick | replace | UI Prototype |
+| `automation_target` | Current automation mode/target selected in the Automation Panel. | enum (string) | On selection | replace | Automation Service |
 
 ## Usage Notes
 
@@ -56,7 +61,12 @@ if statbus:
 | `conveyor_rate` | items/sec | replace | n/a | PX-011.3 | `Economy.gd` |
 | `conveyor_queue` | items | replace | Jam threshold 40 | PX-011.3 | `Economy.gd` |
 | `conveyor_jam_active` | bool | replace | n/a | PX-011.3 | `Economy.gd` |
+| `conveyor_backlog` | items | replace | Jam threshold 40 | PX-020.1 | `Economy.gd` |
+| `conveyor_backlog_label` | string | replace | n/a | PX-020.1 | `UIPrototype` |
 | `power_warning_level` | enum (0-2) | replace | n/a | PX-018.3 | `PowerService.gd` |
+| `economy_rate` | credits/sec | replace | n/a | PX-020.1 | `Economy.gd` |
+| `economy_rate_label` | string | replace | n/a | PX-020.1 | `UIPrototype` |
+| `automation_target` | enum (string) | replace | n/a | PX-020.2 | `AutomationService.gd` |
 
 - StatBus clamps capped values and logs once per minute: `STATBUS: clamp ci_bonus 0.067→0.050`.
 - New stats must declare owner and enforcement path before registration.

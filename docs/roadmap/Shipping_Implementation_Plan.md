@@ -2,6 +2,10 @@
 
 > Snapshot: 2025-10-28. Aligns release gates in `docs/ops/Release_Milestones.md` with remaining feature specs and architecture TODOs. Focus is on work that cannot be faked or stubbed without blocking a ship-ready build.
 
+## Status Highlights
+- **19.x baseline complete.**  HUD capture, CI lint, and replay smoke now run green (see `docs/index.md` Version History).  Treat this as the floor for future PX validation.
+- **PX-020 series in active drafting.**  All GUI/telemetry documents live under `docs/px/` with sequencing managed in [PX-020 Series Roadmap](PX_20_Series_Roadmap.md).  Implementation work should reference those docs before touching HUD, automation, or telemetry code.
+
 ## Solo Execution Sequence
 
 | Order | Target Window | PX | Task | Notes |
