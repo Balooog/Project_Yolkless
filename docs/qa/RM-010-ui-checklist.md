@@ -40,11 +40,12 @@
 
 ## Automated Gates
 - **UI Baseline Capture/Compare**
-  ```bash
-  ./tools/ui_baseline.sh                    # refresh baseline if changes approved
-  ./tools/ui_viewport_matrix.sh             # capture current S/M/L shots
-  ./tools/ui_compare.sh dev/screenshots/ui_baseline dev/screenshots/ui_current
-  ```
+```bash
+./tools/ui_baseline.sh                    # refresh baseline if changes approved
+./tools/ui_viewport_matrix.sh             # capture current S/M/L shots
+./tools/ui_compare.sh dev/screenshots/ui_baseline dev/screenshots/ui_current
+python3 tools/ui_assert_baseline.py --images dev/screenshots/ui_baseline
+```
   Script fails on any pixel delta (threshold TBD). Review differences and attach new PNGs if intentional.
 - **UILint**
   ```bash
@@ -52,7 +53,8 @@
   ```
   Ensure summary reports **0** overflow, missing size flags, and unlabeled buttons. Dev build console must also print zero violations.
 - **CI Jobs**
-  - `ui-baseline-compare` → archives current screenshots and fails on >1 % diff.
+- `ui-baseline-compare` → archives current screenshots and fails on >1 % diff.
+- `ui-baseline-assert` → runs `tools/ui_assert_baseline.py` to enforce toast/safe-area layout.
   - `ui-lint` → runs scene lint suite; artifacts list offending node paths.
   - `ci-smoke` → wraps `check_only_ci.sh` + replay sanity. Confirm logs attach to PR.
 

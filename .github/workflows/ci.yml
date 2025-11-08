@@ -33,6 +33,16 @@ jobs:
         run: |
           python3 tools/validate_tables.py --tables=data/upgrade.tsv,data/research.tsv --schema=docs/data/Schemas.md
 
+  ui-baseline-assert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Verify HUD baseline layout
+        run: python3 tools/ui_assert_baseline.py --images dev/screenshots/ui_baseline
+
   demo-artifacts:
     runs-on: ubuntu-latest
     needs: docs-lint

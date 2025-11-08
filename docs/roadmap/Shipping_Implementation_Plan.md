@@ -10,17 +10,18 @@
 | 2 | Sprint 1 | PX-011.3 | Wire conveyor throughput into Economy and StatBus | Complete 2025-11-02 - StatBus metrics, jam warnings, and delivery telemetry wired. |
 | 3 | Sprint 2 | PX-013.2 | Surface automation scheduling and status UI | Expose queue telemetry and control toggles. |
 | 4 | Sprint 2 | PX-014.4 | Complete StatsProbe diff dashboards | Complete 2025-11-02 - `tools/gen_dashboard.py --diff` prints metric deltas for reviewers. |
-| 5 | Sprint 3 | PX-018.3 | Document and test power warnings | Ensure deficits produce calm feedback and logs. |
-| 6 | Sprint 4 | PX-021.4 / PX-021.5 | Ship diorama evolution and map toggle | Establish shared renderer pipeline ahead of beta polish. |
-| 7 | Sprint 4 | PX-021.6 | Author environment milestone profiles and tier swaps | Data must be ready before prestige and layout hooks. |
-| 8 | Sprint 5 | PX-019.1 | Bind conveyor deliveries with layout adjacency economy bonuses | Requires environment tiers and power ledger to be stable. |
-| 9 | Sprint 5 | PX-016.2 | Implement event and risk system loops | Builds on automation, power, and layout. |
-| 10 | Sprint 6 | PX-015.1 | Prestige theming and HUD wisdom surfacing | Needs environment tiers and event hooks available. |
-| 11 | Sprint 6 | PX-020.1 / PX-010.13 | Finalize art/audio pipeline and accessibility passes | Coordinate with prestige theming and automation UI. |
-| 12 | Sprint 7 | PX-022.1 | Localization dry-run and pipeline docs | Run once UI copy and tokens are stable. |
-| 13 | Sprint 7 | PX-014.3 | Automate nightly telemetry replay and timelapse capture | Depends on map toggle and diff dashboards. |
-| 14 | Sprint 8 | PX-018.2 / PX-017.2 | Harden release automation and build exports | Execute when telemetry automation is proven. |
-| 15 | Sprint 8 | PX-017.3 / PX-016.3 | LiveOps monitoring, risk cadence, and post-launch hooks | Final gating before launch sign-off. |
+| 5 | Sprint 2 | PX-018.5 | UI Baseline: real engine capture + CI assert | Complete 2025-11-07 - `tools/run_headless_godot.sh` captures Godot HUD scenes (xvfb/llvmpipe fallback) and `ui_assert_baseline` enforces toast/safe-area contract. |
+| 6 | Sprint 3 | PX-018.3 | Document and test power warnings | Ensure deficits produce calm feedback and logs. |
+| 7 | Sprint 4 | PX-021.4 / PX-021.5 | Ship diorama evolution and map toggle | Establish shared renderer pipeline ahead of beta polish. |
+| 8 | Sprint 4 | PX-021.6 | Author environment milestone profiles and tier swaps | Data must be ready before prestige and layout hooks. |
+| 9 | Sprint 5 | PX-019.1 | Bind conveyor deliveries with layout adjacency economy bonuses | Requires environment tiers and power ledger to be stable. |
+| 10 | Sprint 5 | PX-016.2 | Implement event and risk system loops | Builds on automation, power, and layout. |
+| 11 | Sprint 6 | PX-015.1 | Prestige theming and HUD wisdom surfacing | Needs environment tiers and event hooks available. |
+| 12 | Sprint 6 | PX-020.1 / PX-010.13 | Finalize art/audio pipeline and accessibility passes | Coordinate with prestige theming and automation UI. |
+| 13 | Sprint 7 | PX-022.1 | Localization dry-run and pipeline docs | Run once UI copy and tokens are stable. |
+| 14 | Sprint 7 | PX-014.3 | Automate nightly telemetry replay and timelapse capture | Depends on map toggle and diff dashboards. |
+| 15 | Sprint 8 | PX-018.2 / PX-017.2 | Harden release automation and build exports | Execute when telemetry automation is proven. |
+| 16 | Sprint 8 | PX-017.3 / PX-016.3 | LiveOps monitoring, risk cadence, and post-launch hooks | Final gating before launch sign-off. |
 
 ## Phase A - Alpha Hardening (Systems Backbone)
 

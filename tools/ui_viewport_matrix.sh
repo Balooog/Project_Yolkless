@@ -9,6 +9,7 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 GODOT_BIN="$(bash "${SCRIPT_DIR}/godot_resolver.sh")"
 export GODOT_BIN
+UI_CAPTURE_HEADLESS="${UI_CAPTURE_HEADLESS:-1}"
 
 MODE="godot"
 OUTPUT_DIR=""
@@ -109,7 +110,11 @@ fi
 
 for vp in "${VIEWPORTS[@]}"; do
 	echo "[ui_viewport_matrix] capturing viewport ${vp}"
-	cmd=("${GODOT_BIN}" --path "${REPO_ROOT}" --rendering-driver vulkan --script "res://tools/ui_screenshots.gd" -- "--viewport=${vp}" "--capture")
+	cmd=("${GODOT_BIN}")
+	if [[ "${UI_CAPTURE_HEADLESS}" != "0" ]]; then
+		cmd+=("--headless")
+	fi
+	cmd+=(--path "${REPO_ROOT}" --rendering-driver vulkan --script "res://tools/ui_screenshots.gd" -- "--viewport=${vp}" "--capture")
 	if [[ -n "${SCENE_LIST}" ]]; then
 		cmd+=("--scenes=${SCENE_LIST}")
 	fi

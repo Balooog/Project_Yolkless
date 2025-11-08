@@ -13,100 +13,122 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 color = Color(0.078, 0.094, 0.122, 1)
 
-[node name="SafeMargin" type="MarginContainer" parent="."]
+[node name="DockPanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+offset_left = 928.0
+offset_top = 24.0
+offset_right = 1216.0
+offset_bottom = 152.0
+custom_minimum_size = Vector2(288, 128)
+
+[node name="DockMargin" type="MarginContainer" parent="DockPanel"]
 anchor_right = 1.0
 anchor_bottom = 1.0
-theme_override_constants/margin_left = 32
-theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 32
-theme_override_constants/margin_bottom = 24
-
-[node name="DockPanel" type="PanelContainer" parent="SafeMargin"]
-unique_name_in_owner = true
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -288.0
 offset_right = 0.0
-offset_top = 0.0
-offset_bottom = 128.0
-theme_override_material = null
+offset_bottom = 0.0
+theme_override_constants/margin_left = 64
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_right = 0
+theme_override_constants/margin_bottom = 0
 
-[node name="StatusColumn" type="VBoxContainer" parent="SafeMargin/DockPanel"]
+[node name="StatusColumn" type="VBoxContainer" parent="DockPanel/DockMargin"]
+custom_minimum_size = Vector2(224, 96)
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 8
 
-[node name="PowerRow" type="HBoxContainer" parent="SafeMargin/DockPanel/StatusColumn"]
+[node name="PowerRow" type="HBoxContainer" parent="DockPanel/DockMargin/StatusColumn"]
 unique_name_in_owner = true
-size_flags_horizontal = 3
+custom_minimum_size = Vector2(224, 32)
+size_flags_horizontal = 0
 theme_override_constants/separation = 8
 
-[node name="PowerIcon" type="ColorRect" parent="SafeMargin/DockPanel/StatusColumn/PowerRow"]
+[node name="PowerIcon" type="ColorRect" parent="DockPanel/DockMargin/StatusColumn/PowerRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(18, 18)
+custom_minimum_size = Vector2(24, 24)
+size_flags_vertical = 4
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_left = 4
 corner_radius_bottom_right = 4
 
-[node name="PowerText" type="VBoxContainer" parent="SafeMargin/DockPanel/StatusColumn/PowerRow"]
+[node name="PowerText" type="VBoxContainer" parent="DockPanel/DockMargin/StatusColumn/PowerRow"]
+custom_minimum_size = Vector2(192, 32)
 size_flags_horizontal = 3
 theme_override_constants/separation = 2
 
-[node name="PowerTitle" type="Label" parent="SafeMargin/DockPanel/StatusColumn/PowerRow/PowerText"]
+[node name="PowerTitle" type="Label" parent="DockPanel/DockMargin/StatusColumn/PowerRow/PowerText"]
 unique_name_in_owner = true
 text = "Power"
+horizontal_alignment = 2
+size_flags_horizontal = 3
 
-[node name="PowerValue" type="Label" parent="SafeMargin/DockPanel/StatusColumn/PowerRow/PowerText"]
+[node name="PowerValue" type="Label" parent="DockPanel/DockMargin/StatusColumn/PowerRow/PowerText"]
 unique_name_in_owner = true
 text = "Load Stable"
-
-[node name="EconomyRow" type="HBoxContainer" parent="SafeMargin/DockPanel/StatusColumn"]
-unique_name_in_owner = true
+horizontal_alignment = 2
 size_flags_horizontal = 3
+
+[node name="EconomyRow" type="HBoxContainer" parent="DockPanel/DockMargin/StatusColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(224, 32)
+size_flags_horizontal = 0
 theme_override_constants/separation = 8
 
-[node name="EconomyIcon" type="ColorRect" parent="SafeMargin/DockPanel/StatusColumn/EconomyRow"]
+[node name="EconomyIcon" type="ColorRect" parent="DockPanel/DockMargin/StatusColumn/EconomyRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(18, 18)
+custom_minimum_size = Vector2(24, 24)
+size_flags_vertical = 4
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_left = 4
 corner_radius_bottom_right = 4
 
-[node name="EconomyText" type="VBoxContainer" parent="SafeMargin/DockPanel/StatusColumn/EconomyRow"]
+[node name="EconomyText" type="VBoxContainer" parent="DockPanel/DockMargin/StatusColumn/EconomyRow"]
+custom_minimum_size = Vector2(192, 32)
 size_flags_horizontal = 3
 theme_override_constants/separation = 2
 
-[node name="EconomyTitle" type="Label" parent="SafeMargin/DockPanel/StatusColumn/EconomyRow/EconomyText"]
+[node name="EconomyTitle" type="Label" parent="DockPanel/DockMargin/StatusColumn/EconomyRow/EconomyText"]
 unique_name_in_owner = true
 text = "Economy"
+horizontal_alignment = 2
+size_flags_horizontal = 3
 
-[node name="EconomyValue" type="Label" parent="SafeMargin/DockPanel/StatusColumn/EconomyRow/EconomyText"]
+[node name="EconomyValue" type="Label" parent="DockPanel/DockMargin/StatusColumn/EconomyRow/EconomyText"]
 unique_name_in_owner = true
 text = "₡ 0"
-
-[node name="PopulationRow" type="HBoxContainer" parent="SafeMargin/DockPanel/StatusColumn"]
-unique_name_in_owner = true
+horizontal_alignment = 2
 size_flags_horizontal = 3
+
+[node name="PopulationRow" type="HBoxContainer" parent="DockPanel/DockMargin/StatusColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(224, 32)
+size_flags_horizontal = 0
 theme_override_constants/separation = 8
 
-[node name="PopulationIcon" type="ColorRect" parent="SafeMargin/DockPanel/StatusColumn/PopulationRow"]
+[node name="PopulationIcon" type="ColorRect" parent="DockPanel/DockMargin/StatusColumn/PopulationRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(18, 18)
+custom_minimum_size = Vector2(24, 24)
+size_flags_vertical = 4
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_left = 4
 corner_radius_bottom_right = 4
 
-[node name="PopulationText" type="VBoxContainer" parent="SafeMargin/DockPanel/StatusColumn/PopulationRow"]
+[node name="PopulationText" type="VBoxContainer" parent="DockPanel/DockMargin/StatusColumn/PopulationRow"]
+custom_minimum_size = Vector2(192, 32)
 size_flags_horizontal = 3
 theme_override_constants/separation = 2
 
-[node name="PopulationTitle" type="Label" parent="SafeMargin/DockPanel/StatusColumn/PopulationRow/PopulationText"]
+[node name="PopulationTitle" type="Label" parent="DockPanel/DockMargin/StatusColumn/PopulationRow/PopulationText"]
 unique_name_in_owner = true
 text = "Population"
+horizontal_alignment = 2
+size_flags_horizontal = 3
 
-[node name="PopulationValue" type="Label" parent="SafeMargin/DockPanel/StatusColumn/PopulationRow/PopulationText"]
+[node name="PopulationValue" type="Label" parent="DockPanel/DockMargin/StatusColumn/PopulationRow/PopulationText"]
 unique_name_in_owner = true
 text = "0 hens"
+horizontal_alignment = 2
+size_flags_horizontal = 3

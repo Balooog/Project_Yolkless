@@ -109,11 +109,7 @@ def write_png(path: Path, pixels: bytearray) -> None:
 
 def base_canvas() -> bytearray:
 	bg = hex_rgba("#14181F")
-	safe_outline = hex_rgba("#3C4652FF")
 	pixels = bytearray([bg[0], bg[1], bg[2], bg[3]] * WIDTH * HEIGHT)
-
-	safe_rect = Rect(32, 24, 1216, 672)
-	draw_border(pixels, safe_rect, safe_outline, thickness=2)
 
 	hud_dock = Rect(928, 24, 288, 128)
 	draw_border(pixels, hud_dock, hex_rgba("#2A3038FF"), thickness=1)
