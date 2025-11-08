@@ -121,6 +121,14 @@ func _process_pending_writes() -> void:
 			var row_dict: Dictionary = row_variant
 			var fallback_flag: int = 1 if row_dict.get("sandbox_render_fallback_active", false) else 0
 			var view_mode_value: String = String(row_dict.get("sandbox_render_view_mode", ""))
+			var economy_rate_value: float = float(row_dict.get("economy_rate", row_dict.get("pps", 0.0)))
+			var economy_rate_label_value: String = String(row_dict.get("economy_rate_label", ""))
+			if economy_rate_label_value == "":
+				economy_rate_label_value = _format_rate_label(economy_rate_value)
+			var backlog_value: float = float(row_dict.get("conveyor_backlog", row_dict.get("conveyor_queue", 0.0)))
+			var backlog_label_value: String = String(row_dict.get("conveyor_backlog_label", ""))
+			if backlog_label_value == "":
+				backlog_label_value = _format_backlog_label(backlog_value)
 			var csv := "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % [
 				row_dict.get("service", SERVICE_SANDBOX),
 				row_dict.get("tick_ms", 0.0),
@@ -145,10 +153,10 @@ func _process_pending_writes() -> void:
 				row_dict.get("eco_research_ms", 0.0),
 				row_dict.get("eco_statbus_ms", 0.0),
 				row_dict.get("eco_ui_ms", 0.0),
-				row_dict.get("economy_rate", row_dict.get("pps", 0.0)),
-				row_dict.get("economy_rate_label", ""),
-				row_dict.get("conveyor_backlog", row_dict.get("conveyor_queue", 0.0)),
-				row_dict.get("conveyor_backlog_label", "")
+				economy_rate_value,
+				economy_rate_label_value,
+				backlog_value,
+				backlog_label_value
 			]
 			file.store_line(csv)
 		file.close()
@@ -214,10 +222,18 @@ func summarize() -> Dictionary:
 			group["pps_accum"] += entry.get("pps", 0.0)
 			group["storage_accum"] += entry.get("storage", 0.0)
 			group["feed_fraction_accum"] += entry.get("feed_fraction", 0.0)
-			(group["economy_rate_values"] as Array).append(float(entry.get("economy_rate", entry.get("pps", 0.0))))
-			(group["conveyor_backlog_values"] as Array).append(float(entry.get("conveyor_backlog", entry.get("conveyor_queue", 0.0))))
-			group["economy_rate_label_last"] = String(entry.get("economy_rate_label", group.get("economy_rate_label_last", "")))
-			group["conveyor_backlog_label_last"] = String(entry.get("conveyor_backlog_label", group.get("conveyor_backlog_label_last", "")))
+			var econ_value: float = float(entry.get("economy_rate", entry.get("pps", 0.0)))
+			var backlog_value: float = float(entry.get("conveyor_backlog", entry.get("conveyor_queue", 0.0)))
+			(group["economy_rate_values"] as Array).append(econ_value)
+			(group["conveyor_backlog_values"] as Array).append(backlog_value)
+			var econ_label: String = String(entry.get("economy_rate_label", group.get("economy_rate_label_last", "")))
+			if econ_label == "":
+				econ_label = _format_rate_label(econ_value)
+			group["economy_rate_label_last"] = econ_label
+			var backlog_label: String = String(entry.get("conveyor_backlog_label", group.get("conveyor_backlog_label_last", "")))
+			if backlog_label == "":
+				backlog_label = _format_backlog_label(backlog_value)
+			group["conveyor_backlog_label_last"] = backlog_label
 			(group["eco_in_values"] as Array).append(float(entry.get("eco_in_ms", 0.0)))
 			(group["eco_apply_values"] as Array).append(float(entry.get("eco_apply_ms", 0.0)))
 			(group["eco_ship_values"] as Array).append(float(entry.get("eco_ship_ms", 0.0)))
@@ -323,3 +339,12 @@ func _profiling_avg(values: Array) -> float:
 	for value in values:
 		sum += float(value)
 	return sum / float(values.size())
+
+func _format_rate_label(value: float) -> String:
+	var decimals := 1
+	if abs(value) >= 10.0:
+		decimals = 0
+	return "%s/s" % String.num(value, decimals)
+
+func _format_backlog_label(value: float) -> String:
+	return "Queue %d" % int(round(value))
