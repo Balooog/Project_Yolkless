@@ -3,9 +3,12 @@
 > Ensures balance changes respect comfort-idle pacing by simulating long sessions with consistent metrics. See [Glossary](../Glossary.md) for terminology.
 
 ## Log Formats
-- **CSV (`logs/telemetry/*.csv`)**: Columns include `timestamp`, `pps`, `storage`, `ci_bonus`, `event`, `power_state`, `power_warning_level`, `power_warning_label`, `active_cells`, `sandbox_render_view_mode`, `sandbox_render_fallback_active`, `minigame_active`, and economy sub-phase timings (`eco_in_ms`, `eco_apply_ms`, `eco_ship_ms`, `eco_research_ms`, `eco_statbus_ms`, `eco_ui_ms`).
-- **JSON (`logs/telemetry/*.json`)**: Batch summaries with averages/percentiles plus per-scenario arrays for shipments and comfort samples (`{ "time", "ci", "bonus" }`).
-- All entries include `scenario` tag (e.g., `hands_off`, `burst_cycle`).
+- **CSV (`logs/perf/tick_*.csv`)**: StatsProbe now appends PX-020 columns to each row:  
+  `...,eco_statbus_ms,eco_ui_ms,economy_rate,economy_rate_label,conveyor_backlog,conveyor_backlog_label,automation_target,automation_target_label,automation_panel_visible`.  
+  These rows join the existing `pps`, `storage`, `ci_bonus`, `power_state`, `sandbox_render_*`, and minigame fields so a single CSV captures both performance budgets and HUD copy context.
+- **JSON (`logs/telemetry/replay_*.json`)**: Batch summaries with averages/percentiles plus per-scenario arrays for shipments, comfort samples (`{ "time", "ci", "bonus" }`), and the new `hud_labels` array (see **PX-020 HUD Label Samples**).  StatsProbe aggregates (`economy_rate_avg`, `conveyor_backlog_avg`, `automation_target_last`, etc.) land under the `stats` key.
+- **Console (`headless.log`)**: Every replay prints `[hud] economy_rate=… | conveyor_backlog=…` every ~10 s and `[automation] p95=… panel_vis=…` after StatsProbe flushes.  Capture these lines when attaching artifacts.
+- All entries include a `scenario` tag (e.g., `hands_off`, `burst_cycle`).
 
 ## Headless CLI
 ```bash
@@ -50,12 +53,21 @@ godot --headless --path . --script res://tools/replay_headless.gd --duration=300
 | `ci_delta_abs_max` | StatsProbe | Flags sudden comfort swings that may indicate instability. |
 | `minigame_active` / `minigame_duration` | Replay controller | Ensures mini-game cooldown rules remain isolated from Credits/RP. |
 | `sandbox_render_view_mode` | StatsProbe | Tracks active renderer view (`diorama`, `map`, etc.) for guardrail coverage. |
+| `economy_rate_avg` / `economy_rate_label_last` | StatsProbe (Economy) | Quantifies steady PPS and the HUD-ready copy for Slot D. |
+| `conveyor_backlog_avg` / `conveyor_backlog_label_last` | StatsProbe (Economy) | Shows average queue pressure plus the exact label used for Slot F. |
+| `automation_target_last` / `automation_panel_visible_ratio` | StatsProbe (Automation) | Verifies which automation target UI selected and how often the panel is visible. |
+| `hud_labels[]` | Replay summary | Array of timestamped HUD samples (`economy_rate`, `conveyor_backlog`, tone) used for DocOps review without screenshots. |
 
 ## Replay Workflow
 1. Run headless scenario (hands-off + burst).
 2. Import CSV into analysis notebook or spreadsheet.
 3. Compare against baseline thresholds (see `Performance_Budgets.md`).
 4. Record results in QA checklist (`docs/qa/`).
+
+## PX-020 HUD Label Samples
+- `hud_labels` mirrors every `[hud]` console print with `{ "time": seconds, "economy_rate": { "value", "label" }, "conveyor_backlog": { "count", "label", "tone" } }`.
+- Use `jq '.hud_labels[-1]' replay_<timestamp>.json` to confirm the final label set matches the HUD copy catalog (PX-020.3) and Spot D/F safe-area rules.
+- Designers can quote these records directly in release notes or telemetry dashboards without rerunning Godot.
 
 ## Automation Hooks
 - CI job `nightly-replay` runs:
@@ -68,12 +80,12 @@ godot --headless --path . --script res://tools/replay_headless.gd --duration=300
 - Local dry-runs can use `./tools/nightly_replay.sh` (honours `GODOT_BIN`, `DURATION`, `SEED`, `STRATEGY`) to mirror the CI workflow and snapshot artifacts into `reports/nightly/<timestamp>/`.
 
 ## Instrumentation Fields
-- `service`, `tick_ms`, `pps`, `ci`, `active_cells`, `power_ratio`, `ci_delta`, `storage`, `feed_fraction`, `conveyor_rate`, `conveyor_queue`, `power_state`, `power_warning_level`, `power_warning_label`, `auto_active`, `global_enabled`, `next_remaining`, `minigame_active`, `minigame_duration` sampled at 10 Hz (fields populate per service).
+- `service`, `tick_ms`, `pps`, `ci`, `active_cells`, `power_ratio`, `ci_delta`, `storage`, `feed_fraction`, `conveyor_rate`, `conveyor_queue`, `economy_rate`, `economy_rate_label`, `conveyor_backlog`, `conveyor_backlog_label`, `automation_target`, `automation_target_label`, `automation_panel_visible`, `power_state`, `power_warning_level`, `power_warning_label`, `auto_active`, `global_enabled`, `next_remaining`, `minigame_active`, `minigame_duration` sampled at 10 Hz (fields populate per service; Economy owns the rate/backlog columns and Automation owns the automation columns).
 - Use `python3 tools/gen_dashboard.py --diff <baseline.json> <candidate.json>` to compare replay summaries (new metrics and alert deltas print to stdout).
 - Offline catch-up emits a single `service=offline` row per session with `elapsed`, `applied`, `grant`, and `passive_multiplier` columns to document capped awards.
 - Renderer stream adds 1 Hz aggregates: `sandbox_render_ms_avg`, `sandbox_render_ms_p95`, `sandbox_render_fallback_ratio`, `belt_anim_ms_avg`, `belt_anim_ms_p95`, `sandbox_render_view_mode`, plus the economy sub-phase metrics (`eco_in_ms_p95`, `eco_apply_ms_p95`, `eco_ship_ms_p95`, `eco_research_ms_p95`, `eco_statbus_ms_p95`, `eco_ui_ms_p95`).
 - Alerts emitted through `stats_probe_alert(metric, value, threshold)` and copied into replay JSON under `alerts`.
-- CSV naming convention: `logs/perf/tick_<timestamp>.csv`; JSON graph exported to `/reports/nightly/<date>.json` with companion PNG trend. JSON summaries now include `sandbox_tick_ms_p95`, `sandbox_render_ms_p95`, `sandbox_render_ms_avg`, `sandbox_render_fallback_ratio`, `sandbox_render_view_mode`, `active_cells_max`, and `ci_delta_abs_max` for regression tracking.
+- CSV naming convention: `logs/perf/tick_<timestamp>.csv`; JSON graph exported to `/reports/nightly/<date>.json` with companion PNG trend. JSON summaries now include `sandbox_tick_ms_p95`, `sandbox_render_ms_p95`, `sandbox_render_ms_avg`, `sandbox_render_fallback_ratio`, `sandbox_render_view_mode`, `active_cells_max`, `ci_delta_abs_max`, `economy_rate_avg`, `conveyor_backlog_avg`, `automation_target_last`, `automation_panel_visible_ratio`, and the `hud_labels` array for regression tracking.
 
 ## Metric Normalization Formulas
 ```

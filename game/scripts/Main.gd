@@ -1054,8 +1054,8 @@ func _on_prototype_automation_panel_closed() -> void:
 		service.set_panel_visible(false)
 
 func _on_prototype_automation_target_changed(button_id: StringName) -> void:
-	var target_variant := AUTOMATION_BUTTON_TARGETS.get(button_id, button_id)
-	var target := StringName(target_variant)
+	var target_variant: Variant = AUTOMATION_BUTTON_TARGETS.get(button_id, button_id)
+	var target: StringName = StringName(target_variant)
 	var service := _get_automation_service()
 	if service:
 		service.set_panel_target(target)

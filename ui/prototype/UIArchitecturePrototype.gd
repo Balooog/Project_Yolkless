@@ -124,6 +124,7 @@ var _metric_labels: Dictionary = {}
 var _tab_buttons: Array[BaseButton] = []
 var _dock_buttons: Array[BaseButton] = []
 var _sheets: Array[Control] = []
+var _status_rows: Dictionary = {}
 var _current_root_margin: float = 24.0
 var _current_column_separation: float = 12.0
 var _factory_design_width: float = 960.0
@@ -181,6 +182,7 @@ func _ready() -> void:
 	_apply_automation_copy()
 
 func _initialize_banner_references() -> void:
+	_status_rows.clear()
 	_banner_content = null
 	_alert_pill = null
 	_banner_metric_title_labels.clear()
@@ -222,6 +224,35 @@ func _initialize_banner_references() -> void:
 			_banner_metric_title_labels = title_labels
 			_metric_labels = metric_map
 			_alert_pill = legacy_content.get_node_or_null("AlertPill") as Label
+			var status_dock := legacy_content.get_node_or_null("StatusDock")
+			if status_dock:
+				_status_rows = {
+					&"power": {
+						"title": status_dock.get_node_or_null("PowerRow/PowerText/PowerTitle"),
+						"value": status_dock.get_node_or_null("PowerRow/PowerText/PowerValue"),
+						"icon": status_dock.get_node_or_null("PowerRow/PowerIcon")
+					},
+					&"economy": {
+						"title": status_dock.get_node_or_null("EconomyRow/EconomyText/EconomyTitle"),
+						"value": status_dock.get_node_or_null("EconomyRow/EconomyText/EconomyValue"),
+						"icon": status_dock.get_node_or_null("EconomyRow/EconomyIcon")
+					},
+					&"population": {
+						"title": status_dock.get_node_or_null("PopulationRow/PopulationText/PopulationTitle"),
+						"value": status_dock.get_node_or_null("PopulationRow/PopulationText/PopulationValue"),
+						"icon": status_dock.get_node_or_null("PopulationRow/PopulationIcon")
+					},
+					&"economy_rate": {
+						"title": status_dock.get_node_or_null("EconomyRateRow/EconomyRateText/EconomyRateTitle"),
+						"value": status_dock.get_node_or_null("EconomyRateRow/EconomyRateText/EconomyRateValue"),
+						"icon": status_dock.get_node_or_null("EconomyRateRow/EconomyRateIcon")
+					},
+					&"conveyor_backlog": {
+						"title": status_dock.get_node_or_null("ConveyorRow/ConveyorText/ConveyorTitle"),
+						"value": status_dock.get_node_or_null("ConveyorRow/ConveyorText/ConveyorValue"),
+						"icon": status_dock.get_node_or_null("ConveyorRow/ConveyorIcon")
+					}
+				}
 	if _banner_metric_columns.is_empty() and _top_banner_component:
 		_banner_metric_columns = _top_banner_component.metric_columns()
 	if _banner_metric_title_labels.is_empty() and _top_banner_component:

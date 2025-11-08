@@ -69,8 +69,7 @@ mkdir -p "${current_dir}"
 find "${current_dir}" -maxdepth 1 -type f -name '*.png' -delete
 find "${current_dir}" -maxdepth 1 -type f -name '*.png.import' -delete
 
-scenes="res://scenes/ui_baseline/hud_blank_reference.tscn,res://scenes/ui_baseline/hud_power_normal.tscn,res://scenes/ui_baseline/hud_power_warning.tscn,res://scenes/ui_baseline/hud_power_critical.tscn"
-run_step "ui_viewport_capture" "${SCRIPT_DIR}/ui_viewport_matrix.sh" --out-dir="${current_dir}" --scenes="${scenes}" --no-viewport-suffix
+run_step "ui_baseline_capture" "${SCRIPT_DIR}/run_headless_godot.sh" "--output=${current_dir}"
 run_step "ui_compare" "${SCRIPT_DIR}/ui_compare.sh" "${baseline_dir}" "${current_dir}"
 
 echo "[check_only] all steps passed"
