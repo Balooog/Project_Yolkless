@@ -32,6 +32,15 @@ hud_slot_f_backlog_normal	Queue {count}
 hud_slot_f_backlog_warning	Queue {count} ⚠
 hud_slot_f_tooltip	Conveyor backlog shows how many shipments await packing.
 hud_slot_f_tooltip_warning	Queue above {threshold} stalls automation. Check power or automation settings.
+tooltip_power_normal	Power load is calm. Automation has full headroom.
+tooltip_power_warning	Power draw is rising. Expect slower automation.
+tooltip_power_critical	Power grid is overloaded. Automation may pause.
+tooltip_economy_normal	Egg Flow is steady and within design targets.
+tooltip_economy_warning	Production dipped; consider feeding or upgrades.
+tooltip_economy_critical	Egg Flow stalled. Automation will pause until recovered.
+tooltip_backlog_normal	Queues are flowing smoothly.
+tooltip_backlog_warning	Backlog growing. Watch automation pacing.
+tooltip_backlog_critical	Shipping blocked. Clear the queue to recover Egg Flow.
 capacity_bar_label	Storage: {value} / {capacity}
 storage_label	Storage: {storage} / {capacity} ({percent}%)
 storage_dump_message	Shipment sent! +{amount}
@@ -70,6 +79,14 @@ reset_save_dialog_confirm	Delete Save
 reset_save_dialog_cancel	Cancel
 automation_panel_title	Automation
 automation_panel_title_tooltip	Configure routines that auto-feed bursts or manage helpers.
+automation_panel_open_button	Automation Panel
+automation_panel_state_label	Automation state
+automation_panel_toggle_label	Enable automation
+automation_panel_slider_label	Auto-feed threshold
+automation_panel_slider_hint	Trigger bursts when feed is above {percent}% capacity.
+automation_panel_slider_value	{percent}%
+automation_panel_target_label	Choose routine
+automation_panel_close_button	Close
 automation_info_unavailable	Automation service unavailable
 automation_state_enabled	Automation enabled
 automation_state_disabled	Automation paused
@@ -77,6 +94,14 @@ automation_state_power_limited	 — limited by power
 automation_next_action	next in {seconds}s
 automation_target_autoburst	Auto-feed bursts
 automation_target_autoburst_tooltip	Automatically trigger Feed bursts when production dips below the sweet spot.
+automation_target_manual	Manual cadence
+automation_target_manual_tooltip	Stay hands-on. Automation will wait until re-enabled.
+toast_tier_one_unlock	Tier I unlocked — conveyor efficiency boosted!
+event_overcast_day_title	Overcast Day
+event_overcast_day_body	Cool skies keep hens calm but slow solar gains. Watch the power meter.
+event_bulk_order_title	Bulk Order
+event_bulk_order_body	New grocer order queued up. Conveyor backlog will swell until it ships.
+event_dismiss_button	Dismiss
 toast_upgrade_prod	Production +10%
 toast_upgrade_cap	Storage +10%
 toast_upgrade_feed_storage	Feed Tank +10

@@ -1,0 +1,153 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scenes/ui/panels/AutomationPanel.gd" id="1"]
+[ext_resource type="Resource" path="res://ui/theme/Tokens.tres" id="2"]
+
+[node name="AutomationPanel" type="Control"]
+layout_mode = 3
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -400.0
+offset_top = -240.0
+offset_right = 400.0
+offset_bottom = 240.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+script = ExtResource("1")
+tokens = ExtResource("2")
+
+[node name="Panel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 0.0
+offset_bottom = 0.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="Content" type="VBoxContainer" parent="Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="HeaderRow" type="HBoxContainer" parent="Panel/Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="AutomationTitle" type="Label" parent="Panel/Margin/Content/HeaderRow"]
+unique_name_in_owner = true
+text = "Automation"
+size_flags_horizontal = 3
+
+[node name="AutomationStateLabel" type="Label" parent="Panel/Margin/Content/HeaderRow"]
+unique_name_in_owner = true
+text = "Automation state"
+size_flags_horizontal = 1
+horizontal_alignment = 2
+
+[node name="StatsRow" type="HBoxContainer" parent="Panel/Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="EconomyBox" type="VBoxContainer" parent="Panel/Margin/Content/StatsRow"]
+size_flags_horizontal = 3
+
+[node name="EconomyLabel" type="Label" parent="Panel/Margin/Content/StatsRow/EconomyBox"]
+text = "Egg Flow"
+
+[node name="EconomyValue" type="Label" parent="Panel/Margin/Content/StatsRow/EconomyBox"]
+unique_name_in_owner = true
+text = "0.0/s"
+
+[node name="BacklogBox" type="VBoxContainer" parent="Panel/Margin/Content/StatsRow"]
+size_flags_horizontal = 3
+
+[node name="BacklogLabel" type="Label" parent="Panel/Margin/Content/StatsRow/BacklogBox"]
+text = "Conveyor Backlog"
+
+[node name="BacklogValue" type="Label" parent="Panel/Margin/Content/StatsRow/BacklogBox"]
+unique_name_in_owner = true
+text = "Queue 0"
+
+[node name="ToggleRow" type="HBoxContainer" parent="Panel/Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="AutomationToggleLabel" type="Label" parent="Panel/Margin/Content/ToggleRow"]
+text = "Enable automation"
+size_flags_horizontal = 3
+
+[node name="AutomationToggle" type="CheckButton" parent="Panel/Margin/Content/ToggleRow"]
+unique_name_in_owner = true
+size_flags_horizontal = 1
+
+[node name="SliderRow" type="VBoxContainer" parent="Panel/Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="SliderHeader" type="HBoxContainer" parent="Panel/Margin/Content/SliderRow"]
+theme_override_constants/separation = 8
+
+[node name="AutomationSliderLabel" type="Label" parent="Panel/Margin/Content/SliderRow/SliderHeader"]
+unique_name_in_owner = true
+text = "Auto-feed threshold"
+size_flags_horizontal = 3
+
+[node name="AutomationSliderValue" type="Label" parent="Panel/Margin/Content/SliderRow/SliderHeader"]
+unique_name_in_owner = true
+text = "50%"
+size_flags_horizontal = 1
+horizontal_alignment = 2
+
+[node name="AutomationSlider" type="HSlider" parent="Panel/Margin/Content/SliderRow"]
+unique_name_in_owner = true
+min_value = 0.0
+max_value = 100.0
+value = 50.0
+size_flags_horizontal = 3
+
+[node name="AutomationHintLabel" type="Label" parent="Panel/Margin/Content/SliderRow"]
+unique_name_in_owner = true
+text = "Trigger bursts when feed is above 50% capacity."
+modulate = Color(1, 1, 1, 0.8)
+size_flags_horizontal = 3
+
+[node name="TargetRow" type="HBoxContainer" parent="Panel/Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="AutomationTargetLabel" type="Label" parent="Panel/Margin/Content/TargetRow"]
+unique_name_in_owner = true
+text = "Choose routine"
+size_flags_horizontal = 1
+
+[node name="TargetSelector" type="OptionButton" parent="Panel/Margin/Content/TargetRow"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+
+[node name="Spacer" type="Control" parent="Panel/Margin/Content"]
+size_flags_vertical = 3
+
+[node name="ButtonRow" type="HBoxContainer" parent="Panel/Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="ButtonSpacer" type="Control" parent="Panel/Margin/Content/ButtonRow"]
+size_flags_horizontal = 3
+
+[node name="AutomationCloseButton" type="Button" parent="Panel/Margin/Content/ButtonRow"]
+unique_name_in_owner = true
+text = "Close"
+size_flags_horizontal = 1

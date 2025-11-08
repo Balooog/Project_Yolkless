@@ -14,6 +14,8 @@ signal throughput_updated(rate: float, queue_len: int)
 var belts: Array[ConveyorBelt] = []
 var items_per_second: float = 0.0
 var average_travel_time: float = 0.0
+var _speed_multiplier: float = 1.0
+var _user_speed_bias: float = 1.0
 
 var _item_sequence: int = 0
 var _log_timer: float = 0.0
@@ -39,6 +41,7 @@ func register_belt(belt: ConveyorBelt) -> void:
 		return
 	belts.append(belt)
 	belt.set_manager(self)
+	belt.set_speed_multiplier(_effective_speed_multiplier())
 
 func unregister_belt(belt: ConveyorBelt) -> void:
 	if belt == null:
@@ -121,6 +124,24 @@ func _process(delta: float) -> void:
 		if logger:
 			logger.log("INFO", "CONVEYOR", "throughput update", context)
 	emit_signal("throughput_updated", items_per_second, total_queue)
+
+func set_speed_multiplier(mult: float) -> void:
+	_speed_multiplier = clamp(mult, 0.1, 3.0)
+	_apply_speed_multiplier()
+
+func set_user_speed_bias(percent: float) -> void:
+	var ratio := clamp(percent, 0.0, 1.0)
+	_user_speed_bias = lerp(0.75, 1.25, ratio)
+	_apply_speed_multiplier()
+
+func _effective_speed_multiplier() -> float:
+	return clamp(_speed_multiplier * _user_speed_bias, 0.1, 5.0)
+
+func _apply_speed_multiplier() -> void:
+	var multiplier := _effective_speed_multiplier()
+	for belt in belts:
+		if belt:
+			belt.set_speed_multiplier(multiplier)
 
 func _get_logger() -> YolkLogger:
 	var node: Node = get_node_or_null("/root/Logger")

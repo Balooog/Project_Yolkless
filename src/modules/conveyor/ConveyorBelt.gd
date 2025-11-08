@@ -28,6 +28,7 @@ class Segment:
 
 var segments: Array[Segment] = []
 var manager: ConveyorManager
+var speed_multiplier: float = 1.0
 
 var _items: Array[ConveyorItem] = []
 var _item_velocity: Dictionary = {}
@@ -198,6 +199,9 @@ func step(delta: float) -> Dictionary:
 func get_total_length() -> float:
 	return _total_length
 
+func set_speed_multiplier(mult: float) -> void:
+	speed_multiplier = clamp(mult, 0.1, 5.0)
+
 func get_item_count() -> int:
 	return _items.size()
 
@@ -216,7 +220,7 @@ func _average_speed() -> float:
 	var total: float = 0.0
 	for seg in segments:
 		total += seg.speed
-	return total / float(segments.size())
+	return (total / float(segments.size())) * speed_multiplier
 
 func _segment_for_distance(distance: float) -> int:
 	if segments.is_empty():
@@ -240,10 +244,10 @@ func _build_segment_occupancy() -> Dictionary:
 
 func _resolve_item_speed(item: ConveyorItem, segment: Segment) -> float:
 	if item == null:
-		return segment.speed
+		return segment.speed * speed_multiplier
 	if item.speed > 0.0:
-		return min(item.speed, segment.speed)
-	return segment.speed
+		return min(item.speed, segment.speed) * speed_multiplier
+	return segment.speed * speed_multiplier
 
 func _update_item_transform(item: ConveyorItem) -> void:
 	if _curve == null:

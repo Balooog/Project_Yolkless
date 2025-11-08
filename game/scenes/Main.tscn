@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 [ext_resource type="Script" path="res://game/scripts/Balance.gd" id="1"]
 [ext_resource type="Script" path="res://game/scripts/Research.gd" id="2"]
 [ext_resource type="Script" path="res://game/scripts/Economy.gd" id="3"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://src/modules/conveyor/ConveyorManager.gd" id="8"]
 [ext_resource type="PackedScene" path="res://game/scenes/modules/conveyor/FactoryConveyor.tscn" id="9"]
 [ext_resource type="PackedScene" path="res://scenes/prototype/ui_architecture.tscn" id="10"]
+[ext_resource type="PackedScene" path="res://scenes/ui/panels/AutomationPanel.tscn" id="11"]
 
 [node name="Main" type="Node"]
 script = ExtResource("5")
@@ -92,6 +93,46 @@ unique_name_in_owner = true
 size_flags_horizontal = 3
 
 [node name="OverlaySpacer" type="Control" parent="UI/RootMargin/RootColumn/OverlayRow"]
+size_flags_horizontal = 3
+
+[node name="MicroEventCard" type="PanelContainer" parent="UI/RootMargin/RootColumn/OverlayRow"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(320, 0)
+
+[node name="MicroEventMargin" type="MarginContainer" parent="UI/RootMargin/RootColumn/OverlayRow/MicroEventCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="MicroEventContent" type="VBoxContainer" parent="UI/RootMargin/RootColumn/OverlayRow/MicroEventCard/MicroEventMargin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="MicroEventTitle" type="Label" parent="UI/RootMargin/RootColumn/OverlayRow/MicroEventCard/MicroEventMargin/MicroEventContent"]
+unique_name_in_owner = true
+text = "Event Title"
+
+[node name="MicroEventBody" type="Label" parent="UI/RootMargin/RootColumn/OverlayRow/MicroEventCard/MicroEventMargin/MicroEventContent"]
+unique_name_in_owner = true
+autowrap = true
+text = "Event description copy."
+max_lines_visible = 3
+
+[node name="MicroEventFooter" type="HBoxContainer" parent="UI/RootMargin/RootColumn/OverlayRow/MicroEventCard/MicroEventMargin/MicroEventContent"]
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="MicroEventTimer" type="Label" parent="UI/RootMargin/RootColumn/OverlayRow/MicroEventCard/MicroEventMargin/MicroEventContent/MicroEventFooter"]
+unique_name_in_owner = true
+text = "0s"
+size_flags_horizontal = 1
+
+[node name="MicroEventDismiss" type="Button" parent="UI/RootMargin/RootColumn/OverlayRow/MicroEventCard/MicroEventMargin/MicroEventContent/MicroEventFooter"]
+unique_name_in_owner = true
+text = "Dismiss"
 size_flags_horizontal = 3
 
 [node name="VBox" type="VBoxContainer" parent="UI/RootMargin/RootColumn"]
@@ -244,6 +285,11 @@ unique_name_in_owner = true
 size_flags_horizontal = 1
 text = "Settings"
 
+[node name="AutomationPanelButton" type="Button" parent="UI/RootMargin/RootColumn/VBox/ButtonRow"]
+unique_name_in_owner = true
+size_flags_horizontal = 1
+text = "Automation Panel"
+
 [node name="OfflinePopup" type="PopupPanel" parent="UI"]
 unique_name_in_owner = true
 visible = false
@@ -261,6 +307,10 @@ horizontal_alignment = 1
 vertical_alignment = 1
 visible = false
 modulate = Color(1, 1, 1, 0)
+
+[node name="AutomationPanel" parent="UI" instance=ExtResource("11")]
+unique_name_in_owner = true
+
 
 [node name="VBox" type="VBoxContainer" parent="UI/OfflinePopup"]
 anchors_preset = 8

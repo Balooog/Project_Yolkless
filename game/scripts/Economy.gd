@@ -91,6 +91,9 @@ var _last_economy_rate_label: String = "0.0/s"
 var _last_conveyor_backlog: int = -1
 var _last_conveyor_backlog_label: String = "Queue 0"
 var _last_conveyor_backlog_tone: StringName = StringName("normal")
+var _automation_feed_threshold: float = 0.5
+var _telemetry_tier: int = 0
+var _telemetry_event_id: String = ""
 
 func setup(balance: Balance, research: Research) -> void:
 	_balance = balance
@@ -513,6 +516,12 @@ func _automation_interval() -> float:
 	var auto_cd_adjust: float = float(_research.multipliers.get("auto_cd", 0.0))
 	return clamp(auto_tick + auto_cd_adjust, 0.1, 999.0)
 
+func set_automation_feed_threshold(ratio: float) -> void:
+	_automation_feed_threshold = clamp(ratio, 0.0, 1.0)
+
+func automation_feed_threshold() -> float:
+	return _automation_feed_threshold
+
 func _refresh_dump_state() -> void:
 	if _balance == null:
 		_dump_enabled = false
@@ -672,6 +681,8 @@ func _handle_autoburst_request() -> bool:
 	if not _automation_environment_ok():
 		return false
 	if feed_current <= 0.0:
+		return false
+	if get_feed_fraction() < _automation_feed_threshold:
 		return false
 	return try_burst(true)
 
@@ -1116,6 +1127,10 @@ func _refresh_config_flags() -> void:
 	else:
 		_ship_amortization_enabled = false
 
+func set_telemetry_context(tier_value: int, event_id: String) -> void:
+	_telemetry_tier = max(tier_value, 0)
+	_telemetry_event_id = String(event_id)
+
 func _record_stats_probe(tick_ms: float, pps: float, base_pps: float, feed_fraction: float) -> void:
 	if _stats_probe == null or not is_instance_valid(_stats_probe):
 		_stats_probe = _get_stats_probe()
@@ -1140,7 +1155,9 @@ func _record_stats_probe(tick_ms: float, pps: float, base_pps: float, feed_fract
 		"eco_ship_ms": float(_profiling_sections.get(PROFILING_PHASE_SHIP, 0.0)),
 		"eco_research_ms": float(_profiling_sections.get(PROFILING_PHASE_RESEARCH, 0.0)),
 		"eco_statbus_ms": float(_profiling_sections.get(PROFILING_PHASE_STATBUS, 0.0)),
-		"eco_ui_ms": float(_profiling_sections.get(PROFILING_PHASE_UI, 0.0))
+		"eco_ui_ms": float(_profiling_sections.get(PROFILING_PHASE_UI, 0.0)),
+		"tier": _telemetry_tier,
+		"event_id": _telemetry_event_id
 	})
 
 func _log(level: String, category: String, message: String, context: Dictionary = {}) -> void:
