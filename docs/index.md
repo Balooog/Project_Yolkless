@@ -17,7 +17,9 @@ layout: default
 | PX ID | Focus | Status | Link |
 |:------|:------|:-------:|:-----|
 | **PX-018** | HUD Baseline / Power Warnings | ✅ Complete | [PX-018 Overview](px/PX-018.0_Overview.md) |
-| **PX-019** | Sandbox Visual Integration | 🟡 In Progress | [PX-019 Overview](px/PX-019.0_Overview.md) |
+| **PX-019.0** | Sandbox Visual Integration Overview | ✅ Complete | [PX-019 Overview](px/PX-019.0_Overview.md) |
+| **PX-019.1** | Sandbox Viewport Integration | ✅ Complete | [PX-019.1 Sandbox Viewport](px/PX-019.1_Sandbox_Viewport.md) |
+| **PX-019.2** | Environment Tick & Performance Validation | ✅ Complete | [PX-019.2 Environment Tick Validation](px/PX-019.2_Environment_Tick_Validation.md) |
 | **PX-020.0** | Economy / Conveyor + GUI Integration Overview | 🧭 Drafting | [PX-020.0 Overview](px/PX-020.0_Overview.md) |
 | **PX-020.1** | GUI Wiring (HUD Slots D / F) | ✅ Implemented | [PX-020.1 GUI Wiring](px/PX-020.1_GUI_Wiring.md) |
 | **PX-020.2** | Automation Panel Interaction | 🧭 Drafting | [PX-020.2 Automation Panel](px/PX-020.2_Interaction_AutomationPanel.md) |
