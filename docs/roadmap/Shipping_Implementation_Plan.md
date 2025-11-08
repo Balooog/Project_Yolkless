@@ -5,6 +5,7 @@
 ## Status Highlights
 - **19.x baseline complete.**  HUD capture, CI lint, and replay smoke now run green (see `docs/index.md` Version History).  Treat this as the floor for future PX validation.
 - **PX-020 series in active drafting.**  All GUI/telemetry documents live under `docs/px/` with sequencing managed in [PX-020 Series Roadmap](PX_20_Series_Roadmap.md).  Implementation work should reference those docs before touching HUD, automation, or telemetry code.
+- **PX-019 series documented.**  Sandbox viewport layering, driver parity, and tick validation now sit in `docs/px/PX-019.*`; use these contracts when touching EnvironmentStage or CI capture scripts.
 
 ## Solo Execution Sequence
 
@@ -18,7 +19,7 @@
 | 6 | Sprint 3 | PX-018.3 | Document and test power warnings | Ensure deficits produce calm feedback and logs. |
 | 7 | Sprint 4 | PX-021.4 / PX-021.5 | Ship diorama evolution and map toggle | Establish shared renderer pipeline ahead of beta polish. |
 | 8 | Sprint 4 | PX-021.6 | Author environment milestone profiles and tier swaps | Data must be ready before prestige and layout hooks. |
-| 9 | Sprint 5 | PX-019.1 | Bind conveyor deliveries with layout adjacency economy bonuses | Requires environment tiers and power ledger to be stable. |
+| 9 | Sprint 5 | PX-019.0 / PX-019.1 / PX-019.2 | Sandbox viewport integration & tick validation | Complete 2025-11-09 - unified world/HUD viewport, driver parity matrix, replay thresholds documented. |
 | 10 | Sprint 5 | PX-016.2 | Implement event and risk system loops | Builds on automation, power, and layout. |
 | 11 | Sprint 6 | PX-015.1 | Prestige theming and HUD wisdom surfacing | Needs environment tiers and event hooks available. |
 | 12 | Sprint 6 | PX-020.1 / PX-010.13 | Finalize art/audio pipeline and accessibility passes | Coordinate with prestige theming and automation UI. |
@@ -51,7 +52,7 @@
 | --- | --- | --- | --- | --- |
 | PX-021.4 / PX-021.5 | Ship diorama evolution + map toggle | Shared sandbox buffers, art staging assets | Era props per tier, instant Diorama/Map toggle, timelapse-ready snapshots | UI baseline run with both views, StatsProbe fallback ratio <5% |
 | PX-021.6 | Author environment milestone profiles and tier swaps (RM-021) | `data/environment_profiles.tsv`, prestige milestones | Tier-based profile data, EnvPanel branching, designer notes | Hot-reload review, replay capturing tier promotion transitions |
-| PX-019.1 | Bind conveyor deliveries + layout adjacency economy bonuses (RM-019) | Factory grid data, power ledger | Placement UX, adjacency modifiers routed to StatBus/Economy, save payload updates | Placement integration smoke, StatBus additive rule validation |
+| PX-019.0 / PX-019.1 / PX-019.2 | Sandbox viewport integration & tick validation (RM-019) | PX-018 HUD baseline, EnvironmentStage_Backyard assets, headless capture scripts | Unified viewport layering doc, driver parity notes, tick thresholds + CI gates | `tools/run_headless_godot.sh` capture, `python3 tools/ui_assert_baseline.py`, `tools/replay_headless.gd` hash/tick checks |
 | PX-016.2 | Implement event and risk system loops (RM-016) | Automation and power hooks, HUD overlays | Weighted scheduler, calm feedback, telemetry coverage | Replay stress scenarios, risk log update with new event class |
 | PX-015.1 | Prestige theming + HUD wisdom surfacing (RM-015) | Art/audio pipeline, EnvPanel, save schema | Prestige ceremony, wisdom panel, Balance Playbook update | Narrative copy review, telemetry parity run matched against targets |
 | PX-020.1 / PX-010.13 | Finalize art/audio pipeline and accessibility passes (RM-020, RM-010) | Asset tokens, automation/power signals | Tokenized palettes, layered ambience, controller/accessibility sign-off | `tools/ui_viewport_matrix.sh`, accessibility checklist closure, audio soak |
