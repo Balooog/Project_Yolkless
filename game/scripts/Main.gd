@@ -1159,8 +1159,6 @@ func _on_economy_rate_changed(rate: float, label: String) -> void:
 	if lbl_pps:
 		lbl_pps.text = slot_label
 		lbl_pps.tooltip_text = tooltip
-	if ui_prototype:
-		ui_prototype.set_status(StringName("economy_rate"), slot_label, tooltip)
 	if automation_panel_ui:
 		automation_panel_ui.update_economy_rate(slot_label)
 	if _tier_rate_samples == 0:
@@ -1954,7 +1952,7 @@ func _update_micro_events(_delta: float) -> void:
 func _show_micro_event_card(event_data: Dictionary) -> void:
 	if micro_event_card == null:
 		return
-	var tint_variant := event_data.get("ui_tint", event_data.get("tint", Color(1, 1, 1, 1)))
+	var tint_variant: Variant = event_data.get("ui_tint", event_data.get("tint", Color(1, 1, 1, 1)))
 	micro_event_card.self_modulate = tint_variant if tint_variant is Color else Color(1, 1, 1, 1)
 	var title_key := String(event_data.get("title_key", ""))
 	var body_key := String(event_data.get("body_key", ""))
