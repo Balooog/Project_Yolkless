@@ -86,12 +86,14 @@ layout_mode = 2
 theme_override_constants/separation = 12
 
 [node name="AutomationToggleLabel" type="Label" parent="Panel/Margin/Content/ToggleRow"]
+unique_name_in_owner = true
 text = "Enable automation"
 size_flags_horizontal = 3
 
 [node name="AutomationToggle" type="CheckButton" parent="Panel/Margin/Content/ToggleRow"]
 unique_name_in_owner = true
 size_flags_horizontal = 1
+tooltip_text = "Pause or resume automation."
 
 [node name="SliderRow" type="VBoxContainer" parent="Panel/Margin/Content"]
 layout_mode = 2

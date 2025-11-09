@@ -58,6 +58,8 @@ export GODOT_BIN="${godot_bin}"
 echo "[check_only] Using $(${GODOT_BIN} --version)"
 
 run_step "godot_check_only" "${SCRIPT_DIR}/check_only.sh"
+run_step "localization_export_check" "${SCRIPT_DIR}/localization_export_check.sh"
+run_step "pseudo_loc_smoke" "${SCRIPT_DIR}/pseudo_loc_smoke.sh"
 
 baseline_dir="${REPO_ROOT}/dev/screenshots/ui_baseline"
 current_dir="${REPO_ROOT}/dev/screenshots/ui_current"

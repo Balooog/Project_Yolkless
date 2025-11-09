@@ -15,6 +15,7 @@ const StringsPath := "/root/Strings"
 @onready var _state_label: Label = %AutomationStateLabel
 @onready var _economy_value_label: Label = %EconomyValue
 @onready var _backlog_value_label: Label = %BacklogValue
+@onready var _toggle_label: Label = %AutomationToggleLabel
 @onready var _toggle: CheckButton = %AutomationToggle
 @onready var _slider: HSlider = %AutomationSlider
 @onready var _slider_value_label: Label = %AutomationSliderValue
@@ -118,6 +119,13 @@ func _apply_strings() -> void:
 		return
 	_title_label.text = String(_strings.call("get_text", "automation_panel_title", _title_label.text))
 	_state_label.text = String(_strings.call("get_text", "automation_panel_state_label", _state_label.text))
+	if _toggle_label:
+		_toggle_label.text = String(_strings.call("get_text", "automation_panel_toggle_label", _toggle_label.text))
+	if _toggle:
+		var toggle_tooltip: String = String(
+			_strings.call("get_text", "automation_panel_toggle_tooltip", _toggle.tooltip_text)
+		)
+		_toggle.tooltip_text = toggle_tooltip
 	_slider_label.text = String(_strings.call("get_text", "automation_panel_slider_label", _slider_label.text))
 	_target_label.text = String(_strings.call("get_text", "automation_panel_target_label", _target_label.text))
 	_close_button.text = String(_strings.call("get_text", "automation_panel_close_button", _close_button.text))

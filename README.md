@@ -128,6 +128,9 @@ code docs/prompts/PX-021.1.md   # paste canvas text
 - `tools/sync_ui_screenshots.sh` — copy captured PNGs from Godot’s user directory into `dev/screenshots/ui_current/`
 - `tools/export_palette.gd` — generate palette PNG + JSON from `data/materials.tsv` to keep UI colors in sync
 - `tools/build_linux.sh` — export a Linux build via `$GODOT_BIN` (requires configured export preset)
+- `tools/export_strings.gd` — build `i18n/strings.pot` from `game/data/strings_egg.tsv` for localization partners
+- `tools/localization_export_check.sh` — CI helper that regenerates the POT and fails when `i18n/strings.pot` is stale
+- `tools/pseudo_loc_smoke.sh` — runs UILint + viewport captures with `PSEUDO_LOC=1` to stress HUD layouts
 
 Make scripts executable: `chmod +x tools/*.sh`.
 
