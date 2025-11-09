@@ -26,23 +26,6 @@ const TOOLTIP_SCENE := preload("res://ui/components/Tooltip.tscn")
 const TIER1_POWER_SECONDS := 90.0
 const TIER1_RATE_THRESHOLD := 1.2
 const TIER1_CONVEYOR_BONUS := 0.10
-const MICRO_EVENT_STAT_KEY := StringName("micro_event_id")
-const MICRO_EVENTS := [
-	{
-		"id": "overcast_day",
-		"title_key": "event_overcast_day_title",
-		"body_key": "event_overcast_day_body",
-		"duration": 45.0,
-		"cooldown": 90.0
-	},
-	{
-		"id": "bulk_order",
-		"title_key": "event_bulk_order_title",
-		"body_key": "event_bulk_order_body",
-		"duration": 50.0,
-		"cooldown": 110.0
-	}
-]
 
 @onready var bal: Balance = $Balance
 @onready var res: Research = $Research
@@ -101,7 +84,8 @@ var environment_panel: EnvPanel
 @onready var micro_event_title: Label = %MicroEventTitle
 @onready var micro_event_body: Label = %MicroEventBody
 @onready var micro_event_timer_label: Label = %MicroEventTimer
-@onready var micro_event_dismiss: Button = %MicroEventDismiss
+@onready var micro_event_primary_button: Button = %MicroEventDismiss
+@onready var micro_event_secondary_button: Button = %MicroEventSecondary
 
 var text_scale := 1.0
 var shop_service: ShopService
@@ -163,10 +147,11 @@ var _tier_one_unlocked := false
 var _stable_power_seconds := 0.0
 var _economy_rate_avg := 0.0
 var _tier_rate_samples := 0
-var _micro_event_timer := 45.0
 var _micro_event_active_id: String = ""
 var _micro_event_time_left := 0.0
-var _micro_event_queue_index := 0
+var _micro_event_current: Dictionary = {}
+var _micro_event_primary_action: String = ""
+var _micro_event_secondary_action: String = ""
 
 func _ready() -> void:
 	_configure_input_actions()
@@ -216,8 +201,10 @@ func _ready() -> void:
 	_setup_status_tooltips()
 	if micro_event_card:
 		micro_event_card.visible = false
-	if micro_event_dismiss:
-		micro_event_dismiss.pressed.connect(_on_micro_event_dismissed)
+	if micro_event_primary_button:
+		micro_event_primary_button.pressed.connect(_on_micro_event_primary_pressed)
+	if micro_event_secondary_button:
+		micro_event_secondary_button.pressed.connect(_on_micro_event_secondary_pressed)
 
 	var config_node := get_node_or_null("/root/Config")
 	var logging_enabled := true
@@ -355,6 +342,9 @@ func _ready() -> void:
 	power_service = _get_power_service()
 	automation_service = _get_automation_service()
 	sandbox_service = _get_sandbox_service()
+	if sandbox_service:
+		sandbox_service.register_gameplay_services(power_service, eco)
+		_connect_sandbox_event_signals()
 	if automation_panel_ui:
 		automation_panel_ui.attach_services(eco, conveyor_manager, automation_service)
 		if not automation_panel_ui.automation_panel_opened.is_connected(_on_prototype_automation_panel_opened):
@@ -1876,6 +1866,20 @@ func _update_telemetry_context() -> void:
 	if eco:
 		eco.set_telemetry_context(sav.tier_progress, _micro_event_active_id)
 
+func _connect_sandbox_event_signals() -> void:
+	if sandbox_service == null:
+		return
+	if not sandbox_service.event_started.is_connected(_on_sandbox_event_started):
+		sandbox_service.event_started.connect(_on_sandbox_event_started)
+	if not sandbox_service.event_completed.is_connected(_on_sandbox_event_completed):
+		sandbox_service.event_completed.connect(_on_sandbox_event_completed)
+	if not sandbox_service.event_declined.is_connected(_on_sandbox_event_declined):
+		sandbox_service.event_declined.connect(_on_sandbox_event_declined)
+	if not sandbox_service.event_accepted.is_connected(_on_sandbox_event_accepted):
+		sandbox_service.event_accepted.connect(_on_sandbox_event_accepted)
+	if not sandbox_service.event_toast_requested.is_connected(_on_sandbox_event_toast_requested):
+		sandbox_service.event_toast_requested.connect(_on_sandbox_event_toast_requested)
+
 func _setup_status_tooltips() -> void:
 	if ui_layer == null:
 		return
@@ -1920,7 +1924,7 @@ func _on_economy_label_hovered() -> void:
 func _on_backlog_label_hovered() -> void:
 	if _backlog_tooltip == null or lbl_conveyor == null:
 		return
-	var text := _tooltip_copy("tooltip_backlog", _backlog_tone_runtime, lbl_conveyor.tooltip_text)
+	var text := _tooltip_copy("tooltip_conveyor", _backlog_tone_runtime, lbl_conveyor.tooltip_text)
 	_show_tooltip(_backlog_tooltip, text, lbl_conveyor)
 
 func _tooltip_copy(prefix: String, tone: StringName, fallback: String) -> String:
@@ -1941,69 +1945,118 @@ func _hide_tooltip(tooltip: UITooltip) -> void:
 	if tooltip:
 		tooltip.visible = false
 
-func _update_micro_events(delta: float) -> void:
-	if MICRO_EVENTS.is_empty():
+func _update_micro_events(_delta: float) -> void:
+	if _micro_event_active_id == "" or sandbox_service == null:
 		return
-	if _micro_event_active_id != "":
-		_micro_event_time_left = max(_micro_event_time_left - delta, 0.0)
-		_update_micro_event_timer_label()
-		if _micro_event_time_left <= 0.0:
-			_complete_micro_event()
-	else:
-		_micro_event_timer = max(_micro_event_timer - delta, 0.0)
-		if _micro_event_timer <= 0.0:
-			_start_next_micro_event()
-
-func _start_next_micro_event() -> void:
-	if MICRO_EVENTS.is_empty():
-		return
-	var event_data: Dictionary = MICRO_EVENTS[_micro_event_queue_index % MICRO_EVENTS.size()]
-	_micro_event_queue_index += 1
-	_micro_event_active_id = String(event_data.get("id", ""))
-	_micro_event_time_left = float(event_data.get("duration", 45.0))
-	_micro_event_timer = float(event_data.get("cooldown", 90.0))
-	_show_micro_event_card(event_data)
-	_set_statbus_event(_micro_event_active_id)
-	_update_telemetry_context()
+	_micro_event_time_left = sandbox_service.get_event_time_remaining(_micro_event_active_id)
+	_update_micro_event_timer_label()
 
 func _show_micro_event_card(event_data: Dictionary) -> void:
 	if micro_event_card == null:
 		return
+	var tint_variant := event_data.get("ui_tint", event_data.get("tint", Color(1, 1, 1, 1)))
+	micro_event_card.self_modulate = tint_variant if tint_variant is Color else Color(1, 1, 1, 1)
 	var title_key := String(event_data.get("title_key", ""))
 	var body_key := String(event_data.get("body_key", ""))
 	if micro_event_title:
 		micro_event_title.text = _strings_get(title_key, title_key)
 	if micro_event_body:
 		micro_event_body.text = _strings_get(body_key, body_key)
-	if micro_event_dismiss:
-		micro_event_dismiss.text = _strings_get("event_dismiss_button", micro_event_dismiss.text)
+	_configure_micro_event_buttons(event_data.get("buttons", []))
 	micro_event_card.visible = true
 	_update_micro_event_timer_label()
 
+func _configure_micro_event_buttons(buttons: Array) -> void:
+	_micro_event_primary_action = ""
+	_micro_event_secondary_action = ""
+	if micro_event_primary_button:
+		micro_event_primary_button.visible = false
+	if micro_event_secondary_button:
+		micro_event_secondary_button.visible = false
+	if buttons.is_empty():
+		return
+	_apply_micro_event_button(buttons[0], true)
+	if buttons.size() > 1:
+		_apply_micro_event_button(buttons[1], false)
+
+func _apply_micro_event_button(button_data: Dictionary, primary: bool) -> void:
+	var button := micro_event_primary_button if primary else micro_event_secondary_button
+	if button == null:
+		return
+	var label_key := String(button_data.get("label_key", ""))
+	if label_key != "":
+		button.text = _strings_get(label_key, button.text)
+	button.visible = true
+	var action := String(button_data.get("id", "ack"))
+	if primary:
+		_micro_event_primary_action = action
+	else:
+		_micro_event_secondary_action = action
+
 func _update_micro_event_timer_label() -> void:
 	if micro_event_timer_label:
-		var remaining := int(ceil(_micro_event_time_left))
-		var text := "%ds" % max(remaining, 0)
-		micro_event_timer_label.text = text
+		if _micro_event_time_left < 0.0:
+			micro_event_timer_label.text = "--"
+		else:
+			var remaining := int(ceil(_micro_event_time_left))
+			var text := "%ds" % max(remaining, 0)
+			micro_event_timer_label.text = text
 
-func _complete_micro_event() -> void:
-	if _micro_event_active_id == "":
-		return
+func _clear_micro_event_state() -> void:
 	_micro_event_active_id = ""
 	_micro_event_time_left = 0.0
-	if micro_event_card:
-		micro_event_card.visible = false
-	_set_statbus_event("")
+	_micro_event_current.clear()
+	_micro_event_primary_action = ""
+	_micro_event_secondary_action = ""
+	_hide_micro_event_card()
 	_update_telemetry_context()
 
-func _on_micro_event_dismissed() -> void:
-	_complete_micro_event()
+func _on_micro_event_primary_pressed() -> void:
+	_handle_micro_event_action(_micro_event_primary_action)
 
-func _set_statbus_event(event_id: String) -> void:
-	var bus := _get_statbus()
-	if bus:
-		bus.register_stat(MICRO_EVENT_STAT_KEY, {"stack": "replace", "default": ""})
-		bus.set_stat(MICRO_EVENT_STAT_KEY, event_id, "MicroEvents")
+func _on_micro_event_secondary_pressed() -> void:
+	_handle_micro_event_action(_micro_event_secondary_action)
+
+func _handle_micro_event_action(action: String) -> void:
+	if action == "" or sandbox_service == null or _micro_event_active_id == "":
+		return
+	match action:
+		"decline":
+			sandbox_service.decline_event(_micro_event_active_id)
+			_hide_micro_event_card()
+		_:
+			sandbox_service.accept_event(_micro_event_active_id)
+			_hide_micro_event_card()
+
+func _hide_micro_event_card() -> void:
+	if micro_event_card:
+		micro_event_card.visible = false
+
+func _on_sandbox_event_started(event_id: String, definition: Dictionary) -> void:
+	_micro_event_active_id = event_id
+	_micro_event_current = definition.duplicate(true)
+	_show_micro_event_card(_micro_event_current)
+	_update_telemetry_context()
+
+func _on_sandbox_event_completed(event_id: String, _definition: Dictionary) -> void:
+	if event_id != _micro_event_active_id:
+		return
+	_clear_micro_event_state()
+
+func _on_sandbox_event_declined(event_id: String, _definition: Dictionary) -> void:
+	if event_id != _micro_event_active_id:
+		return
+	_clear_micro_event_state()
+
+func _on_sandbox_event_accepted(event_id: String, _definition: Dictionary) -> void:
+	if event_id != _micro_event_active_id:
+		return
+	_hide_micro_event_card()
+
+func _on_sandbox_event_toast_requested(key: String) -> void:
+	var message := _strings_get(key, key)
+	if message != "":
+		_show_toast(message)
 
 
 func _update_power_label() -> void:
@@ -2070,7 +2123,7 @@ func _complete_tier_one_unlock() -> void:
 		sav.tier_progress = max(sav.tier_progress, 1)
 	_apply_tier_progression()
 	_update_telemetry_context()
-	_show_toast(_strings_get("toast_tier_one_unlock", "Tier I unlocked — conveyor efficiency boosted!"))
+	_show_toast(_strings_get("tier_unlocked_1_body", "Tier 1 Unlocked — automation efficiency +10%."))
 	sav.save("tier_progress")
 
 func _sanitize_log_line(line: String) -> String:

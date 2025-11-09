@@ -4,6 +4,7 @@ class_name StatsProbe
 signal stats_probe_alert(metric: StringName, value: float, threshold: float)
 
 const OUTPUT_DIR := "user://logs/perf"
+const EVENT_LOG_PATH := OUTPUT_DIR + "/event_log.csv"
 const DEFAULT_FLUSH_INTERVAL := 10.0
 const CI_DELTA_WARMUP_SAMPLES := 20 # Ignore first ~2 seconds (10 Hz) before flagging CI spikes.
 const SANDBOX_TICK_WARMUP_SAMPLES := 12
@@ -34,6 +35,8 @@ var _service_thresholds := {
 }
 var _pending_writes: Array = []
 var _write_scheduled := false
+var _event_log_queue: Array[Dictionary] = []
+var _event_log_write_scheduled := false
 
 func _ready() -> void:
 	set_process(false)
@@ -64,6 +67,17 @@ func flush_now() -> void:
 		return
 	_flush_buffer()
 	_last_flush_timestamp = 0.0
+
+func event_log(payload: Dictionary) -> void:
+	var entry = {
+		"ts": payload.get("ts", Time.get_unix_time_from_system()),
+		"event_id": String(payload.get("event_id", "")),
+		"kind": String(payload.get("kind", "")),
+	}
+	_event_log_queue.append(entry)
+	if not _event_log_write_scheduled:
+		_event_log_write_scheduled = true
+		call_deferred("_flush_event_log")
 
 func _check_thresholds(payload: Dictionary) -> void:
 	var service := String(payload.get("service", SERVICE_SANDBOX))
@@ -171,6 +185,34 @@ func _process_pending_writes() -> void:
 			file.store_line(csv)
 		file.close()
 	_write_scheduled = false
+	if _event_log_write_scheduled:
+		_flush_event_log()
+
+func _flush_event_log() -> void:
+	if _event_log_queue.is_empty():
+		_event_log_write_scheduled = false
+		return
+	DirAccess.make_dir_recursive_absolute(OUTPUT_DIR)
+	var file_exists = FileAccess.file_exists(EVENT_LOG_PATH)
+	var open_mode := FileAccess.READ_WRITE if file_exists else FileAccess.WRITE
+	var file := FileAccess.open(EVENT_LOG_PATH, open_mode)
+	if file == null:
+		push_warning("StatsProbe: Failed to open %s for event log" % EVENT_LOG_PATH)
+		_event_log_queue.clear()
+		_event_log_write_scheduled = false
+		return
+	if file_exists:
+		file.seek_end()
+	else:
+		file.store_line("ts,event_id,kind")
+	for entry in _event_log_queue:
+		var ts_value = entry.get("ts", Time.get_unix_time_from_system())
+		var event_id = _sanitize_csv_field(String(entry.get("event_id", "")))
+		var kind = _sanitize_csv_field(String(entry.get("kind", "")))
+		file.store_line("%s,%s,%s" % [ts_value, event_id, kind])
+	file.close()
+	_event_log_queue.clear()
+	_event_log_write_scheduled = false
 
 func summarize() -> Dictionary:
 	# Lightweight statistics for telemetry aggregation.
@@ -356,6 +398,13 @@ func summarize() -> Dictionary:
 				summary["%s_tick_ms_p95" % service] = p95
 				summary["%s_tick_ms_avg" % service] = avg
 	return summary
+
+func _sanitize_csv_field(value: String) -> String:
+	if value.find("\"") != -1:
+		value = value.replace("\"", "\"\"")
+	if value.find(",") != -1:
+		value = "\"%s\"" % value
+	return value
 
 func _profiling_p95(values: Array) -> float:
 	if values.is_empty():

@@ -1131,6 +1131,35 @@ func set_telemetry_context(tier_value: int, event_id: String) -> void:
 	_telemetry_tier = max(tier_value, 0)
 	_telemetry_event_id = String(event_id)
 
+func get_economy_rate() -> float:
+	if _last_economy_rate >= 0.0:
+		return _last_economy_rate
+	return _current_pps()
+
+func enqueue_backlog(count: int) -> void:
+	if count == 0:
+		return
+	_conveyor_queue = max(_conveyor_queue + count, 0)
+	if _conveyor_queue >= CONVEYOR_JAM_QUEUE_THRESHOLD:
+		_conveyor_jam_active = true
+		_conveyor_jam_timer = CONVEYOR_JAM_SECONDS
+	else:
+		if _conveyor_queue <= 0:
+			_conveyor_jam_timer = 0.0
+		_conveyor_jam_active = false
+	_update_conveyor_statbus()
+	_update_conveyor_backlog_signal()
+	conveyor_metrics_changed.emit(_conveyor_rate, _conveyor_queue, _conveyor_jam_active)
+
+func credit_payment(amount: float, reason: String = "event") -> void:
+	if amount <= 0.0:
+		return
+	_deposit_soft(amount, reason)
+	_log("INFO", "ECONOMY", "Credit payment applied", {
+		"amount": amount,
+		"reason": reason
+	})
+
 func _record_stats_probe(tick_ms: float, pps: float, base_pps: float, feed_fraction: float) -> void:
 	if _stats_probe == null or not is_instance_valid(_stats_probe):
 		_stats_probe = _get_stats_probe()

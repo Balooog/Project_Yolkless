@@ -135,6 +135,12 @@ unique_name_in_owner = true
 text = "Dismiss"
 size_flags_horizontal = 3
 
+[node name="MicroEventSecondary" type="Button" parent="UI/RootMargin/RootColumn/OverlayRow/MicroEventCard/MicroEventMargin/MicroEventContent/MicroEventFooter"]
+unique_name_in_owner = true
+text = "Decline"
+size_flags_horizontal = 3
+visible = false
+
 [node name="VBox" type="VBoxContainer" parent="UI/RootMargin/RootColumn"]
 unique_name_in_owner = true
 size_flags_horizontal = 0

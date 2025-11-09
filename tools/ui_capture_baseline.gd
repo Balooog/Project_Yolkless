@@ -10,6 +10,8 @@ const BASELINE_SCENES := [
 ]
 const TOAST_RECT := Rect2i(Vector2i(340, 624), Vector2i(600, 72))
 const SAFE_AREA := Rect2i(Vector2i(32, 24), Vector2i(1216, 672))
+const VIEWPORT_UPDATE_ALWAYS := SubViewport.UPDATE_ALWAYS
+const VIEWPORT_CLEAR_ALWAYS := SubViewport.CLEAR_MODE_ALWAYS
 
 var _output_dir := DEFAULT_OUTPUT
 var _root_viewport: Viewport
@@ -25,10 +27,15 @@ func _ready() -> void:
 func _ensure_viewport() -> void:
 	if _root_viewport:
 		return
-	_root_viewport = get_root()
-	_root_viewport.size = VIEWPORT_SIZE
-	DisplayServer.window_set_size(VIEWPORT_SIZE)
-	_root_viewport.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_LINEAR
+	var viewport := SubViewport.new()
+	viewport.size = VIEWPORT_SIZE
+	viewport.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_LINEAR
+	viewport.render_target_update_mode = VIEWPORT_UPDATE_ALWAYS
+	viewport.render_target_clear_mode = VIEWPORT_CLEAR_ALWAYS
+	var root_window := get_root()
+	if root_window:
+		root_window.add_child(viewport)
+	_root_viewport = viewport
 
 func _parse_args() -> void:
 	for arg in OS.get_cmdline_user_args():
@@ -105,11 +112,15 @@ func _capture_scene(scene_path: String, out_name: String) -> void:
 	await process_frame
 	await process_frame
 	var image := await _capture_viewport_image()
+	if image == null:
+		push_error("Baseline capture produced null image for %s" % scene_path)
+		await _clear_scene(instance)
+		return
 	_save_png(image, out_name)
 	await _clear_scene(instance)
 
 func _mask_toast(image: Image) -> void:
-	if TOAST_RECT.size == Vector2i.ZERO:
+	if image == null or TOAST_RECT.size == Vector2i.ZERO:
 		return
 	var bg := image.get_pixel(0, 0)
 	var start_x := TOAST_RECT.position.x
@@ -121,7 +132,7 @@ func _mask_toast(image: Image) -> void:
 			image.set_pixel(x, y, bg)
 
 func _mask_outside_safe_area(image: Image) -> void:
-	if SAFE_AREA.size == Vector2i.ZERO:
+	if image == null or SAFE_AREA.size == Vector2i.ZERO:
 		return
 	var bg := image.get_pixel(0, 0)
 	var left := SAFE_AREA.position.x

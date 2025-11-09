@@ -20,12 +20,15 @@
 | `AutomationPanel` | `automation_panel_closed()` | `{}` | AutomationService, UIPrototype | on panel close (tab leaves Automation sheet) |
 | `AutomationPanel` | `automation_target_changed(target_id: StringName)` | `{ target }` | AutomationService, StatBus/Telemetry | on target swap |
 | `SandboxService` | `ci_changed(ci: float, bonus: float)` | `{ ci, bonus }` | Economy StatBus, Telemetry | 2 Hz |
+| `SandboxService` | `event_started(event_id: String, definition: Dictionary)` | `{ id, ui_copy, buttons, duration, effects }` | Main HUD micro-event card, StatsProbe | when an event enters the active queue |
+| `SandboxService` | `event_accepted(event_id: String, definition: Dictionary)` | `{ id, ui_copy }` | HUD (hide card), Economy (apply accept effects) | on player accept |
+| `SandboxService` | `event_declined(event_id: String, definition: Dictionary)` | `{ id }` | HUD (clear), Economy/Power rollback | on player decline |
+| `SandboxService` | `event_completed(event_id: String, definition: Dictionary)` | `{ id, elapsed }` | HUD (clear), telemetry review (StatsProbe log) | on timer/callback completion |
+| `SandboxService` | `event_toast_requested(string_key: String)` | `{ key }` | HUD toast system, Audio cues | when events request follow-up messaging |
 | `SandboxRenderer` | `fallback_state_changed(active: bool)` | `{ active }` | Telemetry, EnvPanel tooltip, debug overlay | on fallback enter/exit |
 | `AutomationService` | `mode_changed(building_id: StringName, mode: int)` | `{ building_id, mode }` | UI overlays, save system | when automation toggles |
 | `AutomationService` | `auto_burst_enqueued()` | `{}` | HUD queue indicator, telemetry | when queue increments |
 | `PowerService` | `power_state_changed(state: float)` | `{ state }` | UI, AutomationService | 5 Hz |
-| `EventDirector` | `event_started(event_id: StringName, data: Dictionary)` | `{ id, modifiers, duration }` | UI popups, telemetry | event start |
-| `EventDirector` | `event_ended(event_id: StringName)` | `{ id }` | UI popups, telemetry | event completion |
 | `ShopService` | `state_changed(id: StringName)` | `{ id, state }` | UI buttons, ShopDebug | on price/lock change |
 | `Research` | `changed()` | `{}` | UI sheets, telemetry | on RP spend |
 | `ConveyorManager` | `throughput_updated(rate: float, queue_len: int)` | `{ rate, queue }` | Economy, HUD, StatBus | per frame |

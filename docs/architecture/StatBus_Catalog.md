@@ -67,7 +67,7 @@ if statbus:
 | `economy_rate` | credits/sec | replace | n/a | PX-020.1 | `Economy.gd` |
 | `economy_rate_label` | string | replace | n/a | PX-020.1 | `UIPrototype` |
 | `automation_target` | enum (string) | replace | n/a | PX-020.2 | `AutomationService.gd` |
-| `micro_event_id` | Active micro-event identifier for telemetry dashboards. | string | replace | n/a | PX-016.2 | `Main.gd` |
+| `micro_event_id` | Active micro-event identifier mirrored to StatsProbe’s event log (`event_id/kind/ts`). | string | replace | n/a | PX-016.2 | `SandboxService.gd` |
 
 - StatBus clamps capped values and logs once per minute: `STATBUS: clamp ci_bonus 0.067→0.050`.
 - New stats must declare owner and enforcement path before registration.

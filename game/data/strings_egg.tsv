@@ -32,15 +32,18 @@ hud_slot_f_backlog_normal	Queue {count}
 hud_slot_f_backlog_warning	Queue {count} ⚠
 hud_slot_f_tooltip	Conveyor backlog shows how many shipments await packing.
 hud_slot_f_tooltip_warning	Queue above {threshold} stalls automation. Check power or automation settings.
-tooltip_power_normal	Power load is calm. Automation has full headroom.
-tooltip_power_warning	Power draw is rising. Expect slower automation.
-tooltip_power_critical	Power grid is overloaded. Automation may pause.
-tooltip_economy_normal	Egg Flow is steady and within design targets.
-tooltip_economy_warning	Production dipped; consider feeding or upgrades.
-tooltip_economy_critical	Egg Flow stalled. Automation will pause until recovered.
+tooltip_power_normal	Power stable.
+tooltip_power_warning	Power output dropping. Efficiency reduced.
+tooltip_power_critical	Critical power! Systems shutting down soon.
+tooltip_economy_normal	Economy steady.
+tooltip_economy_warning	Throughput slowing. Market demand increasing.
+tooltip_economy_critical	Economy stalled. Production halted.
 tooltip_backlog_normal	Queues are flowing smoothly.
 tooltip_backlog_warning	Backlog growing. Watch automation pacing.
 tooltip_backlog_critical	Shipping blocked. Clear the queue to recover Egg Flow.
+tooltip_conveyor_normal	Conveyor load nominal.
+tooltip_conveyor_warning	Conveyor backlog rising.
+tooltip_conveyor_critical	Conveyor jam risk — manual reset may be required.
 capacity_bar_label	Storage: {value} / {capacity}
 storage_label	Storage: {storage} / {capacity} ({percent}%)
 storage_dump_message	Shipment sent! +{amount}
@@ -97,17 +100,25 @@ automation_target_autoburst_tooltip	Automatically trigger Feed bursts when produ
 automation_target_manual	Manual cadence
 automation_target_manual_tooltip	Stay hands-on. Automation will wait until re-enabled.
 toast_tier_one_unlock	Tier I unlocked — conveyor efficiency boosted!
-event_overcast_day_title	Overcast Day
-event_overcast_day_body	Cool skies keep hens calm but slow solar gains. Watch the power meter.
-event_bulk_order_title	Bulk Order
-event_bulk_order_body	New grocer order queued up. Conveyor backlog will swell until it ships.
-event_dismiss_button	Dismiss
+event_overcast_title	Overcast Day
+event_overcast_body	Solar input drops below target levels. Reserve cells engaged to compensate.\nExpect temporary power fluctuations for one minute.
+event_overcast_button_ack	Acknowledge
+event_overcast_toast_end	Skies clearing — power returning to nominal levels.
+event_bulk_order_title	Bulk Order Opportunity
+event_bulk_order_body	A large client requests an expedited shipment.\nAccepting adds temporary strain to the conveyor queue but offers a bonus once fulfilled.
+event_bulk_order_button_accept	Accept Order
+event_bulk_order_button_decline	Decline
+event_bulk_order_toast_accept	Bulk order accepted — conveyor load increased.
+event_bulk_order_toast_complete	Bulk order completed — payment credited to Economy.
 toast_upgrade_prod	Production +10%
 toast_upgrade_cap	Storage +10%
 toast_upgrade_feed_storage	Feed Tank +10
 toast_upgrade_feed_refill	Refill Rate +1/s
 toast_upgrade_feed_efficiency	Feed Boost +10%
 toast_upgrade_auto	Automation Unlocked
+tier_unlocked_1_title	Tier 1 Unlocked
+tier_unlocked_1_body	Grid Stable and Economy Growing.\nAutomation efficiency +10 %. Systems nominal.
+tier_unlocked_1_tooltip	Tier 1 achieved after sustained grid stability. Conveyor throughput increased by 10 %.
 debug_overlay_title	DEBUG OVERLAY
 debug_overlay_pps	PPS: {pps}
 debug_overlay_seed	Seed: {seed}

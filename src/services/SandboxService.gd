@@ -2,6 +2,11 @@ extends Node
 class_name SandboxService
 
 signal ci_changed(ci: float, bonus: float)
+signal event_started(event_id: String, definition: Dictionary)
+signal event_accepted(event_id: String, definition: Dictionary)
+signal event_declined(event_id: String, definition: Dictionary)
+signal event_completed(event_id: String, definition: Dictionary)
+signal event_toast_requested(string_key: String)
 
 const UPDATE_INTERVAL := 0.5 # 2 Hz
 const BONUS_CAP := 0.05
@@ -13,13 +18,18 @@ const StatBus: GDScript = preload("res://src/services/StatBus.gd")
 const EnvironmentService: GDScript = preload("res://src/services/EnvironmentService.gd")
 const SandboxGrid: GDScript = preload("res://src/sandbox/SandboxGrid.gd")
 const StatsProbe: GDScript = preload("res://src/services/StatsProbe.gd")
+const EventEngine: GDScript = preload("res://src/events/EventEngine.gd")
 const YolkLogger: GDScript = preload("res://game/scripts/Logger.gd")
+const PowerService: GDScript = preload("res://src/services/PowerService.gd")
+const Economy: GDScript = preload("res://game/scripts/Economy.gd")
 const STABLE_DELTA_THRESHOLD := 0.0002
 const STABLE_ACTIVE_THRESHOLD := 0.38
 const STABLE_SKIP_LIMIT := 8
 const ENV_TARGET_EPS := 0.01
 const ACTIVE_RELAX_THRESHOLD := 0.27
 const ACTIVE_RELAX_TARGET := 0.22
+const EVENT_OVERCAST_INTERVAL := 180.0
+const EVENT_BULK_ORDER_INTERVAL := 240.0
 var _environment: EnvironmentService
 var _statbus: StatBus
 var _grid: SandboxGrid
@@ -64,6 +74,11 @@ var _metrics_front: Dictionary = {}
 var _metrics_back: Dictionary = {}
 var _grid_cell_count: float = 0.0
 var _stable_tick_counter: int = 0
+var _event_engine: EventEngine
+var _power_service_ref: PowerService
+var _economy_service_ref: Economy
+var _event_overcast_timer: float = 45.0
+var _event_bulk_order_timer: float = 90.0
 
 func _ready() -> void:
 	_load_config()
@@ -77,6 +92,7 @@ func _ready() -> void:
 	_grid = SandboxGrid.new()
 	_grid_cell_count = float(SandboxGrid.get_cell_count())
 	_grid.seed_grid()
+	_initialize_event_engine()
 	set_process(true)
 	_tick(0.0)
 
@@ -133,6 +149,24 @@ func step(delta: float) -> void:
 func set_scheduler_enabled(enabled: bool) -> void:
 	_use_scheduler = enabled
 
+func register_gameplay_services(power: PowerService, economy: Economy) -> void:
+	_power_service_ref = power
+	_economy_service_ref = economy
+	_refresh_event_engine_sources()
+
+func accept_event(event_id: String) -> void:
+	if _event_engine:
+		_event_engine.accept(event_id)
+
+func decline_event(event_id: String) -> void:
+	if _event_engine:
+		_event_engine.decline(event_id)
+
+func get_event_time_remaining(event_id: String) -> float:
+	if _event_engine == null:
+		return 0.0
+	return _event_engine.time_remaining(event_id)
+
 func _tick(delta: float) -> void:
 	if _grid == null:
 		return
@@ -178,6 +212,8 @@ func _tick(delta: float) -> void:
 	var tick_ms: float = float(Time.get_ticks_usec() - tick_start) / 1000.0
 	_record_stats_probe(tick_ms, _smoothed_ci, _last_active_fraction, _last_ci_delta)
 	_log_telemetry(delta, _smoothed_ci, bonus)
+	if delta > 0.0:
+		_update_event_scheduler(delta)
 	if skip_step:
 		_stable_tick_counter = min(_stable_tick_counter + 1, STABLE_SKIP_LIMIT)
 	else:
@@ -198,6 +234,88 @@ func _register_statbus_keys() -> void:
 	if _statbus == null:
 		return
 	_statbus.register_stat(&"comfort_index", {"stack": "replace", "default": 0.0})
+
+func _initialize_event_engine() -> void:
+	if _event_engine:
+		return
+	_event_engine = EventEngine.new()
+	add_child(_event_engine)
+	_event_engine.event_started.connect(_on_event_started)
+	_event_engine.event_accepted.connect(_on_event_accepted)
+	_event_engine.event_declined.connect(_on_event_declined)
+	_event_engine.event_completed.connect(_on_event_completed)
+	_event_engine.toast_requested.connect(func(key: String): event_toast_requested.emit(key))
+	_refresh_event_engine_sources()
+
+func _refresh_event_engine_sources() -> void:
+	if _event_engine == null:
+		return
+	var power := _power_service()
+	var economy := _economy_service()
+	_event_engine.setup(power, economy, economy, _statbus, _stats_probe)
+
+func _power_service() -> PowerService:
+	if _power_service_ref and is_instance_valid(_power_service_ref):
+		return _power_service_ref
+	var node := get_node_or_null("/root/PowerServiceSingleton")
+	if node is PowerService:
+		_power_service_ref = node as PowerService
+	return _power_service_ref
+
+func _economy_service() -> Economy:
+	if _economy_service_ref and is_instance_valid(_economy_service_ref):
+		return _economy_service_ref
+	return _economy_service_ref
+
+func _on_event_started(event_id: String, definition: Dictionary) -> void:
+	event_started.emit(event_id, definition)
+
+func _on_event_accepted(event_id: String, definition: Dictionary) -> void:
+	event_accepted.emit(event_id, definition)
+
+func _on_event_declined(event_id: String, definition: Dictionary) -> void:
+	event_declined.emit(event_id, definition)
+
+func _on_event_completed(event_id: String, definition: Dictionary) -> void:
+	event_completed.emit(event_id, definition)
+
+func _update_event_scheduler(delta: float) -> void:
+	if _event_engine == null:
+		return
+	_event_overcast_timer = max(_event_overcast_timer - delta, 0.0)
+	_event_bulk_order_timer = max(_event_bulk_order_timer - delta, 0.0)
+	if _event_overcast_timer <= 0.0 and _should_trigger_overcast():
+		if _event_engine.trigger("overcast_day"):
+			_event_overcast_timer = EVENT_OVERCAST_INTERVAL
+		else:
+			_event_overcast_timer = 10.0
+	if _event_bulk_order_timer <= 0.0 and _should_trigger_bulk_order():
+		if _event_engine.trigger("bulk_order"):
+			_event_bulk_order_timer = EVENT_BULK_ORDER_INTERVAL
+		else:
+			_event_bulk_order_timer = 15.0
+
+func _should_trigger_overcast() -> bool:
+	var power := _power_service()
+	if power == null:
+		return false
+	if power.current_warning_level() != PowerService.WARNING_NORMAL:
+		return false
+	return power.current_state() >= 0.85
+
+func _should_trigger_bulk_order() -> bool:
+	var economy := _economy_service()
+	if economy == null:
+		return false
+	var rate: float = 0.0
+	if economy.has_method("get_economy_rate"):
+		rate = float(economy.call("get_economy_rate"))
+	if rate < 0.8:
+		return false
+	var backlog: float = 0.0
+	if _statbus:
+		backlog = _statbus.get_stat(&"conveyor_backlog", 0.0)
+	return backlog < 15.0
 	_statbus.register_stat(&"ci_bonus", {"stack": "add", "cap": BONUS_CAP, "default": 0.0})
 
 func _update_statbus(ci: float, bonus: float) -> void:

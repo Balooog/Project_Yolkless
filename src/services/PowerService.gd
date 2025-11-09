@@ -13,10 +13,12 @@ const WARNING_CRITICAL := StringName("critical")
 
 var _statbus: StatBus
 var _current_state: float = 1.0
+var _base_state: float = 1.0
 var _warning_threshold: float = 0.7
 var _critical_threshold: float = 0.4
 var _stats_probe: StatsProbe
 var _current_warning_level: StringName = WARNING_NORMAL
+var _power_multiplier: float = 1.0
 
 func _ready() -> void:
 	_statbus = _get_statbus()
@@ -32,23 +34,36 @@ func set_thresholds(warning: float, critical: float) -> void:
 
 func update_power_state(state: float) -> void:
 	var tick_start := Time.get_ticks_usec()
-	var clamped: float = clamp(state, 0.0, 1.5)
-	var delta: float = abs(clamped - _current_state)
+	_base_state = clamp(state, 0.0, 1.5)
+	var scaled := _scaled_state()
+	var delta: float = abs(scaled - _current_state)
 	if delta > 0.0001:
-		_current_state = clamped
-		_update_power_state_stat(clamped)
-		power_state_changed.emit(clamped)
-	_apply_warning_state(clamped, false)
-	_record_stats_probe(float(Time.get_ticks_usec() - tick_start) / 1000.0, clamped)
+		_current_state = scaled
+		_update_power_state_stat(scaled)
+		power_state_changed.emit(scaled)
+	_apply_warning_state(scaled, false)
+	_record_stats_probe(float(Time.get_ticks_usec() - tick_start) / 1000.0, scaled)
 
 func current_state() -> float:
 	return _current_state
+
+func set_power_multiplier(mult: float) -> void:
+	var clamped = clamp(mult, 0.0, 2.0)
+	if abs(clamped - _power_multiplier) <= 0.0001:
+		return
+	_power_multiplier = clamped
+	_reapply_power_multiplier()
+
+func get_power_multiplier() -> float:
+	return _power_multiplier
 
 func current_warning_level() -> StringName:
 	return _current_warning_level
 
 func reset() -> void:
 	_current_state = 1.0
+	_base_state = 1.0
+	_power_multiplier = 1.0
 	_current_warning_level = WARNING_NORMAL
 	_update_power_state_stat(_current_state)
 	_update_warning_stat(_current_warning_level)
@@ -125,3 +140,16 @@ func _warning_level_value(level: StringName) -> float:
 			return 1.0
 		_:
 			return 0.0
+
+func _scaled_state() -> float:
+	return clamp(_base_state * _power_multiplier, 0.0, 1.5)
+
+func _reapply_power_multiplier() -> void:
+	var scaled := _scaled_state()
+	if abs(scaled - _current_state) <= 0.0001:
+		return
+	_current_state = scaled
+	_update_power_state_stat(_current_state)
+	power_state_changed.emit(_current_state)
+	_apply_warning_state(_current_state, true)
+	_record_stats_probe(0.0, _current_state)

@@ -9,3 +9,5 @@ bin/
 __pycache__/
 *.pyc
 dev/screenshots/ui_current/
+.xdg-*/
+dev/screenshots/ui_baseline/*.import
