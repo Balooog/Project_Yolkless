@@ -23,6 +23,14 @@ const AUTOMATION_BUTTON_TARGETS := {
 }
 const StatBus := preload("res://src/services/StatBus.gd")
 const TOOLTIP_SCENE := preload("res://ui/components/Tooltip.tscn")
+const USER_DATA_DIRS := [
+	"user://",
+	"user://logs",
+	"user://logs/perf",
+	"user://logs/telemetry",
+	"user://screenshots/ui_baseline",
+	"user://screenshots/ui_current"
+]
 const TIER1_POWER_SECONDS := 90.0
 const TIER1_RATE_THRESHOLD := 1.2
 const TIER1_CONVEYOR_BONUS := 0.10
@@ -154,6 +162,7 @@ var _micro_event_primary_action: String = ""
 var _micro_event_secondary_action: String = ""
 
 func _ready() -> void:
+	_ensure_user_dirs()
 	_configure_input_actions()
 
 	res.setup(bal)
@@ -908,6 +917,13 @@ func _commit_prototype_status() -> void:
 	if not _prototype_available():
 		return
 	ui_prototype.set_status(_prototype_status)
+
+func _ensure_user_dirs() -> void:
+	for dir_path in USER_DATA_DIRS:
+		var absolute_path := ProjectSettings.globalize_path(dir_path)
+		var err := DirAccess.make_dir_recursive_absolute(absolute_path)
+		if err != OK:
+			push_error("Failed to prepare %s (err=%d)" % [absolute_path, err])
 
 
 func _set_prototype_status(key: String, value: String, tone: String = "normal", tooltip: String = "") -> void:
