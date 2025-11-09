@@ -75,6 +75,9 @@ color_palette_protanopia	Protanopia Friendly
 settings_visuals	Visual Effects
 visuals_label	Visual Effects
 visuals_feed_particles	Feed Particles
+audio_alerts_label	Alert Sounds
+audio_alerts_toggle	Power Alert Sounds
+audio_alerts_tooltip	Play calm audio cues when the power grid dips into warning or critical levels.
 reset_save_button	Reset Save
 reset_save_dialog_title	Delete Save Data?
 reset_save_dialog_body	This will delete your local save and restart the session. This cannot be undone.

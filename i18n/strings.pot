@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Project Yolkless\n"
-"POT-Creation-Date: 2025-11-09 02:23:43\n"
+"POT-Creation-Date: 2025-11-09 02:49:06\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -385,6 +385,21 @@ msgstr ""
 #: visuals_feed_particles
 msgctxt "visuals_feed_particles"
 msgid "Feed Particles"
+msgstr ""
+
+#: audio_alerts_label
+msgctxt "audio_alerts_label"
+msgid "Alert Sounds"
+msgstr ""
+
+#: audio_alerts_toggle
+msgctxt "audio_alerts_toggle"
+msgid "Power Alert Sounds"
+msgstr ""
+
+#: audio_alerts_tooltip
+msgctxt "audio_alerts_tooltip"
+msgid "Play calm audio cues when the power grid dips into warning or critical levels."
 msgstr ""
 
 #: reset_save_button
