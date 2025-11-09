@@ -1,0 +1,879 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Project Yolkless\n"
+"POT-Creation-Date: 2025-11-09 02:23:43\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: soft_label
+msgctxt "soft_label"
+msgid "Egg Credits: {value} / {capacity}"
+msgstr ""
+
+#: soft_label_wallet
+msgctxt "soft_label_wallet"
+msgid "Egg Credits: {value}"
+msgstr ""
+
+#: pps_label
+msgctxt "pps_label"
+msgid "Egg Flow: {pps}/s"
+msgstr ""
+
+#: conveyor_label
+msgctxt "conveyor_label"
+msgid "Conveyor: {rate}/s | Queue {queue}"
+msgstr ""
+
+#: farm_stage
+msgctxt "farm_stage"
+msgid "Farm Stage: {name}"
+msgstr ""
+
+#: prestige_label
+msgctxt "prestige_label"
+msgid "Reputation Stars: {prestige} (Next Rebrand: +{next})"
+msgstr ""
+
+#: prestige_button_ready
+msgctxt "prestige_button_ready"
+msgid "Rebrand & Advance to Next Generation"
+msgstr ""
+
+#: prestige_button_locked
+msgctxt "prestige_button_locked"
+msgid "Rebrand & Advance"
+msgstr ""
+
+#: burst_button
+msgctxt "burst_button"
+msgid "Feed the Hens! (hold)"
+msgstr ""
+
+#: buy_prod
+msgctxt "buy_prod"
+msgid "Feeding Efficiency ({cost} 🥚)"
+msgstr ""
+
+#: buy_cap
+msgctxt "buy_cap"
+msgid "Coop Capacity ({cost} 🥚)"
+msgstr ""
+
+#: buy_feed
+msgctxt "buy_feed"
+msgid "Feed Silo ({cost} 🥚)"
+msgstr ""
+
+#: buy_auto
+msgctxt "buy_auto"
+msgid "Auto-Feeder System ({cost} 🥚){requirement}"
+msgstr ""
+
+#: buy_auto_requirement
+msgctxt "buy_auto_requirement"
+msgid " — Requires {stage}"
+msgstr ""
+
+#: promote_disabled
+msgctxt "promote_disabled"
+msgid "Stage Mastered"
+msgstr ""
+
+#: promote_button
+msgctxt "promote_button"
+msgid "Upgrade to {name} ({cost} 🥚)"
+msgstr ""
+
+#: promote
+msgctxt "promote"
+msgid "Next Stage"
+msgstr ""
+
+#: research_header
+msgctxt "research_header"
+msgid "Innovation Lab — Research Points: {points}"
+msgstr ""
+
+#: research_header_title
+msgctxt "research_header_title"
+msgid "Innovation Lab"
+msgstr ""
+
+#: research_prod_label
+msgctxt "research_prod_label"
+msgid "Feed Conversion R&D"
+msgstr ""
+
+#: research_cap_label
+msgctxt "research_cap_label"
+msgid "Modular Coops"
+msgstr ""
+
+#: research_auto_label
+msgctxt "research_auto_label"
+msgid "Drone Feeders"
+msgstr ""
+
+#: research_owned
+msgctxt "research_owned"
+msgid "{label} ✅"
+msgstr ""
+
+#: research_available
+msgctxt "research_available"
+msgid "{label} ({cost} 🌟)"
+msgstr ""
+
+#: offline_title
+msgctxt "offline_title"
+msgid "Offline Egg Credits"
+msgstr ""
+
+#: offline_summary_title
+msgctxt "offline_summary_title"
+msgid "While you were away…"
+msgstr ""
+
+#: offline_summary_body
+msgctxt "offline_summary_body"
+msgid "Your farm produced {amount} at {pct}% passive efficiency. Feed to boost output!"
+msgstr ""
+
+#: hud_slot_d_economy_rate
+msgctxt "hud_slot_d_economy_rate"
+msgid "Egg Flow: {value}/s"
+msgstr ""
+
+#: hud_slot_d_tooltip
+msgctxt "hud_slot_d_tooltip"
+msgid "Live production after comfort, power, and automation modifiers."
+msgstr ""
+
+#: hud_slot_f_backlog_normal
+msgctxt "hud_slot_f_backlog_normal"
+msgid "Queue {count}"
+msgstr ""
+
+#: hud_slot_f_backlog_warning
+msgctxt "hud_slot_f_backlog_warning"
+msgid "Queue {count} ⚠"
+msgstr ""
+
+#: hud_slot_f_tooltip
+msgctxt "hud_slot_f_tooltip"
+msgid "Conveyor backlog shows how many shipments await packing."
+msgstr ""
+
+#: hud_slot_f_tooltip_warning
+msgctxt "hud_slot_f_tooltip_warning"
+msgid "Queue above {threshold} stalls automation. Check power or automation settings."
+msgstr ""
+
+#: tooltip_power_normal
+msgctxt "tooltip_power_normal"
+msgid "Power stable."
+msgstr ""
+
+#: tooltip_power_warning
+msgctxt "tooltip_power_warning"
+msgid "Power output dropping. Efficiency reduced."
+msgstr ""
+
+#: tooltip_power_critical
+msgctxt "tooltip_power_critical"
+msgid "Critical power! Systems shutting down soon."
+msgstr ""
+
+#: tooltip_economy_normal
+msgctxt "tooltip_economy_normal"
+msgid "Economy steady."
+msgstr ""
+
+#: tooltip_economy_warning
+msgctxt "tooltip_economy_warning"
+msgid "Throughput slowing. Market demand increasing."
+msgstr ""
+
+#: tooltip_economy_critical
+msgctxt "tooltip_economy_critical"
+msgid "Economy stalled. Production halted."
+msgstr ""
+
+#: tooltip_backlog_normal
+msgctxt "tooltip_backlog_normal"
+msgid "Queues are flowing smoothly."
+msgstr ""
+
+#: tooltip_backlog_warning
+msgctxt "tooltip_backlog_warning"
+msgid "Backlog growing. Watch automation pacing."
+msgstr ""
+
+#: tooltip_backlog_critical
+msgctxt "tooltip_backlog_critical"
+msgid "Shipping blocked. Clear the queue to recover Egg Flow."
+msgstr ""
+
+#: tooltip_conveyor_normal
+msgctxt "tooltip_conveyor_normal"
+msgid "Conveyor load nominal."
+msgstr ""
+
+#: tooltip_conveyor_warning
+msgctxt "tooltip_conveyor_warning"
+msgid "Conveyor backlog rising."
+msgstr ""
+
+#: tooltip_conveyor_critical
+msgctxt "tooltip_conveyor_critical"
+msgid "Conveyor jam risk — manual reset may be required."
+msgstr ""
+
+#: capacity_bar_label
+msgctxt "capacity_bar_label"
+msgid "Storage: {value} / {capacity}"
+msgstr ""
+
+#: storage_label
+msgctxt "storage_label"
+msgid "Storage: {storage} / {capacity} ({percent}%)"
+msgstr ""
+
+#: storage_dump_message
+msgctxt "storage_dump_message"
+msgid "Shipment sent! +{amount}"
+msgstr ""
+
+#: ship_now_button
+msgctxt "ship_now_button"
+msgid "Ship Now"
+msgstr ""
+
+#: ship_now_tooltip_ready
+msgctxt "ship_now_tooltip_ready"
+msgid "Ship now for {efficiency}% of stored credits (instant payout)."
+msgstr ""
+
+#: ship_now_tooltip_empty
+msgctxt "ship_now_tooltip_empty"
+msgid "Fill crates before shipping."
+msgstr ""
+
+#: feed_bar_label
+msgctxt "feed_bar_label"
+msgid "Feed Supply"
+msgstr ""
+
+#: feed_refilling
+msgctxt "feed_refilling"
+msgid "Refilling silo… {pct}%"
+msgstr ""
+
+#: feed_empty
+msgctxt "feed_empty"
+msgid "Feed empty"
+msgstr ""
+
+#: feeding_now
+msgctxt "feeding_now"
+msgid "Feeding… +{pps}/s"
+msgstr ""
+
+#: feed_hint_boost
+msgctxt "feed_hint_boost"
+msgid "+{pps}/s boost"
+msgstr ""
+
+#: settings_button
+msgctxt "settings_button"
+msgid "Settings"
+msgstr ""
+
+#: export_button
+msgctxt "export_button"
+msgid "Copy Save"
+msgstr ""
+
+#: import_button
+msgctxt "import_button"
+msgid "Paste Save"
+msgstr ""
+
+#: copy_diagnostics
+msgctxt "copy_diagnostics"
+msgid "Copy Diagnostics"
+msgstr ""
+
+#: close_button
+msgctxt "close_button"
+msgid "Close"
+msgstr ""
+
+#: text_scale_label
+msgctxt "text_scale_label"
+msgid "Text Size"
+msgstr ""
+
+#: text_scale_100
+msgctxt "text_scale_100"
+msgid "100%"
+msgstr ""
+
+#: text_scale_110
+msgctxt "text_scale_110"
+msgid "110%"
+msgstr ""
+
+#: text_scale_125
+msgctxt "text_scale_125"
+msgid "125%"
+msgstr ""
+
+#: settings_title
+msgctxt "settings_title"
+msgid "Accessibility & Diagnostics"
+msgstr ""
+
+#: high_contrast_label
+msgctxt "high_contrast_label"
+msgid "High Contrast UI"
+msgstr ""
+
+#: high_contrast_tooltip
+msgctxt "high_contrast_tooltip"
+msgid "Increases contrast for key interface elements"
+msgstr ""
+
+#: color_palette_label
+msgctxt "color_palette_label"
+msgid "Color Palette"
+msgstr ""
+
+#: color_palette_tooltip
+msgctxt "color_palette_tooltip"
+msgid "Choose a color-safe palette for accessibility"
+msgstr ""
+
+#: color_palette_default
+msgctxt "color_palette_default"
+msgid "Default Palette"
+msgstr ""
+
+#: color_palette_deuteranopia
+msgctxt "color_palette_deuteranopia"
+msgid "Deuteranopia Friendly"
+msgstr ""
+
+#: color_palette_protanopia
+msgctxt "color_palette_protanopia"
+msgid "Protanopia Friendly"
+msgstr ""
+
+#: settings_visuals
+msgctxt "settings_visuals"
+msgid "Visual Effects"
+msgstr ""
+
+#: visuals_label
+msgctxt "visuals_label"
+msgid "Visual Effects"
+msgstr ""
+
+#: visuals_feed_particles
+msgctxt "visuals_feed_particles"
+msgid "Feed Particles"
+msgstr ""
+
+#: reset_save_button
+msgctxt "reset_save_button"
+msgid "Reset Save"
+msgstr ""
+
+#: reset_save_dialog_title
+msgctxt "reset_save_dialog_title"
+msgid "Delete Save Data?"
+msgstr ""
+
+#: reset_save_dialog_body
+msgctxt "reset_save_dialog_body"
+msgid "This will delete your local save and restart the session. This cannot be undone."
+msgstr ""
+
+#: reset_save_dialog_confirm
+msgctxt "reset_save_dialog_confirm"
+msgid "Delete Save"
+msgstr ""
+
+#: reset_save_dialog_cancel
+msgctxt "reset_save_dialog_cancel"
+msgid "Cancel"
+msgstr ""
+
+#: automation_panel_title
+msgctxt "automation_panel_title"
+msgid "Automation"
+msgstr ""
+
+#: automation_panel_title_tooltip
+msgctxt "automation_panel_title_tooltip"
+msgid "Configure routines that auto-feed bursts or manage helpers."
+msgstr ""
+
+#: automation_panel_open_button
+msgctxt "automation_panel_open_button"
+msgid "Automation Panel"
+msgstr ""
+
+#: automation_panel_state_label
+msgctxt "automation_panel_state_label"
+msgid "Automation state"
+msgstr ""
+
+#: automation_panel_toggle_label
+msgctxt "automation_panel_toggle_label"
+msgid "Enable automation"
+msgstr ""
+
+#: automation_panel_toggle_tooltip
+msgctxt "automation_panel_toggle_tooltip"
+msgid "Pause or resume all automation routines."
+msgstr ""
+
+#: automation_panel_slider_label
+msgctxt "automation_panel_slider_label"
+msgid "Auto-feed threshold"
+msgstr ""
+
+#: automation_panel_slider_hint
+msgctxt "automation_panel_slider_hint"
+msgid "Trigger bursts when feed is above {percent}% capacity."
+msgstr ""
+
+#: automation_panel_slider_value
+msgctxt "automation_panel_slider_value"
+msgid "{percent}%"
+msgstr ""
+
+#: automation_panel_target_label
+msgctxt "automation_panel_target_label"
+msgid "Choose routine"
+msgstr ""
+
+#: automation_panel_close_button
+msgctxt "automation_panel_close_button"
+msgid "Close"
+msgstr ""
+
+#: automation_info_unavailable
+msgctxt "automation_info_unavailable"
+msgid "Automation service unavailable"
+msgstr ""
+
+#: automation_state_enabled
+msgctxt "automation_state_enabled"
+msgid "Automation enabled"
+msgstr ""
+
+#: automation_state_disabled
+msgctxt "automation_state_disabled"
+msgid "Automation paused"
+msgstr ""
+
+#: automation_state_power_limited
+msgctxt "automation_state_power_limited"
+msgid " — limited by power"
+msgstr ""
+
+#: automation_next_action
+msgctxt "automation_next_action"
+msgid "next in {seconds}s"
+msgstr ""
+
+#: automation_target_autoburst
+msgctxt "automation_target_autoburst"
+msgid "Auto-feed bursts"
+msgstr ""
+
+#: automation_target_autoburst_tooltip
+msgctxt "automation_target_autoburst_tooltip"
+msgid "Automatically trigger Feed bursts when production dips below the sweet spot."
+msgstr ""
+
+#: automation_target_manual
+msgctxt "automation_target_manual"
+msgid "Manual cadence"
+msgstr ""
+
+#: automation_target_manual_tooltip
+msgctxt "automation_target_manual_tooltip"
+msgid "Stay hands-on. Automation will wait until re-enabled."
+msgstr ""
+
+#: toast_tier_one_unlock
+msgctxt "toast_tier_one_unlock"
+msgid "Tier I unlocked — conveyor efficiency boosted!"
+msgstr ""
+
+#: event_overcast_title
+msgctxt "event_overcast_title"
+msgid "Overcast Day"
+msgstr ""
+
+#: event_overcast_body
+msgctxt "event_overcast_body"
+msgid "Solar input drops below target levels. Reserve cells engaged to compensate.\\nExpect temporary power fluctuations for one minute."
+msgstr ""
+
+#: event_overcast_button_ack
+msgctxt "event_overcast_button_ack"
+msgid "Acknowledge"
+msgstr ""
+
+#: event_overcast_toast_end
+msgctxt "event_overcast_toast_end"
+msgid "Skies clearing — power returning to nominal levels."
+msgstr ""
+
+#: event_bulk_order_title
+msgctxt "event_bulk_order_title"
+msgid "Bulk Order Opportunity"
+msgstr ""
+
+#: event_bulk_order_body
+msgctxt "event_bulk_order_body"
+msgid "A large client requests an expedited shipment.\\nAccepting adds temporary strain to the conveyor queue but offers a bonus once fulfilled."
+msgstr ""
+
+#: event_bulk_order_button_accept
+msgctxt "event_bulk_order_button_accept"
+msgid "Accept Order"
+msgstr ""
+
+#: event_bulk_order_button_decline
+msgctxt "event_bulk_order_button_decline"
+msgid "Decline"
+msgstr ""
+
+#: event_bulk_order_toast_accept
+msgctxt "event_bulk_order_toast_accept"
+msgid "Bulk order accepted — conveyor load increased."
+msgstr ""
+
+#: event_bulk_order_toast_complete
+msgctxt "event_bulk_order_toast_complete"
+msgid "Bulk order completed — payment credited to Economy."
+msgstr ""
+
+#: toast_upgrade_prod
+msgctxt "toast_upgrade_prod"
+msgid "Production +10%"
+msgstr ""
+
+#: toast_upgrade_cap
+msgctxt "toast_upgrade_cap"
+msgid "Storage +10%"
+msgstr ""
+
+#: toast_upgrade_feed_storage
+msgctxt "toast_upgrade_feed_storage"
+msgid "Feed Tank +10"
+msgstr ""
+
+#: toast_upgrade_feed_refill
+msgctxt "toast_upgrade_feed_refill"
+msgid "Refill Rate +1/s"
+msgstr ""
+
+#: toast_upgrade_feed_efficiency
+msgctxt "toast_upgrade_feed_efficiency"
+msgid "Feed Boost +10%"
+msgstr ""
+
+#: toast_upgrade_auto
+msgctxt "toast_upgrade_auto"
+msgid "Automation Unlocked"
+msgstr ""
+
+#: tier_unlocked_1_title
+msgctxt "tier_unlocked_1_title"
+msgid "Tier 1 Unlocked"
+msgstr ""
+
+#: tier_unlocked_1_body
+msgctxt "tier_unlocked_1_body"
+msgid "Grid Stable and Economy Growing.\\nAutomation efficiency +10 %. Systems nominal."
+msgstr ""
+
+#: tier_unlocked_1_tooltip
+msgctxt "tier_unlocked_1_tooltip"
+msgid "Tier 1 achieved after sustained grid stability. Conveyor throughput increased by 10 %."
+msgstr ""
+
+#: debug_overlay_title
+msgctxt "debug_overlay_title"
+msgid "DEBUG OVERLAY"
+msgstr ""
+
+#: debug_overlay_pps
+msgctxt "debug_overlay_pps"
+msgid "PPS: {pps}"
+msgstr ""
+
+#: debug_overlay_seed
+msgctxt "debug_overlay_seed"
+msgid "Seed: {seed}"
+msgstr ""
+
+#: debug_overlay_storage
+msgctxt "debug_overlay_storage"
+msgid "Storage: {storage} / {capacity} ({percent}%)"
+msgstr ""
+
+#: debug_overlay_wallet
+msgctxt "debug_overlay_wallet"
+msgid "Credits: {wallet}"
+msgstr ""
+
+#: debug_overlay_capacity
+msgctxt "debug_overlay_capacity"
+msgid "Capacity: {soft} / {capacity}"
+msgstr ""
+
+#: debug_overlay_feed
+msgctxt "debug_overlay_feed"
+msgid "Feed: {pct}% | State {state} | Refill {seconds}s"
+msgstr ""
+
+#: debug_overlay_feed_on
+msgctxt "debug_overlay_feed_on"
+msgid "ON"
+msgstr ""
+
+#: debug_overlay_feed_off
+msgctxt "debug_overlay_feed_off"
+msgid "OFF"
+msgstr ""
+
+#: debug_overlay_tier
+msgctxt "debug_overlay_tier"
+msgid "Tier: {tier} ({name})"
+msgstr ""
+
+#: debug_overlay_research
+msgctxt "debug_overlay_research"
+msgid "Research multipliers: prod={prod} cap={cap} auto_cd={auto}"
+msgstr ""
+
+#: debug_overlay_total
+msgctxt "debug_overlay_total"
+msgid "Total earned: {total}"
+msgstr ""
+
+#: debug_overlay_reputation
+msgctxt "debug_overlay_reputation"
+msgid "Reputation: {stars} (+{next})"
+msgstr ""
+
+#: debug_overlay_logging
+msgctxt "debug_overlay_logging"
+msgid "Logging: {status} | size {size} | rotations {rotations}"
+msgstr ""
+
+#: debug_overlay_balance_md5
+msgctxt "debug_overlay_balance_md5"
+msgid "Balance md5: {hash}"
+msgstr ""
+
+#: debug_overlay_save_hash
+msgctxt "debug_overlay_save_hash"
+msgid "Save hash: {hash}"
+msgstr ""
+
+#: debug_overlay_tail_title
+msgctxt "debug_overlay_tail_title"
+msgid "--- Log Tail ---"
+msgstr ""
+
+#: pollution_label
+msgctxt "pollution_label"
+msgid "Pollution"
+msgstr ""
+
+#: stress_label
+msgctxt "stress_label"
+msgid "Stress"
+msgstr ""
+
+#: reputation_label
+msgctxt "reputation_label"
+msgid "Reputation"
+msgstr ""
+
+#: environment_label
+msgctxt "environment_label"
+msgid "Environment Status"
+msgstr ""
+
+#: environment_stage_backyard
+msgctxt "environment_stage_backyard"
+msgid "Backyard"
+msgstr ""
+
+#: environment_title
+msgctxt "environment_title"
+msgid "Environment"
+msgstr ""
+
+#: environment_toggle_details
+msgctxt "environment_toggle_details"
+msgid "Details"
+msgstr ""
+
+#: environment_preset_selector_tooltip
+msgctxt "environment_preset_selector_tooltip"
+msgid "Switch environment preset"
+msgstr ""
+
+#: environment_temperature
+msgctxt "environment_temperature"
+msgid "Temperature"
+msgstr ""
+
+#: environment_light
+msgctxt "environment_light"
+msgid "Light"
+msgstr ""
+
+#: environment_humidity
+msgctxt "environment_humidity"
+msgid "Humidity"
+msgstr ""
+
+#: environment_air_quality
+msgctxt "environment_air_quality"
+msgid "Air Quality"
+msgstr ""
+
+#: environment_pollution
+msgctxt "environment_pollution"
+msgid "Pollution"
+msgstr ""
+
+#: environment_stress
+msgctxt "environment_stress"
+msgid "Stress"
+msgstr ""
+
+#: environment_reputation
+msgctxt "environment_reputation"
+msgid "Reputation"
+msgstr ""
+
+#: environment_feed_modifier
+msgctxt "environment_feed_modifier"
+msgid "Feed Modifier"
+msgstr ""
+
+#: environment_power_modifier
+msgctxt "environment_power_modifier"
+msgid "Power Modifier"
+msgstr ""
+
+#: environment_prestige_modifier
+msgctxt "environment_prestige_modifier"
+msgid "Prestige Modifier"
+msgstr ""
+
+#: environment_comfort_index
+msgctxt "environment_comfort_index"
+msgid "Comfort Index"
+msgstr ""
+
+#: environment_comfort_bonus
+msgctxt "environment_comfort_bonus"
+msgid "Comfort Bonus"
+msgstr ""
+
+#: environment_phase_dawn
+msgctxt "environment_phase_dawn"
+msgid "Dawn"
+msgstr ""
+
+#: environment_phase_day
+msgctxt "environment_phase_day"
+msgid "Day"
+msgstr ""
+
+#: environment_phase_dusk
+msgctxt "environment_phase_dusk"
+msgid "Dusk"
+msgstr ""
+
+#: environment_phase_night
+msgctxt "environment_phase_night"
+msgid "Night"
+msgstr ""
+
+#: environment_temperature_tooltip
+msgctxt "environment_temperature_tooltip"
+msgid "Heat curve shaping flock comfort and feed efficiency."
+msgstr ""
+
+#: environment_light_tooltip
+msgctxt "environment_light_tooltip"
+msgid "Ambient light feeds power bonuses and morale moods."
+msgstr ""
+
+#: environment_humidity_tooltip
+msgctxt "environment_humidity_tooltip"
+msgid "High humidity raises feed demand and stress."
+msgstr ""
+
+#: environment_air_quality_tooltip
+msgctxt "environment_air_quality_tooltip"
+msgid "Clean air boosts reputation and prestige earnings."
+msgstr ""
+
+#: environment_pollution_tooltip
+msgctxt "environment_pollution_tooltip"
+msgid "Waste and emissions scraping at air quality."
+msgstr ""
+
+#: environment_stress_tooltip
+msgctxt "environment_stress_tooltip"
+msgid "Stress slows production and shrinks automation windows."
+msgstr ""
+
+#: environment_reputation_tooltip
+msgctxt "environment_reputation_tooltip"
+msgid "Public sentiment toward the farm this cycle."
+msgstr ""
+
+#: environment_feed_modifier_tooltip
+msgctxt "environment_feed_modifier_tooltip"
+msgid "Current multiplier applied to feed-driven PPS gains."
+msgstr ""
+
+#: environment_power_modifier_tooltip
+msgctxt "environment_power_modifier_tooltip"
+msgid "Current multiplier on generators and solar sources."
+msgstr ""
+
+#: environment_prestige_modifier_tooltip
+msgctxt "environment_prestige_modifier_tooltip"
+msgid "Multiplier affecting rebrand star value."
+msgstr ""
+
+#: environment_comfort_index_tooltip
+msgctxt "environment_comfort_index_tooltip"
+msgid "Sandbox serenity score (0–100) powering the comfort bonus."
+msgstr ""
+
+#: environment_comfort_bonus_tooltip
+msgctxt "environment_comfort_bonus_tooltip"
+msgid "Live PPS boost granted by the comfort index (capped at +5%)."
+msgstr ""
+

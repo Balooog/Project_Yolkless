@@ -87,6 +87,7 @@ $(bash tools/godot_resolver.sh) --headless --path . --script res://tools/replay_
 2. `./tools/ui_viewport_matrix.sh` then `./tools/ui_compare.sh` → expect zero diffs (or review intentional deltas).
 3. `$(bash tools/godot_resolver.sh) --headless --script res://tools/replay_headless.gd --duration=300 --seed=42` → inspect JSON/CSV p95 metrics.
 4. Optional: run `./tools/ui_baseline.sh` to refresh baseline after approved UI changes (commit PNG updates).
+5. Run `PSEUDO_LOC=1 ./tools/pseudo_loc_smoke.sh` before merging HUD copy/layout changes to ensure pseudo-localized UILint + screenshots stay green.
 
 ## Troubleshooting
 - **“command not found: $GODOT_BIN”** — run `bash tools/godot_resolver.sh`; if it fails, rerun `tools/bootstrap_godot.sh` to reinstall the tarball.

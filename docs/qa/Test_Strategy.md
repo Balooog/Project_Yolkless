@@ -8,6 +8,7 @@
 | Integration | Subsystem workflow (Environment→Sandbox, Economy→UI) | Nightly | QA |
 | Replay | Headless 5-minute run using `tools/replay_headless.gd` | Nightly | CI |
 | Visual | Screenshot diff (`ui_viewport_matrix.sh`, `ui_compare.sh`) | Nightly | CI |
+| Localization | POT sync + pseudo-loc UILint (`tools/localization_export_check.sh`, `tools/pseudo_loc_smoke.sh`) | On commit / pre-PR | CI |
 | Soak | 1-hour stability run with telemetry logging | Weekly | QA |
 | Manual | UX/feel regression checklist (`RM-010` HUD) | Milestone / release | Design |
 

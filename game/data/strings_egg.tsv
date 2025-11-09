@@ -85,6 +85,7 @@ automation_panel_title_tooltip	Configure routines that auto-feed bursts or manag
 automation_panel_open_button	Automation Panel
 automation_panel_state_label	Automation state
 automation_panel_toggle_label	Enable automation
+automation_panel_toggle_tooltip	Pause or resume all automation routines.
 automation_panel_slider_label	Auto-feed threshold
 automation_panel_slider_hint	Trigger bursts when feed is above {percent}% capacity.
 automation_panel_slider_value	{percent}%

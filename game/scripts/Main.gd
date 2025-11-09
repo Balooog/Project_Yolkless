@@ -123,13 +123,13 @@ var _conveyor_colors: Array[Color] = [
 	Color(0.757, 0.486, 0.455, 1.0)
 ]
 var _automation_refresh_timer: float = 0.0
-var _prototype_metrics := {
+var _prototype_metrics: Dictionary = {
 	"credits": "₡ 0",
 	"storage": "Storage 0 / 0",
 	"pps": "0 PPS",
 	"research": "0 RP"
 }
-var _prototype_status := {
+var _prototype_status: Dictionary = {
 	"power": {"value": "Load n/a", "tone": StringName("normal")},
 	"economy": {"value": "₡ 0", "tone": StringName("normal")},
 	"population": {"value": "0 hens", "tone": StringName("normal")},
@@ -548,7 +548,7 @@ func _update_soft_view(value: float) -> void:
 	lbl_soft.text = soft_template.format({
 		"value": _format_num(value)
 	})
-	_set_prototype_status("economy", "₡ %s" % _format_num(value))
+	_update_prototype_status("economy", "₡ %s" % _format_num(value))
 	var pps_template := _strings_get("pps_label", "Egg Flow: {pps}/s")
 	lbl_pps.text = pps_template.format({
 		"pps": _format_num(eco.current_pps(), 1)
@@ -594,7 +594,7 @@ func _update_factory_view() -> void:
 		})
 		btn_promote.disabled = eco.soft + 1e-6 < next_cost
 	var population_estimate := int(round(eco.feed_capacity))
-	_set_prototype_status("population", "%s hens" % _format_num(float(population_estimate), 0))
+	_update_prototype_status("population", "%s hens" % _format_num(float(population_estimate), 0))
 	_refresh_prototype_home_sheet()
 
 func _update_conveyor_view(rate: float, queue_len: int, jam_active: bool = false) -> void:
@@ -916,7 +916,7 @@ func _commit_prototype_metrics() -> void:
 func _commit_prototype_status() -> void:
 	if not _prototype_available():
 		return
-	ui_prototype.set_status(_prototype_status)
+	ui_prototype.call("set_status", _prototype_status)
 
 func _ensure_user_dirs() -> void:
 	for dir_path in USER_DATA_DIRS:
@@ -926,7 +926,7 @@ func _ensure_user_dirs() -> void:
 			push_error("Failed to prepare %s (err=%d)" % [absolute_path, err])
 
 
-func _set_prototype_status(key: String, value: String, tone: String = "normal", tooltip: String = "") -> void:
+func _update_prototype_status(key: String, value: String, tone: String = "normal", tooltip: String = "") -> void:
 	_prototype_status[key] = {
 		"value": value,
 		"tone": StringName(tone),
@@ -1171,7 +1171,7 @@ func _on_economy_rate_changed(rate: float, label: String) -> void:
 	elif rate < 0.5:
 		tone = StringName("warning")
 	_economy_tone = tone
-	_set_prototype_status("economy_rate", slot_label, String(tone), tooltip)
+	_update_prototype_status("economy_rate", slot_label, String(tone), tooltip)
 	if lbl_pps:
 		lbl_pps.text = slot_label
 		lbl_pps.tooltip_text = tooltip
@@ -1192,7 +1192,7 @@ func _on_conveyor_backlog_changed(queue_len: int, label: String, tone: StringNam
 		"count": queue_len,
 		"threshold": CONVEYOR_JAM_WARNING_THRESHOLD
 	})
-	_set_prototype_status("conveyor_backlog", slot_label, tone_string, tooltip)
+	_update_prototype_status("conveyor_backlog", slot_label, tone_string, tooltip)
 	_backlog_tone_runtime = tone
 	if lbl_conveyor:
 		lbl_conveyor.text = slot_label
@@ -1949,9 +1949,9 @@ func _show_tooltip(tooltip: UITooltip, text: String, anchor: Control) -> void:
 	if tooltip == null or anchor == null:
 		return
 	tooltip.set_text(text)
-	var anchor_pos := anchor.get_global_position()
-	var offset := Vector2(0, anchor.size.y + 8.0)
-	var pos := anchor_pos + offset
+	var anchor_pos: Vector2 = anchor.get_global_position()
+	var offset: Vector2 = Vector2(0, anchor.size.y + 8.0)
+	var pos: Vector2 = anchor_pos + offset
 	tooltip.position = Vector2(round(pos.x), round(pos.y))
 	tooltip.visible = true
 
@@ -2098,7 +2098,7 @@ func _update_power_label() -> void:
 		status_tone = "critical"
 	elif warning_level == PowerService.WARNING_WARNING:
 		status_tone = "warning"
-	_set_prototype_status("power", "%s%% load" % ratio_text, status_tone)
+	_update_prototype_status("power", "%s%% load" % ratio_text, status_tone)
 	if _comfort_bonus > 0.0:
 		var comfort_text: String = _format_num(_comfort_bonus * 100.0, 1)
 		label += " | Comfort +%s%%" % comfort_text
