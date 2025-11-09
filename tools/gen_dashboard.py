@@ -281,6 +281,18 @@ def compute_alerts(records: List[RunRecord], threshold: float = 0.15) -> List[st
 		eco_ship = run.stats.get("eco_ship_ms_p95")
 		if eco_ship is not None and eco_ship > 7.0:
 			alerts.append(f"{run.label}: Economy shipment p95 {eco_ship:.2f} ms exceeds 7 ms budget")
+		warn_count = run.stats.get("power_warning_count")
+		warn_duration = run.stats.get("power_warning_duration")
+		warn_min = run.stats.get("power_warning_min_ratio")
+		if warn_count is not None and warn_count > 0.0:
+			message = f"{run.label}: {warn_count:.0f} power warning episodes"
+			if warn_duration:
+				message += f", longest {warn_duration:.1f}s"
+			if warn_min:
+				message += f", min ratio {warn_min:.2f}"
+			alerts.append(message)
+		elif warn_min is not None and warn_min < 0.5:
+			alerts.append(f"{run.label}: Power ratio dipped to {warn_min:.2f} without recorded warning episodes")
 	return alerts
 
 
@@ -317,6 +329,9 @@ def build_table_rows(records: Iterable[RunRecord]) -> str:
 			render_metric_cell(run.stats.get("pps_avg")),
 			render_metric_cell(run.stats.get("ci_avg")),
 			render_metric_cell(run.stats.get("power_ratio_avg")),
+			render_metric_cell(run.stats.get("power_warning_count"), precision=0),
+			render_metric_cell(run.stats.get("power_warning_duration"), "s"),
+			render_metric_cell(run.stats.get("power_warning_min_ratio")),
 			render_metric_cell(run.final_ci),
 			render_metric_cell(run.final_bonus * 100.0, "%", 2),
 			render_metric_cell(run.final_pps),
@@ -346,6 +361,9 @@ def render_summary_block(records: List[RunRecord]) -> str:
 		("ci_avg", "Comfort Index Avg", False),
 		("economy_tick_ms_p95", "Economy Tick p95 (ms)", False),
 		("eco_ship_ms_p95", "Economy Ship p95 (ms)", False),
+		("power_warning_count", "Power Warning Episodes", False),
+		("power_warning_duration", "Power Warning Duration (s)", False),
+		("power_warning_min_ratio", "Power Warning Min Ratio", False),
 	]
 	rows: List[str] = []
 	for key, label, is_percent in metrics:
@@ -388,6 +406,9 @@ def render_dashboard(records: List[RunRecord], alerts: List[str]) -> str:
 		"PPS Avg",
 		"CI Avg",
 		"Power Ratio Avg",
+		"Power Warn Count",
+		"Power Warn Duration (s)",
+		"Power Warn Min Ratio",
 		"Final CI",
 		"CI Bonus (%)",
 		"Final PPS",

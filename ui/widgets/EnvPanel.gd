@@ -4,6 +4,13 @@ class_name EnvPanel
 signal details_toggled(visible: bool)
 signal preset_selected(preset: StringName)
 
+const PowerService := preload("res://src/services/PowerService.gd")
+const POWER_WARNING_COLOR := Color(0.996, 0.784, 0.318, 1.0)
+const POWER_CRITICAL_COLOR := Color(0.984, 0.412, 0.392, 1.0)
+const POWER_ICON_NORMAL := "⚡"
+const POWER_ICON_WARNING := "⚡!"
+const POWER_ICON_CRITICAL := "⚠⚡"
+
 @onready var header_panel: PanelContainer = %HeaderPanel
 @onready var phase_label: Label = %PhaseLabel
 @onready var summary_label: Label = %SummaryLabel
@@ -31,6 +38,10 @@ var _preset_ids: Array[StringName] = []
 var _suppress_preset_signal := false
 var _sandbox_metrics: Dictionary = {}
 const DEFAULT_ICON_KEY := "weather_icon_day"
+var _power_warning_level: StringName = PowerService.WARNING_NORMAL
+var _last_power_modifier: float = 1.0
+var _power_ratio_last: float = 1.0
+var _power_base_color: Color = ProceduralFactory.COLOR_TEXT
 
 func _ready() -> void:
 	toggle_button.toggle_mode = true
@@ -149,7 +160,9 @@ func _update_state_texts() -> void:
 	stress_value.text = "%0.0f" % float(_last_state.get("stress", 0.0))
 	reputation_value.text = "%0.0f" % float(_last_state.get("reputation", 0.0))
 	feed_value.text = "%0.1f×" % float(modifiers.get("feed", 1.0))
-	power_value.text = "%0.1f×" % float(modifiers.get("power", 1.0))
+	_last_power_modifier = float(modifiers.get("power", 1.0))
+	_power_ratio_last = float(_last_state.get("power_ratio", _last_power_modifier))
+	_refresh_power_value_text()
 	prestige_value.text = "%0.1f×" % float(modifiers.get("prestige", 1.0))
 	var comfort_percent: float = clamp(comfort_ci * 100.0, 0.0, 100.0)
 	comfort_value.text = "%0.0f%%" % comfort_percent
@@ -173,6 +186,7 @@ func _apply_styles() -> void:
 		header_panel.add_theme_stylebox_override("panel", panel_style.duplicate(true))
 		detail_panel.add_theme_stylebox_override("panel", panel_style.duplicate(true))
 	var label_color := ProceduralFactory.COLOR_TEXT
+	_power_base_color = label_color
 	for label in [
 		phase_label,
 		summary_label,
@@ -223,6 +237,42 @@ func _apply_styles() -> void:
 		var focus_style := ArtRegistry.get_style("ui_button_hover", _high_contrast)
 		if focus_style:
 			preset_selector.add_theme_stylebox_override("focus", focus_style)
+
+func set_power_warning_state(level: StringName, ratio: float) -> void:
+	_power_warning_level = level
+	_power_ratio_last = ratio
+	_refresh_power_value_text()
+
+func _refresh_power_value_text() -> void:
+	if power_value == null:
+		return
+	var icon := _power_icon_for(_power_warning_level)
+	var multiplier_text := "%0.1f×" % _last_power_modifier
+	if icon != "":
+		power_value.text = "%s %s" % [icon, multiplier_text]
+	else:
+		power_value.text = multiplier_text
+	var swatch := _power_base_color
+	match _power_warning_level:
+		PowerService.WARNING_CRITICAL:
+			swatch = POWER_CRITICAL_COLOR
+		PowerService.WARNING_WARNING:
+			swatch = POWER_WARNING_COLOR
+	power_value.add_theme_color_override("font_color", swatch)
+	var tooltip_base := power_value.tooltip_text
+	if _strings:
+		tooltip_base = _strings.get_text("environment_power_modifier_tooltip", tooltip_base)
+	var ratio_percent: float = clamp(_power_ratio_last * 100.0, 0.0, 200.0)
+	power_value.tooltip_text = "%s — %0.0f%%" % [tooltip_base, ratio_percent]
+
+func _power_icon_for(level: StringName) -> String:
+	match level:
+		PowerService.WARNING_CRITICAL:
+			return POWER_ICON_CRITICAL
+		PowerService.WARNING_WARNING:
+			return POWER_ICON_WARNING
+		_:
+			return POWER_ICON_NORMAL
 
 func _apply_strings() -> void:
 	if _strings == null:

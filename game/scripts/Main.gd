@@ -17,6 +17,9 @@ const POWER_WARNING_COLOR := Color(0.996, 0.784, 0.318, 1.0)
 const POWER_CRITICAL_COLOR := Color(0.984, 0.412, 0.392, 1.0)
 const POWER_WARNING_CLIP := preload("res://assets/placeholder/audio/power_warning_low.wav")
 const POWER_CRITICAL_CLIP := preload("res://assets/placeholder/audio/power_warning_critical.wav")
+const POWER_ICON_NORMAL := "⚡"
+const POWER_ICON_WARNING := "⚡!"
+const POWER_ICON_CRITICAL := "⚠⚡"
 const CONVEYOR_JAM_WARNING_THRESHOLD := 40
 const AUTOMATION_BUTTON_TARGETS := {
 	StringName("auto_1"): StringName("economy_feed_autoburst")
@@ -102,6 +105,7 @@ var settings_panel: SettingsPanel
 var debug_overlay: CanvasLayer
 var high_contrast_enabled := false
 var visuals_enabled := true
+var _power_audio_enabled := true
 var color_palette: StringName = ProceduralFactory.PALETTE_DEFAULT
 var environment_service: EnvironmentService
 var power_service: PowerService
@@ -314,12 +318,14 @@ func _ready() -> void:
 	settings_panel.high_contrast_toggled.connect(_on_high_contrast_toggled)
 	settings_panel.color_palette_selected.connect(_on_color_palette_selected)
 	settings_panel.visuals_toggled.connect(_on_visuals_toggled)
+	settings_panel.audio_alerts_toggled.connect(_on_power_audio_toggled)
 	settings_panel.reset_requested.connect(_on_reset_requested)
 	settings_panel.set_color_palette(color_palette)
 	ArtRegistry.set_palette(color_palette)
 	ProceduralFactory.set_palette(color_palette)
 	settings_panel.set_high_contrast(high_contrast_enabled)
 	settings_panel.set_visuals_enabled(visuals_enabled)
+	settings_panel.set_audio_alerts_enabled(_power_audio_enabled)
 
 	if environment_panel and not environment_panel.preset_selected.is_connected(_on_environment_preset_selected):
 		environment_panel.preset_selected.connect(_on_environment_preset_selected)
@@ -1263,6 +1269,9 @@ func _on_visuals_toggled(enabled: bool) -> void:
 	if not enabled:
 		_conveyor_spawn_accumulator = 0.0
 
+func _on_power_audio_toggled(enabled: bool) -> void:
+	_power_audio_enabled = enabled
+
 func _apply_power_warning_visuals(level: StringName) -> void:
 	if lbl_power == null:
 		return
@@ -1274,8 +1283,17 @@ func _apply_power_warning_visuals(level: StringName) -> void:
 		_:
 			lbl_power.remove_theme_color_override("font_color")
 
+func _power_icon_for(level: StringName) -> String:
+	match level:
+		PowerService.WARNING_CRITICAL:
+			return POWER_ICON_CRITICAL
+		PowerService.WARNING_WARNING:
+			return POWER_ICON_WARNING
+		_:
+			return POWER_ICON_NORMAL
+
 func _play_power_warning_sound(level: StringName) -> void:
-	if power_warning_sound == null:
+	if power_warning_sound == null or not _power_audio_enabled or not visuals_enabled:
 		return
 	var clip: AudioStream = POWER_CRITICAL_CLIP if level == PowerService.WARNING_CRITICAL else POWER_WARNING_CLIP
 	if clip == null:
@@ -1587,6 +1605,7 @@ func _on_settings_pressed() -> void:
 	settings_panel.populate_strings()
 	settings_panel.set_high_contrast(high_contrast_enabled)
 	settings_panel.set_visuals_enabled(visuals_enabled)
+	settings_panel.set_audio_alerts_enabled(_power_audio_enabled)
 	settings_panel.show_panel(text_scale, high_contrast_enabled, color_palette)
 
 func apply_text_scale(scale: float) -> void:
@@ -2088,11 +2107,7 @@ func _update_power_label() -> void:
 			_power_warning_level = service_level
 	var ratio: float = clamp(power_service.current_state(), 0.0, 1.3)
 	var ratio_text: String = _format_num(ratio * 100.0, 0)
-	var label: String = "Power Load: %s%%" % ratio_text
-	if warning_level == PowerService.WARNING_CRITICAL:
-		label += " ⚠"
-	elif warning_level == PowerService.WARNING_WARNING:
-		label += " ⚡"
+	var label: String = "%s Power Load: %s%%" % [_power_icon_for(warning_level), ratio_text]
 	var status_tone := "normal"
 	if warning_level == PowerService.WARNING_CRITICAL:
 		status_tone = "critical"
@@ -2114,6 +2129,8 @@ func _update_power_label() -> void:
 		tooltip_lines.append(_strings_get("power_warning_tooltip_normal", "Power grid stable."))
 	lbl_power.tooltip_text = "\n".join(tooltip_lines)
 	_apply_power_warning_visuals(warning_level)
+	if environment_panel:
+		environment_panel.set_power_warning_state(warning_level, ratio)
 	if automation_panel_ui:
 		automation_panel_ui.set_power_limited(warning_level != PowerService.WARNING_NORMAL)
 

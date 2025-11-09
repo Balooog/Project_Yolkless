@@ -6,6 +6,7 @@ signal diagnostics_requested
 signal high_contrast_toggled(enabled: bool)
 signal color_palette_selected(palette: StringName)
 signal visuals_toggled(enabled: bool)
+signal audio_alerts_toggled(enabled: bool)
 signal reset_requested
 
 @onready var title_label: Label = %TitleLabel
@@ -17,6 +18,8 @@ signal reset_requested
 @onready var color_palette_option: OptionButton = %ColorPaletteOption
 @onready var visuals_label: Label = %VisualsLabel
 @onready var visuals_toggle: CheckButton = %VisualsToggle
+@onready var audio_alerts_label: Label = %AudioAlertsLabel
+@onready var audio_alerts_toggle: CheckButton = %AudioAlertsToggle
 @onready var copy_button: Button = %CopyDiagnosticsButton
 @onready var reset_button: Button = %ResetButton
 @onready var close_button: Button = %CloseButton
@@ -25,6 +28,7 @@ signal reset_requested
 var _suppress_signal := false
 var _current_high_contrast := false
 var _current_visuals_enabled := true
+var _current_audio_alerts_enabled := true
 var _current_palette: StringName = ProceduralFactory.PALETTE_DEFAULT
 
 func _ready() -> void:
@@ -34,6 +38,7 @@ func _ready() -> void:
 	high_contrast_toggle.toggled.connect(_on_high_contrast_toggled)
 	color_palette_option.item_selected.connect(_on_color_palette_option_selected)
 	visuals_toggle.toggled.connect(_on_visuals_toggled)
+	audio_alerts_toggle.toggled.connect(_on_audio_alerts_toggled)
 	copy_button.pressed.connect(func(): diagnostics_requested.emit())
 	reset_button.pressed.connect(_on_reset_pressed)
 	close_button.pressed.connect(func(): hide())
@@ -44,6 +49,7 @@ func _ready() -> void:
 	populate_color_palette_options(_current_palette)
 	_set_high_contrast_internal(false)
 	_set_visuals_internal(true)
+	_set_audio_alerts_internal(true)
 	_apply_styles()
 
 func show_panel(current_scale: float, high_contrast: bool, palette: StringName) -> void:
@@ -79,6 +85,9 @@ func populate_strings() -> void:
 	visuals_label.text = _strings("visuals_label", visuals_label.text)
 	visuals_toggle.text = _strings("settings_visuals", visuals_toggle.text)
 	visuals_toggle.tooltip_text = _strings("visuals_feed_particles", visuals_toggle.tooltip_text)
+	audio_alerts_label.text = _strings("audio_alerts_label", audio_alerts_label.text)
+	audio_alerts_toggle.text = _strings("audio_alerts_toggle", audio_alerts_toggle.text)
+	audio_alerts_toggle.tooltip_text = _strings("audio_alerts_tooltip", audio_alerts_toggle.tooltip_text)
 	reset_dialog.title = _strings("reset_save_dialog_title", reset_dialog.title)
 	reset_dialog.dialog_text = _strings("reset_save_dialog_body", reset_dialog.dialog_text)
 	reset_dialog.ok_button_text = _strings("reset_save_dialog_confirm", reset_dialog.ok_button_text)
@@ -150,6 +159,21 @@ func _set_visuals_internal(enabled: bool) -> void:
 	_suppress_signal = true
 	_current_visuals_enabled = enabled
 	visuals_toggle.button_pressed = enabled
+	_suppress_signal = false
+
+func _on_audio_alerts_toggled(pressed: bool) -> void:
+	if _suppress_signal:
+		return
+	_current_audio_alerts_enabled = pressed
+	audio_alerts_toggled.emit(pressed)
+
+func set_audio_alerts_enabled(enabled: bool) -> void:
+	_set_audio_alerts_internal(enabled)
+
+func _set_audio_alerts_internal(enabled: bool) -> void:
+	_suppress_signal = true
+	_current_audio_alerts_enabled = enabled
+	audio_alerts_toggle.button_pressed = enabled
 	_suppress_signal = false
 
 func on_strings_reloaded() -> void:

@@ -18,6 +18,7 @@
 | `wisdom_mult` | Prestige-derived production multiplier. | multiplier | On prestige/level up | multiplicative | Prestige System |
 | `power_state` | Normalized power load (0-1). | ratio | Power ledger (~5 Hz) | last-write | Power Service |
 | `power_warning_level` | Warning severity (`0` normal, `1` warning, `2` critical). | enum | Power ledger transitions | replace | Power Service |
+| `power_warning_episodes` | Count of warning episodes triggered since session start. | count | Power ledger transitions | replace | Power Service |
 | `auto_burst_ready` | Indicates autoburst queue status for UI. | bool | Automation tick (5 Hz) | last-write | Automation Service |
 | `research_points` | Current RP pool for unlocks. | points | Research tick (1 Hz) | additive | Research Service |
 | `comfort_index` | Raw comfort score before conversion to bonus; shown in EnvPanel detail grid. | 0-1 | Sandbox sim (2 Hz) | weighted average | Sandbox Service |
@@ -64,6 +65,7 @@ if statbus:
 | `conveyor_backlog` | items | replace | Jam threshold 40 | PX-020.1 | `Economy.gd` |
 | `conveyor_backlog_label` | string | replace | n/a | PX-020.1 | `UIPrototype` |
 | `power_warning_level` | enum (0-2) | replace | n/a | PX-018.3 | `PowerService.gd` |
+| `power_warning_episodes` | count | replace | n/a | PX-018.3 | `PowerService.gd` |
 | `economy_rate` | credits/sec | replace | n/a | PX-020.1 | `Economy.gd` |
 | `economy_rate_label` | string | replace | n/a | PX-020.1 | `UIPrototype` |
 | `automation_target` | enum (string) | replace | n/a | PX-020.2 | `AutomationService.gd` |

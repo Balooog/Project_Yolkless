@@ -130,7 +130,7 @@ func _process_pending_writes() -> void:
 		if file == null:
 			push_warning("StatsProbe: Failed to open %s for writing" % path)
 			continue
-		file.store_line("service,tick_ms,pps,ci,active_cells,power_ratio,ci_delta,storage,feed_fraction,power_state,power_warning_level,power_warning_label,auto_active,sandbox_render_view_mode,sandbox_render_fallback_active,stage_rebuild_ms,stage_rebuild_source,eco_in_ms,eco_apply_ms,eco_ship_ms,eco_research_ms,eco_statbus_ms,eco_ui_ms,economy_rate,economy_rate_label,conveyor_backlog,conveyor_backlog_label,automation_target,automation_target_label,automation_panel_visible,tier,event_id")
+		file.store_line("service,tick_ms,pps,ci,active_cells,power_ratio,ci_delta,storage,feed_fraction,power_state,power_warning_level,power_warning_label,power_warning_count,power_warning_duration,power_warning_min_ratio,auto_active,sandbox_render_view_mode,sandbox_render_fallback_active,stage_rebuild_ms,stage_rebuild_source,eco_in_ms,eco_apply_ms,eco_ship_ms,eco_research_ms,eco_statbus_ms,eco_ui_ms,economy_rate,economy_rate_label,conveyor_backlog,conveyor_backlog_label,automation_target,automation_target_label,automation_panel_visible,tier,event_id")
 		for row_variant in rows:
 			var row_dict: Dictionary = row_variant
 			var fallback_flag: int = 1 if row_dict.get("sandbox_render_fallback_active", false) else 0
@@ -148,7 +148,7 @@ func _process_pending_writes() -> void:
 			var automation_panel_visible_value: float = float(row_dict.get("automation_panel_visible", 0.0))
 			var tier_value: int = int(row_dict.get("tier", 0))
 			var event_id_value: String = String(row_dict.get("event_id", ""))
-			var csv := "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % [
+			var csv := "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % [
 				row_dict.get("service", SERVICE_SANDBOX),
 				row_dict.get("tick_ms", 0.0),
 				row_dict.get("pps", 0.0),
@@ -161,6 +161,9 @@ func _process_pending_writes() -> void:
 				row_dict.get("power_state", 0.0),
 				row_dict.get("power_warning_level", 0.0),
 				row_dict.get("power_warning_label", ""),
+				row_dict.get("power_warning_count", 0.0),
+				row_dict.get("power_warning_duration", 0.0),
+				row_dict.get("power_warning_min_ratio", 0.0),
 				row_dict.get("auto_active", 0),
 				view_mode_value,
 				fallback_flag,

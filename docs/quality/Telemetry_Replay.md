@@ -31,6 +31,9 @@ godot --headless --path . --script res://tools/replay_headless.gd --duration=300
 | `power_state` | PowerService | Detects stress from power deficits. |
 | `power_warning_level` | PowerService | Enum severity mapped from StatBus (0 normal, 1 warning, 2 critical). |
 | `power_warning_label` | PowerService | String label mirroring severity for dashboards. |
+| `power_warning_count` | PowerService | Running total of warning episodes, useful for correlating automation throttles vs. deficits. |
+| `power_warning_duration` | PowerService | Duration (seconds) of the active warning episode (0 when stable). |
+| `power_warning_min_ratio` | PowerService | Lowest power ratio observed during the active episode (or last completed episode). |
 | `sandbox_tick_ms_p95` | StatsProbe | Guards the ≤1.9 ms sandbox budget at 10 Hz. |
 | `sandbox_render_ms_p95` | StatsProbe | Flags viewport render cost breaching the 1.0 ms target. |
 | `sandbox_render_ms_avg` | StatsProbe | Tracks steady-state renderer cost for trend analysis. |
@@ -80,7 +83,7 @@ godot --headless --path . --script res://tools/replay_headless.gd --duration=300
 - Local dry-runs can use `./tools/nightly_replay.sh` (honours `GODOT_BIN`, `DURATION`, `SEED`, `STRATEGY`) to mirror the CI workflow and snapshot artifacts into `reports/nightly/<timestamp>/`.
 
 ## Instrumentation Fields
-- `service`, `tick_ms`, `pps`, `ci`, `active_cells`, `power_ratio`, `ci_delta`, `storage`, `feed_fraction`, `conveyor_rate`, `conveyor_queue`, `economy_rate`, `economy_rate_label`, `conveyor_backlog`, `conveyor_backlog_label`, `automation_target`, `automation_target_label`, `automation_panel_visible`, `power_state`, `power_warning_level`, `power_warning_label`, `auto_active`, `global_enabled`, `next_remaining`, `minigame_active`, `minigame_duration` sampled at 10 Hz (fields populate per service; Economy owns the rate/backlog columns and Automation owns the automation columns).
+- `service`, `tick_ms`, `pps`, `ci`, `active_cells`, `power_ratio`, `ci_delta`, `storage`, `feed_fraction`, `conveyor_rate`, `conveyor_queue`, `economy_rate`, `economy_rate_label`, `conveyor_backlog`, `conveyor_backlog_label`, `automation_target`, `automation_target_label`, `automation_panel_visible`, `power_state`, `power_warning_level`, `power_warning_label`, `power_warning_count`, `power_warning_duration`, `power_warning_min_ratio`, `auto_active`, `global_enabled`, `next_remaining`, `minigame_active`, `minigame_duration` sampled at 10 Hz (fields populate per service; Economy owns the rate/backlog columns and Automation owns the automation columns).
 - Use `python3 tools/gen_dashboard.py --diff <baseline.json> <candidate.json>` to compare replay summaries (new metrics and alert deltas print to stdout).
 - Offline catch-up emits a single `service=offline` row per session with `elapsed`, `applied`, `grant`, and `passive_multiplier` columns to document capped awards.
 - Renderer stream adds 1 Hz aggregates: `sandbox_render_ms_avg`, `sandbox_render_ms_p95`, `sandbox_render_fallback_ratio`, `belt_anim_ms_avg`, `belt_anim_ms_p95`, `sandbox_render_view_mode`, plus the economy sub-phase metrics (`eco_in_ms_p95`, `eco_apply_ms_p95`, `eco_ship_ms_p95`, `eco_research_ms_p95`, `eco_statbus_ms_p95`, `eco_ui_ms_p95`).
