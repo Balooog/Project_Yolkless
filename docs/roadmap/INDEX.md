@@ -12,7 +12,7 @@
 | [RM-013](RM/RM-013.md) | Automation core | [Signals & Events](../architecture/Signals_Events.md) |
 | [RM-014](RM/RM-014.md) | Telemetry & QA | [Telemetry Replay](../quality/Telemetry_Replay.md), [PX-014.2](../prompts/PX-014.2.md) |
 | [RM-015](RM/RM-015.md) | Wisdom prestige | [Balance Playbook](../design/Balance_Playbook.md) |
-| [RM-016](RM/RM-016.md) | Event & risk system | [Performance Budgets](../quality/Performance_Budgets.md), [Signals & Events](../architecture/Signals_Events.md) |
+| [RM-016](RM/RM-016.md) | Event & risk system | [Performance Budgets](../quality/Performance_Budgets.md), [Signals & Events](../architecture/Signals_Events.md), [PX-016.2](../prompts/PX-016.2.md) |
 | [RM-017](RM/RM-017.md) | Release milestones | [Build Cookbook](../dev/Build_Cookbook.md) |
 | [RM-018](RM/RM-018.md) | Power & resource | [Signals & Events](../architecture/Signals_Events.md), [PX-018.1](../prompts/PX-018.1.md) |
 | [RM-019](RM/RM-019.md) | Factory layout | [Architecture Overview](../architecture/Overview.md) |

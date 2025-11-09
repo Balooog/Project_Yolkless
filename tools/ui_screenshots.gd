@@ -12,6 +12,7 @@ var output_dir: String = "user://ui_screenshots"
 var _viewport_override: Vector2i = Vector2i(1280, 720)
 var _capture_enabled: bool = false
 var _append_viewport_suffix: bool = true
+var _scenes_overridden: bool = false
 
 func _init() -> void:
 	_parse_args()
@@ -35,6 +36,7 @@ func _parse_args() -> void:
 					filtered.append(trimmed)
 			if not filtered.is_empty():
 				scenes = filtered
+				_scenes_overridden = true
 		elif arg == "--no-viewport-suffix":
 			_append_viewport_suffix = false
 		elif arg.begins_with("--output="):
@@ -52,12 +54,23 @@ func _execute() -> void:
 	if DirAccess.make_dir_recursive_absolute(absolute_output) != OK:
 		printerr("ui_screenshots.gd: failed to create output directory %s" % [absolute_output])
 
-	for scene_path in scenes:
+	var capture_list: Array[String] = scenes.duplicate()
+	if _should_limit_suite(capture_list.size()):
+		capture_list = [capture_list[0]]
+
+	for scene_path in capture_list:
 		print("ui_screenshots.gd: capturing ", scene_path)
 		await _capture_scene(scene_path, absolute_output)
 		print("ui_screenshots.gd: finished ", scene_path)
 
 	quit()
+
+func _should_limit_suite(scene_count: int) -> bool:
+	if scene_count <= 1 or _scenes_overridden:
+		return false
+	if OS.has_environment("CI") and OS.get_environment("CI") != "":
+		return true
+	return OS.has_feature("headless")
 
 func _capture_scene(scene_path: String, absolute_output: String) -> void:
 	var packed := load(scene_path) as PackedScene
@@ -76,10 +89,12 @@ func _capture_scene(scene_path: String, absolute_output: String) -> void:
 
 	instance.name = "SceneUnderTest"
 	get_root().add_child(instance)
+	print("ui_screenshots.gd: instance added for ", scene_path)
 
 	# Allow layout to settle across a couple of frames.
 	await process_frame
 	await process_frame
+	print("ui_screenshots.gd: frames settled for ", scene_path)
 	if not OS.has_feature("headless"):
 		RenderingServer.force_draw(true, 0.0)
 		await RenderingServer.frame_post_draw
@@ -97,6 +112,7 @@ func _capture_scene(scene_path: String, absolute_output: String) -> void:
 		instance.queue_free()
 		await process_frame
 		return
+	print("ui_screenshots.gd: viewport texture ready for ", scene_path)
 
 	var image := texture.get_image()
 	if image == null:
@@ -104,6 +120,7 @@ func _capture_scene(scene_path: String, absolute_output: String) -> void:
 		instance.queue_free()
 		await process_frame
 		return
+	print("ui_screenshots.gd: image captured for ", scene_path)
 
 	# Vulkan outputs appear inverted only on the Y axis in most engines, but lavapipe already returns upright data.
 	# We amend orientation handling below once we know which backend is active.
@@ -120,6 +137,7 @@ func _capture_scene(scene_path: String, absolute_output: String) -> void:
 
 	instance.queue_free()
 	await process_frame
+	print("ui_screenshots.gd: instance freed for ", scene_path)
 
 func _scene_basename(scene_path: String) -> String:
 	var slash := scene_path.rfind("/")

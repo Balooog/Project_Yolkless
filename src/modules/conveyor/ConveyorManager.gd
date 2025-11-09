@@ -130,7 +130,7 @@ func set_speed_multiplier(mult: float) -> void:
 	_apply_speed_multiplier()
 
 func set_user_speed_bias(percent: float) -> void:
-	var ratio := clamp(percent, 0.0, 1.0)
+	var ratio: float = clamp(percent, 0.0, 1.0)
 	_user_speed_bias = lerp(0.75, 1.25, ratio)
 	_apply_speed_multiplier()
 
@@ -152,7 +152,7 @@ func _get_logger() -> YolkLogger:
 func _obtain_item() -> ConveyorItem:
 	if not _item_pool.is_empty():
 		return _item_pool.pop_back()
-	var item := ConveyorItem.new()
+	var item: ConveyorItem = ConveyorItem.new()
 	if _spawn_container:
 		_spawn_container.add_child(item)
 	return item

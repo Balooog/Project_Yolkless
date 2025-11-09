@@ -9,6 +9,16 @@ static func set_fill_expand(control, horizontal := true, vertical := false) -> v
 	control.size_flags_horizontal = h_flag
 	control.size_flags_vertical = v_flag
 
+static func apply_panel_tokens(panel: Control, _tokens = null) -> void:
+	if panel == null:
+		return
+	# Intentionally left as a no-op for smoke/headless captures until token variants land everywhere.
+
+static func apply_button_tokens(button: BaseButton, _tokens = null, _style: StringName = &"primary") -> void:
+	if button == null:
+		return
+	# Headless smoke runs only require the node to exist; styling happens in-editor/runtime.
+
 static func apply_label_tokens(label, tokens, size_token = &"font_m", colour_token = &"banner_text") -> void:
 	if label == null or tokens == null:
 		return
