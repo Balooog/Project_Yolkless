@@ -46,7 +46,33 @@ const ERA_CONFIG := {
 		"material_palette": {
 			SandboxGrid.MATERIAL_SAND: Color(0.88, 0.81, 0.57, 1.0),
 			SandboxGrid.MATERIAL_PLANT: Color(0.30, 0.69, 0.42, 1.0)
-		}
+		},
+		"props": [
+			{
+				"id": "coop_block",
+				"color": Color(0.78, 0.58, 0.40, 1.0),
+				"size": Vector2(0.26, 0.28),
+				"position": Vector2(0.32, 0.73),
+				"corner_radius": 12,
+				"requires_tier": 1
+			},
+			{
+				"id": "tree_canopy",
+				"color": Color(0.42, 0.68, 0.42, 1.0),
+				"size": Vector2(0.28, 0.36),
+				"position": Vector2(0.72, 0.58),
+				"corner_radius": 48,
+				"requires_research_count": 1
+			},
+			{
+				"id": "lantern_post",
+				"color": Color(0.98, 0.92, 0.60, 0.85),
+				"size": Vector2(0.05, 0.18),
+				"position": Vector2(0.58, 0.48),
+				"corner_radius": 6,
+				"requires_research_count": 3
+			}
+		]
 	},
 	StringName("small_farm"): {
 		"label": "Small Farm",
@@ -81,7 +107,33 @@ const ERA_CONFIG := {
 			SandboxGrid.MATERIAL_SAND: Color(0.92, 0.78, 0.52, 1.0),
 			SandboxGrid.MATERIAL_PLANT: Color(0.42, 0.72, 0.35, 1.0),
 			SandboxGrid.MATERIAL_WATER: Color(0.38, 0.56, 0.86, 0.92)
-		}
+		},
+		"props": [
+			{
+				"id": "farm_barn",
+				"color": Color(0.78, 0.46, 0.32, 1.0),
+				"size": Vector2(0.30, 0.32),
+				"position": Vector2(0.34, 0.70),
+				"corner_radius": 10,
+				"requires_tier": 3
+			},
+			{
+				"id": "farm_silo",
+				"color": Color(0.86, 0.78, 0.48, 1.0),
+				"size": Vector2(0.12, 0.34),
+				"position": Vector2(0.68, 0.62),
+				"corner_radius": 20,
+				"requires_tier": 3
+			},
+			{
+				"id": "farm_tractor",
+				"color": Color(1.0, 0.68, 0.30, 1.0),
+				"size": Vector2(0.12, 0.10),
+				"position": Vector2(0.52, 0.78),
+				"corner_radius": 8,
+				"requires_research_count": 4
+			}
+		]
 	},
 	StringName("industrial"): {
 		"label": "Industrial Plant",
@@ -117,7 +169,33 @@ const ERA_CONFIG := {
 			SandboxGrid.MATERIAL_OIL: Color(0.22, 0.18, 0.12, 0.96),
 			SandboxGrid.MATERIAL_PLANT: Color(0.32, 0.54, 0.28, 1.0),
 			SandboxGrid.MATERIAL_FIRE: Color(1.0, 0.52, 0.18, 1.0)
-		}
+		},
+		"props": [
+			{
+				"id": "stack_a",
+				"color": Color(0.46, 0.48, 0.52, 1.0),
+				"size": Vector2(0.10, 0.40),
+				"position": Vector2(0.28, 0.60),
+				"corner_radius": 6,
+				"requires_tier": 4
+			},
+			{
+				"id": "stack_b",
+				"color": Color(0.40, 0.42, 0.46, 1.0),
+				"size": Vector2(0.08, 0.36),
+				"position": Vector2(0.38, 0.58),
+				"corner_radius": 6,
+				"requires_tier": 4
+			},
+			{
+				"id": "cooling_tower",
+				"color": Color(0.62, 0.64, 0.70, 1.0),
+				"size": Vector2(0.20, 0.32),
+				"position": Vector2(0.65, 0.66),
+				"corner_radius": 18,
+				"requires_research_count": 5
+			}
+		]
 	},
 	StringName("eco_revival"): {
 		"label": "Eco Revival",
@@ -152,7 +230,33 @@ const ERA_CONFIG := {
 			SandboxGrid.MATERIAL_PLANT: Color(0.32, 0.78, 0.48, 1.0),
 			SandboxGrid.MATERIAL_WATER: Color(0.30, 0.66, 0.86, 0.92),
 			SandboxGrid.MATERIAL_STONE: Color(0.56, 0.60, 0.58, 1.0)
-		}
+		},
+		"props": [
+			{
+				"id": "vertical_garden",
+				"color": Color(0.32, 0.78, 0.48, 1.0),
+				"size": Vector2(0.18, 0.34),
+				"position": Vector2(0.30, 0.60),
+				"corner_radius": 25,
+				"requires_tier": 5
+			},
+			{
+				"id": "glass_dome",
+				"color": Color(0.70, 0.92, 0.88, 1.0),
+				"size": Vector2(0.24, 0.26),
+				"position": Vector2(0.62, 0.68),
+				"corner_radius": 30,
+				"requires_tier": 5
+			},
+			{
+				"id": "solar_stack",
+				"color": Color(0.90, 0.96, 0.78, 1.0),
+				"size": Vector2(0.16, 0.12),
+				"position": Vector2(0.50, 0.80),
+				"corner_radius": 8,
+				"requires_research_count": 6
+			}
+		]
 	},
 	StringName("off_world"): {
 		"label": "Off-World Habitat",
@@ -188,7 +292,33 @@ const ERA_CONFIG := {
 			SandboxGrid.MATERIAL_PLANT: Color(0.48, 0.86, 0.78, 1.0),
 			SandboxGrid.MATERIAL_STONE: Color(0.58, 0.60, 0.68, 1.0),
 			SandboxGrid.MATERIAL_FIRE: Color(0.92, 0.56, 0.96, 1.0)
-		}
+		},
+		"props": [
+			{
+				"id": "hab_tower",
+				"color": Color(0.72, 0.76, 0.92, 1.0),
+				"size": Vector2(0.16, 0.40),
+				"position": Vector2(0.32, 0.58),
+				"corner_radius": 20,
+				"requires_tier": 6
+			},
+			{
+				"id": "orbital_spire",
+				"color": Color(0.48, 0.64, 0.92, 1.0),
+				"size": Vector2(0.12, 0.36),
+				"position": Vector2(0.54, 0.56),
+				"corner_radius": 18,
+				"requires_tier": 6
+			},
+			{
+				"id": "light_array",
+				"color": Color(0.92, 0.82, 0.96, 1.0),
+				"size": Vector2(0.28, 0.16),
+				"position": Vector2(0.66, 0.74),
+				"corner_radius": 40,
+				"requires_research_count": 7
+			}
+		]
 	}
 }
 

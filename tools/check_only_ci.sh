@@ -11,12 +11,11 @@ export LIBGL_ALWAYS_SOFTWARE=1
 export SDL_AUDIODRIVER=${SDL_AUDIODRIVER:-dummy}
 export SDL_VIDEODRIVER=${SDL_VIDEODRIVER:-dummy}
 export QT_QPA_PLATFORM=${QT_QPA_PLATFORM:-offscreen}
-export XDG_DATA_HOME="${PWD}/.xdg-data"
-export XDG_CACHE_HOME="${PWD}/.xdg-cache"
-export XDG_CONFIG_HOME="${PWD}/.xdg-config"
-
 SCRIPT_DIR="$(cd -- "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+export REPO_ROOT_OVERRIDE="${REPO_ROOT}"
+source "${SCRIPT_DIR}/env_common.sh"
+unset REPO_ROOT_OVERRIDE
 
 heartbeat() {
 	while sleep "${HEARTBEAT_SECS}"; do
@@ -50,8 +49,6 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 heartbeat & HB_PID=$!
-
-mkdir -p "${XDG_DATA_HOME}" "${XDG_CACHE_HOME}" "${XDG_CONFIG_HOME}"
 
 godot_bin="$(bash "${SCRIPT_DIR}/godot_resolver.sh" | tail -n1)"
 export GODOT_BIN="${godot_bin}"

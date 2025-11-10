@@ -13,13 +13,16 @@
 ## Headless CLI
 ```bash
 # 5 minute hands-off baseline
-godot --headless --path . --script res://tools/replay_headless.gd --duration=300 --seed=12345 --strategy=idle --env_renderer=sandbox
+godot --headless --path . --script res://tools/replay_headless.gd --duration=300 --seed=12345 --strategy=idle --env_renderer=sandbox --sandbox_view=diorama
+
+# Map-view perf soak
+godot --headless --path . --script res://tools/replay_headless.gd --duration=300 --seed=12345 --strategy=idle --env_renderer=sandbox --sandbox_view=map
 
 # Spread shipment bookkeeping over two frames
 godot --headless --path . --script res://tools/replay_headless.gd --duration=300 --economy_amortize_shipment=true
 ```
 - Outputs human-readable log to `logs/yolkless.log` and summary JSON at `logs/telemetry/replay_YYYYMMDD_HHMM.json`.
-- Command flags: `--duration` (seconds), `--seed`, `--dt` (tick size, default 0.1), `--strategy` (`normal|burst|idle|pulse`), `--economy_amortize_shipment` (true/false, defaults to false).
+- Command flags: `--duration` (seconds), `--seed`, `--dt` (tick size, default 0.1), `--strategy` (`normal|burst|idle|pulse`), `--env_renderer` (`legacy|sandbox`), `--sandbox_view` (`diorama|map`), `--economy_amortize_shipment` (true/false, defaults to false).
 - StatsProbe writes additional CSV snapshots to `logs/perf/tick_<timestamp>.csv`, ignores `ci_delta` alerts for the first ~2 s of sampling to avoid warm-up spikes, and clamps alerts to tighter budgets (`tick_ms > 1.9`, `active_cells > 400`, `|ci_delta| > 0.05`, `sandbox_render_ms_p95 > 1.0`, renderer frame p95 > 18 ms sustained for ≥5 s).
 
 ## Key Metrics

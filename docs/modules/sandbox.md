@@ -11,7 +11,7 @@ The sandbox renderer visualises the Comfort Index cellular automata (CA) grid, t
 ## Responsibilities
 | Area | Details |
 | --- | --- |
-| Rendering | Diorama: layered backgrounds, sprites, parallax. Map: shader/palette projection of CA cells. |
+| Rendering | Diorama: era palettes, camera offsets, progress-driven props + particles. Map: shader/palette projection of CA cells. |
 | Simulation bridge | Pull snapshots from `SandboxService.current_snapshot()`, respect shared smoothing/skip cadence. |
 | Performance | Logic ≤ 2 ms, render ≤ 1 ms; auto lowers draw cadence when p95 >18 ms for 5 s. |
 | Telemetry | Emit StatsProbe metrics (`sandbox_render_ms_avg`, `sandbox_render_ms_p95`) plus active view mode. |
@@ -29,6 +29,8 @@ The sandbox renderer visualises the Comfort Index cellular automata (CA) grid, t
 ## Inputs
 - `EnvironmentService.environment_updated(state: Dictionary)` — drives tone/colour adjustments.
 - `SandboxService.get_front_buffer()` / `SandboxService.ci_changed(ci, bonus)` — supply CA grid data + metrics.
+- `SandboxRenderer.set_progress_context(tier/research metrics)` — invoked from `Main.gd` to unlock props tied to factory tier and research milestones.
+- View toggle state via `Config.sandbox_view` (persisted), EnvPanel button events, and idle drift logic in `Main.gd`.
 - Config: `Config.env_renderer` flag and `data/environment_config.json` smoothing parameters.
 
 ## Outputs
@@ -37,9 +39,9 @@ The sandbox renderer visualises the Comfort Index cellular automata (CA) grid, t
 - UI hooks for EnvPanel (`Comfort +X.XX %` tooltip) and sandbox debug overlays.
 
 ## View Modes & Guardrails
-- Diorama and Map views share the same CA front buffer; toggling the view swaps presentation only and must complete ≤ 100 ms without touching sim cadence.
-- Diorama uses era-specific LUTs, props, and conveyor accents; Map view uses a fixed legend/heatmap palette with an always-visible CI/PPS legend.
-- CI ranges are normalized per era so tint thresholds line up between Diorama props and Map legend.
+- Diorama and Map views share the same CA front buffer; the EnvPanel toggle swaps presentation instantly (<100 ms) without touching sim cadence, and idle drift automatically moves to the Map after 5 minutes of inactivity (user input snaps back to Diorama).
+- Diorama uses era-specific LUTs, props, camera settings, and conveyor accents defined in `SandboxEraLibrary.gd`; props unlock as Research nodes and tiers are earned so no simulation reset is required.
+- Map view draws a heatmap that maps Comfort (green calm ↔ red stressed), PPS glow, temperature tint, and pollution shading; the legend text in EnvPanel explains the palette whenever Map mode is active.
 - When `Config.reduce_sandbox_motion` is enabled, both views disable camera pan/drift, halve burst-linked motion, and keep tint changes low-frequency.
 
 ## Mini-Game Interaction Constraints
@@ -65,12 +67,12 @@ The sandbox renderer visualises the Comfort Index cellular automata (CA) grid, t
 | Path | Role |
 | --- | --- |
 | `scenes/sandbox/SandboxCanvas.tscn` | Diorama viewport host (SubViewportContainer). |
+| `src/sandbox/SandboxEraLibrary.gd` | Era palette/camera/prop definitions consumed by the renderer. |
 | `game/scenes/modules/environment/EnvironmentStage_Backyard.tscn` | Era 1 placeholder (backyard coop). |
 | `game/scenes/modules/environment/EnvironmentStage_SmallFarm.tscn` | Era 2 placeholder (small farm). |
 | `game/scenes/modules/environment/EnvironmentStage_Industrial.tscn` | Era 3 placeholder (industrial plant). |
 | `game/scenes/modules/environment/EnvironmentStage_EcoRevival.tscn` | Era 4 placeholder (eco revival). |
 | `game/scenes/modules/environment/EnvironmentStage_OffWorld.tscn` | Era 5 placeholder (off-world habitat). |
-| `scenes/sandbox/TopDownCanvas.tscn` | Map view host (Control + shader). |
 | `src/sandbox/SandboxRenderer.gd` | Diorama renderer (CPU buffers, parallax, StatsProbe). |
 | `src/sandbox/TopDownRenderer.gd` | Map renderer (palette/shader). |
 | `ui/widgets/EnvPanel.tscn` | Tooltip + map legend integration. |
@@ -92,7 +94,7 @@ The sandbox renderer visualises the Comfort Index cellular automata (CA) grid, t
 
 ## Testing & Validation
 - **Scene smoke:** Instantiate `scenes/sandbox/SandboxCanvas.tscn` headless to ensure buffers load.
-- **Perf soak:** Run `tools/replay_headless.gd` with sandbox enabled; confirm `sandbox_render_ms_p95 ≤ 1.0 ms`.
+- **Perf soak:** Run `tools/replay_headless.gd` with sandbox enabled; confirm `sandbox_render_ms_p95 ≤ 1.0 ms` for both `--sandbox_view=diorama` and `--sandbox_view=map`.
 - **Fallback share:** Inspect replay summary `sandbox_render_fallback_ratio`; keep sustained fallback below 0.05 (≤5 %) absent GPU experiments.
 - **Determinism capture:** Hash successive frames for identical seeds/presets to guarantee reproducibility (±1 pixel).
 - **Visual regression:** Include sandbox viewport in UI baseline screenshots (PX-010.9).

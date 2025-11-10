@@ -16,6 +16,7 @@ config/features=PackedStringArray("4.5")
 
 [autoload]
 
+EarlyBoot="*res://autoload/EarlyBoot.gd"
 Config="*res://game/scripts/Config.gd"
 Logger="*res://game/scripts/Logger.gd"
 Strings="*res://game/scripts/Strings.gd"
@@ -189,6 +190,17 @@ ui_tab_prestige={
 "type": "KEY"
 }]
 }
+
+[rendering]
+
+shader_compilation/cache/enable=false
+shader_compilation/cache/enabled=false
+shader_compilation/shader_cache/enable=false
+shader_compilation/shader_cache/enabled=false
+shaders/shader_cache/enable=false
+shaders/shader_cache/enabled=false
+textures/canvas_textures/default_texture_filter=0
+textures/default_filters/use_nearest_mipmap_filter=false
 ui_tab_feed={
 "deadzone": 0.5,
 "events": [{

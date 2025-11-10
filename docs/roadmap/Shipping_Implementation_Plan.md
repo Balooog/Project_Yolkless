@@ -7,6 +7,8 @@
 - **PX-020 series in active drafting.**  All GUI/telemetry documents live under `docs/px/` with sequencing managed in [PX-020 Series Roadmap](PX_20_Series_Roadmap.md).  Implementation work should reference those docs before touching HUD, automation, or telemetry code.
 - **PX-019 series documented.**  Sandbox viewport layering, driver parity, and tick validation now sit in `docs/px/PX-019.*`; use these contracts when touching EnvironmentStage or CI capture scripts.
 - **PX-020 telemetry gating wired.**  `tools/check_only_ci.sh` now runs the 60 s PX-020 replay smoke (`--duration=60 --seed=42`) described in [PX-020.4 Telemetry Replay](../px/PX-020.4_Telemetry_Replay.md); attach the console snippet plus CSV/JSON artifacts to every PX-020 PR.
+- **PX-021.5 map toggle shipped.**  Diorama ↔ Map view shares the CA buffer, auto-drifts to Map after 5 min idle, and StatsProbe now reports `sandbox_view_mode` + map render times; use `--sandbox_view=map` in headless runs when capturing telemetry proof.
+- **PX-021.4 diorama pass landed.**  SandboxRenderer now swaps era palettes/camera offsets and progress-locked props without disturbing the CA spine; EnvPanel tooltips report the active era.
 
 ## Solo Execution Sequence
 

@@ -30,6 +30,7 @@ const FOCUS_LEFT := StringName("left")
 const FOCUS_RIGHT := StringName("right")
 const FOCUS_UP := StringName("up")
 const FOCUS_DOWN := StringName("down")
+const FEED_EFFECT_TEXTURE_KEY := "grain_particle"
 
 var _current_tab := "home"
 var _feed_queue_count := 0
@@ -51,6 +52,9 @@ var _status := {
 }
 var _home_feed_default_text := "Hold to Feed"
 var _is_desktop_layout := false
+var _feed_effect_active := false
+var _feed_effect_texture_assigned := false
+var _feed_effect_root_connected := false
 
 @onready var _root_margin_container: MarginContainer = $RootMargin
 @onready var _bottom_bar: MarginContainer = $RootMargin/RootStack/BottomBar
@@ -64,6 +68,8 @@ var _is_desktop_layout := false
 @onready var _canvas_message: Label = $RootMargin/RootStack/MainStack/CanvasWrapper/CanvasPanel/CanvasMessage
 @onready var _canvas_placeholder: ColorRect = $RootMargin/RootStack/MainStack/CanvasWrapper/CanvasPanel/CanvasPlaceholder
 @onready var _feed_button: Button = $RootMargin/RootStack/BottomBar/TabBar/FeedButton
+@onready var _feed_effect_layer: Control = %FeedEffectLayer
+@onready var _feed_splash: GPUParticles2D = %FeedEffectLayer/FeedSplash
 @onready var _environment_wrapper: Control = $RootMargin/RootStack/MainStack/EnvironmentWrapper
 @onready var _environment_panel: Control = $RootMargin/RootStack/MainStack/EnvironmentWrapper/EnvironmentPanel
 @onready var _mobile_sheet_anchor: Control = $RootMargin/RootStack/MainStack/CanvasWrapper/MobileSheetAnchor
@@ -144,8 +150,8 @@ func _ready() -> void:
 	if _canvas_wrapper:
 		_canvas_wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_feed_button.pressed.connect(_on_feed_pressed)
-	_feed_button.button_down.connect(_on_feed_hold_button_down)
-	_feed_button.button_up.connect(_on_feed_hold_button_up)
+	_feed_button.button_down.connect(_on_primary_feed_hold_button_down)
+	_feed_button.button_up.connect(_on_primary_feed_hold_button_up)
 	_home_feed_button.button_down.connect(_on_feed_hold_button_down)
 	_home_feed_button.button_up.connect(_on_feed_hold_button_up)
 	_home_promote_button.pressed.connect(func(): promote_requested.emit())
@@ -172,6 +178,7 @@ func _ready() -> void:
 	if _canvas_panel and not _canvas_panel.resized.is_connected(_sync_factory_viewport_size):
 		_canvas_panel.resized.connect(_sync_factory_viewport_size)
 	_home_feed_default_text = _home_feed_button.text
+	_configure_feed_effect_layer()
 	set_metrics(_metrics)
 	set_status(_status)
 	_sync_factory_viewport_size()
@@ -1188,7 +1195,7 @@ func _input(event: InputEvent) -> void:
 		_show_tab("prestige")
 		tab_selected.emit("prestige")
 		accept_event()
-	elif event.is_action_pressed("ui_tab_feed"):
+	elif InputMap.has_action("ui_tab_feed") and event.is_action_pressed("ui_tab_feed"):
 		_on_feed_pressed()
 		accept_event()
 	elif event.is_action_pressed("ui_cancel"):
@@ -1204,11 +1211,98 @@ func _on_tab_pressed(tab_id: String) -> void:
 func _on_feed_pressed() -> void:
 	feed_requested.emit()
 
+func _on_primary_feed_hold_button_down() -> void:
+	_on_feed_hold_button_down()
+	_start_feed_effect()
+
+func _on_primary_feed_hold_button_up() -> void:
+	_on_feed_hold_button_up()
+	_stop_feed_effect()
+
 func _on_feed_hold_button_down() -> void:
 	feed_hold_started.emit()
 
 func _on_feed_hold_button_up() -> void:
 	feed_hold_ended.emit()
+
+func _configure_feed_effect_layer() -> void:
+	if _feed_effect_layer == null or _feed_splash == null:
+		return
+	_feed_effect_layer.visible = false
+	_feed_effect_layer.clip_contents = true
+	_feed_effect_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_feed_effect_layer.z_index = 50
+	if not _feed_button.item_rect_changed.is_connected(_align_feed_effect_layer):
+		_feed_button.item_rect_changed.connect(_align_feed_effect_layer)
+	if not resized.is_connected(_align_feed_effect_layer):
+		resized.connect(_align_feed_effect_layer)
+	var root := get_tree().root
+	if root and not _feed_effect_root_connected:
+		root.size_changed.connect(_align_feed_effect_layer)
+		_feed_effect_root_connected = true
+	_sync_feed_splash_material(Vector2.ZERO)
+	_assign_feed_effect_texture()
+	_align_feed_effect_layer()
+
+func _start_feed_effect() -> void:
+	if _feed_effect_layer == null or _feed_splash == null:
+		return
+	_feed_effect_active = true
+	_align_feed_effect_layer()
+	_feed_effect_layer.visible = true
+	_feed_splash.emitting = true
+	_feed_splash.restart()
+
+func _stop_feed_effect() -> void:
+	if _feed_effect_layer == null or _feed_splash == null:
+		return
+	_feed_effect_active = false
+	_feed_splash.emitting = false
+	_feed_effect_layer.visible = false
+
+func _align_feed_effect_layer() -> void:
+	if _feed_effect_layer == null or _feed_button == null:
+		return
+	if not _feed_effect_active:
+		return
+	var rect := _feed_button.get_global_rect()
+	var parent := _feed_effect_layer.get_parent()
+	if parent is Control:
+		var parent_control := parent as Control
+		var parent_transform := parent_control.get_global_transform_with_canvas()
+		var local_position: Vector2 = parent_transform.affine_inverse() * rect.position
+		_feed_effect_layer.position = local_position
+	else:
+		_feed_effect_layer.global_position = rect.position
+	_feed_effect_layer.size = rect.size
+	_feed_splash.position = _feed_effect_layer.size * 0.5
+	_sync_feed_splash_material(rect.size)
+
+func _assign_feed_effect_texture() -> void:
+	if _feed_splash == null or _feed_effect_texture_assigned:
+		return
+	var texture := ArtRegistry.get_texture(FEED_EFFECT_TEXTURE_KEY)
+	if texture:
+		_feed_splash.texture = texture
+		_feed_effect_texture_assigned = true
+
+func _sync_feed_splash_material(target_size: Vector2) -> void:
+	if _feed_splash == null:
+		return
+	var material := _feed_splash.process_material as ParticleProcessMaterial
+	if material == null:
+		material = ParticleProcessMaterial.new()
+		material.resource_local_to_scene = true
+		_feed_splash.process_material = material
+	elif not material.resource_local_to_scene:
+		var duplicated := material.duplicate()
+		if duplicated is ParticleProcessMaterial:
+			material = duplicated as ParticleProcessMaterial
+			material.resource_local_to_scene = true
+			_feed_splash.process_material = material
+	var half_extents := Vector3(max(target_size.x * 0.45, 12.0), max(target_size.y * 0.3, 10.0), 0.0)
+	material.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+	material.emission_box_extents = half_extents
 
 func _on_upgrade_button_pressed(action_id: String) -> void:
 	upgrade_requested.emit(action_id)
