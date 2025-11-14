@@ -361,11 +361,7 @@ func _ready() -> void:
 	if environment_panel:
 		environment_panel.set_strings(strings)
 
-	var director := _get_visual_director()
-	if director:
-		director.set_sources(eco, strings)
-		director.set_high_contrast(high_contrast_enabled)
-		director.activate("feed_particles", visuals_enabled)
+	_set_ui_visuals_enabled(visuals_enabled)
 
 	environment_service = _get_environment_service()
 	power_service = _get_power_service()
@@ -1198,9 +1194,6 @@ func _on_prototype_automation_target_changed(button_id: StringName) -> void:
 func _on_high_contrast_toggled(enabled: bool) -> void:
 	high_contrast_enabled = enabled
 	_apply_contrast_theme()
-	var director := _get_visual_director()
-	if director:
-		director.set_high_contrast(enabled)
 	if environment_panel:
 		environment_panel.set_high_contrast(enabled)
 	if settings_panel:
@@ -1306,9 +1299,7 @@ func _on_power_warning(level: StringName) -> void:
 
 func _on_visuals_toggled(enabled: bool) -> void:
 	visuals_enabled = enabled
-	var director := _get_visual_director()
-	if director:
-		director.activate("feed_particles", enabled)
+	_set_ui_visuals_enabled(enabled)
 	if conveyor_layer:
 		conveyor_layer.visible = enabled
 		if not enabled and conveyor_layer is FactoryConveyor:
@@ -1818,11 +1809,9 @@ func _get_logger() -> YolkLogger:
 		return node as YolkLogger
 	return null
 
-func _get_visual_director() -> VisualDirector:
-	var node := get_node_or_null("/root/VisualDirectorSingleton")
-	if node is VisualDirector:
-		return node as VisualDirector
-	return null
+func _set_ui_visuals_enabled(enabled: bool) -> void:
+	if ui_prototype:
+		ui_prototype.set_feed_effect_enabled(enabled)
 
 func _get_environment_service() -> EnvironmentService:
 	var node := get_node_or_null("/root/EnvironmentServiceSingleton")

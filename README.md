@@ -69,9 +69,9 @@ code docs/prompts/PX-021.1.md   # paste canvas text
 
 - Capacity bar tracks Egg Credits versus storage and hot-reloads with balance tweaks (`R`).
 - Feed button now shows a live Feed Supply meter that drains while held and refills when idle.
-- A lightweight VisualDirector autoload drives feed particles that burst from the Hold-to-Feed button only while you are feeding; disable them via the Settings → Visual Effects toggle.
-- Visual Layer is a background `CanvasLayer`; the HUD sits on a higher layer so buttons stay interactive while visuals play underneath.
-- The `VisualViewport` control stretches with the window, keeping particle modules centered and auto-resized across any viewport.
+- The Feed FX now live entirely inside the UI prototype’s `FeedEffectLayer` (a clipped Control anchored to the Feed buttons) so bursts never bleed across the HUD.
+- Feed FX inherit the UI layout transforms directly, so no extra background CanvasLayers or fullscreen viewports are needed to keep visuals aligned.
+- The prototype exposes the same feed data everywhere; pressing `R` refreshes both numbers and copy.
 - All player-facing strings are driven via `game/data/strings_egg.tsv`; pressing `R` refreshes both numbers and copy.
 - The top stats row now surfaces conveyor throughput (`items/sec` and queue) straight from the ConveyorManager.
 - Storage panel includes a **Ship Now** button (75 % payout) plus a tooltip that explains when to launch shipments manually.
@@ -95,7 +95,7 @@ code docs/prompts/PX-021.1.md   # paste canvas text
 ## Accessibility & Diagnostics
 
 - Open the in-game **Settings** panel to choose 100 % / 110 % / 125 % text scale, enable High Contrast UI, and copy Diagnostics to the clipboard.
-- The new Visual Effects checkbox toggles the Feed Particles module (default ON) for lower-spec or distraction-free play.
+- The Visual Effects checkbox now simply enables/disables the button-local Feed FX layer (default ON) for lower-spec or distraction-free play.
 - A Reset Save button (with confirmation) clears `user://save.json` and reloads the session instantly.
 - Diagnostics export includes build/seed metadata, tier state, upgrade/research snapshots, constants, and the last 200 log lines (sanitised).
 - The High Contrast toggle applies WCAG AA compliant themes to the storage bar and feed meter for both dark and light backgrounds.

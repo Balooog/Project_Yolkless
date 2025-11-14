@@ -20,24 +20,31 @@ const USER_DIRS := [
 ]
 
 func _enter_tree() -> void:
-	_disable_shader_cache()
+	var env_value := OS.get_environment("YOLKLESS_DISABLE_SHADER_CACHE")
+	var should_disable := env_value != "0"
+	var cache_disabled := false
+	if should_disable:
+		cache_disabled = _disable_shader_cache()
 	_ensure_user_dirs()
-	_write_probe()
+	_write_probe(cache_disabled, env_value)
 
-func _disable_shader_cache() -> void:
+func _disable_shader_cache() -> bool:
+	var touched := false
 	for key in CACHE_KEYS:
 		if ProjectSettings.has_setting(key):
 			ProjectSettings.set_setting(key, false)
+			touched = true
+	return touched
 
 func _ensure_user_dirs() -> void:
 	for dir_path in USER_DIRS:
 		var absolute_path := ProjectSettings.globalize_path(dir_path)
 		DirAccess.make_dir_recursive_absolute(absolute_path)
 
-func _write_probe() -> void:
+func _write_probe(cache_disabled: bool, env_value: String) -> void:
 	var probe_path := ProjectSettings.globalize_path("user://logs/earlyboot_probe.log")
 	DirAccess.make_dir_recursive_absolute(probe_path.get_base_dir())
 	var file := FileAccess.open(probe_path, FileAccess.WRITE)
 	if file:
-		file.store_line("[EarlyBoot] cache_disabled=true")
+		file.store_line("[EarlyBoot] cache_env=%s cache_disabled=%s" % [env_value if env_value != "" else "<unset>", str(cache_disabled)])
 		file.close()

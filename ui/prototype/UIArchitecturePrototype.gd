@@ -55,6 +55,8 @@ var _is_desktop_layout := false
 var _feed_effect_active := false
 var _feed_effect_texture_assigned := false
 var _feed_effect_root_connected := false
+var _feed_effect_enabled := true
+var _feed_effect_target: Control = null
 
 @onready var _root_margin_container: MarginContainer = $RootMargin
 @onready var _bottom_bar: MarginContainer = $RootMargin/RootStack/BottomBar
@@ -152,8 +154,8 @@ func _ready() -> void:
 	_feed_button.pressed.connect(_on_feed_pressed)
 	_feed_button.button_down.connect(_on_primary_feed_hold_button_down)
 	_feed_button.button_up.connect(_on_primary_feed_hold_button_up)
-	_home_feed_button.button_down.connect(_on_feed_hold_button_down)
-	_home_feed_button.button_up.connect(_on_feed_hold_button_up)
+	_home_feed_button.button_down.connect(_on_home_feed_hold_button_down)
+	_home_feed_button.button_up.connect(_on_home_feed_hold_button_up)
 	_home_promote_button.pressed.connect(func(): promote_requested.emit())
 	_home_copy_button.pressed.connect(func(): save_export_requested.emit())
 	_home_paste_button.pressed.connect(func(): save_import_requested.emit())
@@ -1213,11 +1215,26 @@ func _on_feed_pressed() -> void:
 
 func _on_primary_feed_hold_button_down() -> void:
 	_on_feed_hold_button_down()
-	_start_feed_effect()
+	_start_feed_effect(_feed_button)
 
 func _on_primary_feed_hold_button_up() -> void:
 	_on_feed_hold_button_up()
 	_stop_feed_effect()
+
+func _on_home_feed_hold_button_down() -> void:
+	_on_feed_hold_button_down()
+	_start_feed_effect(_home_feed_button)
+
+func _on_home_feed_hold_button_up() -> void:
+	_on_feed_hold_button_up()
+	_stop_feed_effect()
+
+func set_feed_effect_enabled(enabled: bool) -> void:
+	if _feed_effect_enabled == enabled:
+		return
+	_feed_effect_enabled = enabled
+	if not enabled:
+		_stop_feed_effect()
 
 func _on_feed_hold_button_down() -> void:
 	feed_hold_started.emit()
@@ -1244,10 +1261,13 @@ func _configure_feed_effect_layer() -> void:
 	_assign_feed_effect_texture()
 	_align_feed_effect_layer()
 
-func _start_feed_effect() -> void:
-	if _feed_effect_layer == null or _feed_splash == null:
+func _start_feed_effect(target: Control) -> void:
+	if _feed_effect_layer == null or _feed_splash == null or target == null:
+		return
+	if not _feed_effect_enabled:
 		return
 	_feed_effect_active = true
+	_feed_effect_target = target
 	_align_feed_effect_layer()
 	_feed_effect_layer.visible = true
 	_feed_splash.emitting = true
@@ -1257,15 +1277,16 @@ func _stop_feed_effect() -> void:
 	if _feed_effect_layer == null or _feed_splash == null:
 		return
 	_feed_effect_active = false
+	_feed_effect_target = null
 	_feed_splash.emitting = false
 	_feed_effect_layer.visible = false
 
 func _align_feed_effect_layer() -> void:
-	if _feed_effect_layer == null or _feed_button == null:
+	if _feed_effect_layer == null or _feed_effect_target == null:
 		return
 	if not _feed_effect_active:
 		return
-	var rect := _feed_button.get_global_rect()
+	var rect := _feed_effect_target.get_global_rect()
 	var parent := _feed_effect_layer.get_parent()
 	if parent is Control:
 		var parent_control := parent as Control

@@ -45,22 +45,6 @@ volume_db = -6.0
 unique_name_in_owner = true
 autoplay = false
 
-[node name="VisualLayer" type="CanvasLayer" parent="."]
-unique_name_in_owner = true
-layer = 0
-
-[node name="VisualViewport" type="Control" parent="VisualLayer"]
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 0.0
-offset_top = 0.0
-offset_right = 0.0
-offset_bottom = 0.0
-grow_horizontal = 2
-grow_vertical = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-
 [node name="UI" type="CanvasLayer" parent="."]
 layer = 10
 

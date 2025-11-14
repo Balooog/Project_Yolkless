@@ -13,7 +13,7 @@
 | **RM-005 – Logging & Diagnostics**  | ✅ Active      | YolkLogger with queued writes, Diagnostics overlay, and clipboard export.                        | —                                                                     |
 | **RM-006 – Feed System**            | ✅ Complete    | Hold-to-feed mechanic with feed bar, drain/refill loop, and capacity/refill/efficiency upgrades. | —                                                                     |
 | **RM-007 – Offline Passive Rate**   | ⏳ Planned     | Offline production at reduced efficiency (≈25% base PPS). Automation adds a multiplier.          | PX-007.1 – Offline baseline sim (Target Sprint 2025.11)               |
-| **RM-008 – VisualDirector & FX**    | ⏳ In Progress | Reactive particle effects while feeding; foundation for later modules.                           | PX-008.2 – Particle tuning & gating (Target Sprint 2025.12)           |
+| **RM-008 – Feed FX Layer**         | ⏳ In Progress | Reactive button-local feed FX rendered inside the prototype UI; groundwork for future modules.   | PX-008.2 – Particle tuning & gating (Target Sprint 2025.12)           |
 | **RM-021 – Environmental Simulation Layer** | ✅ Active    | `EnvironmentService` autoload with seasonal curves, feed/power modifiers, and HUD preset toggle. | PX-021.1 – Service telemetry & tuning (Target Sprint 2025.12)    |
 | **Prestige / Rebrand Loop**         | ✅ Implemented | Converts Reputation Stars to permanent production multipliers; “Rebrand & Advance” transition.   | —                                                                     |
 
@@ -36,7 +36,7 @@
 
 | Module                              | Linked RM | Description                                    | Next PX Target                                               |
 | ----------------------------------- | --------- | ---------------------------------------------- | ------------------------------------------------------------ |
-| **FeedParticles**                   | RM-008    | Grain bursts that fire from the Hold-to-Feed button while feeding | PX-008.2 – Particle tuning & gating (Target Sprint 2025.12)  |
+| **Feed FX Layer**                   | RM-008    | Button-local bursts rendered inside the prototype UI for the Hold-to-Feed loop | PX-008.2 – Particle tuning & gating (Target Sprint 2025.12)  |
 | **Conveyor Belt System**            | RM-009    | Visual egg transport tied to PPS               | PX-009.1 – Conveyor prototype pass (Target Sprint 2026.01)   |
 | **Environment Overlay UI**          | RM-021    | Weather icon + environment panel reflecting live factors | PX-021.1 – Environment service scaffold (Target Sprint 2025.12)  |
 | **Weather & Day/Night Cycle**       | RM-012    | Ambient variation, pollution clearing          | PX-012.1 – Lighting baseline (Target Sprint 2026.02)         |

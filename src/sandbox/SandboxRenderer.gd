@@ -241,7 +241,7 @@ func _build_viewport_layer() -> void:
 	_topdown_renderer.visible = false
 	add_child(_topdown_renderer)
 	_sync_topdown_renderer_bounds()
-	_update_view_mode_visibility()
+	_update_view_mode_visibility(false)
 
 func _initialize_era_state() -> void:
 	var preset: StringName = StringName("early_farm")
@@ -312,23 +312,38 @@ func _set_target_era(preset: StringName, immediate: bool = false) -> void:
 
 func set_view_mode(mode: StringName) -> void:
 	var normalized := _normalize_view_mode(mode)
-	if view_mode == normalized:
-		return
+	var changed := view_mode != normalized
 	view_mode = normalized
-	_update_view_mode_visibility()
+	_update_view_mode_visibility(changed)
 
 func _normalize_view_mode(mode: StringName) -> StringName:
 	return StringName("map") if mode == StringName("map") else StringName("diorama")
 
-func _update_view_mode_visibility() -> void:
+func _update_view_mode_visibility(log_change: bool = true) -> void:
 	var show_diorama := view_mode != StringName("map")
 	if _background_root:
 		_background_root.visible = show_diorama
 	if _viewport_root:
 		_viewport_root.visible = show_diorama
+	if _texture_rect:
+		_texture_rect.visible = not show_diorama  # show only in map mode
+	if _comfort_overlay_rect:
+		_comfort_overlay_rect.visible = show_diorama
 	if _topdown_renderer and is_instance_valid(_topdown_renderer):
 		_topdown_renderer.set_active(not show_diorama)
 		_sync_topdown_renderer_bounds()
+	if log_change:
+		_print_view_mode_debug(show_diorama)
+
+func _print_view_mode_debug(show_diorama: bool) -> void:
+	var map_visible := false
+	if _topdown_renderer and is_instance_valid(_topdown_renderer):
+		map_visible = _topdown_renderer.visible
+	print("[SandboxView] view=%s diorama.visible=%s topdown.visible=%s" % [
+		String(view_mode),
+		str(show_diorama),
+		str(map_visible)
+	])
 
 func _refresh_current_metrics() -> void:
 	_current_metrics["era_label"] = _current_era_label
