@@ -3,6 +3,7 @@ class_name EnvPanel
 
 signal details_toggled(visible: bool)
 signal preset_selected(preset: StringName)
+signal view_mode_requested(mode: StringName)
 
 const PowerService := preload("res://src/services/PowerService.gd")
 const POWER_WARNING_COLOR := Color(0.996, 0.784, 0.318, 1.0)
@@ -15,6 +16,7 @@ const POWER_ICON_CRITICAL := "⚠⚡"
 @onready var phase_label: Label = %PhaseLabel
 @onready var summary_label: Label = %SummaryLabel
 @onready var toggle_button: Button = %ToggleButton
+@onready var view_toggle_button: Button = %ViewToggleButton
 @onready var preset_selector: OptionButton = %PresetSelector
 @onready var weather_icon: TextureRect = %WeatherIcon
 @onready var detail_panel: PanelContainer = %DetailPanel
@@ -30,6 +32,7 @@ const POWER_ICON_CRITICAL := "⚠⚡"
 @onready var prestige_value: Label = %PrestigeValue
 @onready var comfort_value: Label = %ComfortValue
 @onready var comfort_bonus_value: Label = %ComfortBonusValue
+@onready var map_legend_label: Label = %MapLegendLabel
 
 var _strings: StringsCatalog
 var _high_contrast := false
@@ -42,6 +45,8 @@ var _power_warning_level: StringName = PowerService.WARNING_NORMAL
 var _last_power_modifier: float = 1.0
 var _power_ratio_last: float = 1.0
 var _power_base_color: Color = ProceduralFactory.COLOR_TEXT
+var _view_mode: StringName = StringName("diorama")
+var _view_toggle_enabled: bool = true
 
 func _ready() -> void:
 	toggle_button.toggle_mode = true
@@ -50,11 +55,14 @@ func _ready() -> void:
 	toggle_button.toggled.connect(_on_toggle_details)
 	if preset_selector:
 		preset_selector.item_selected.connect(_on_preset_item_selected)
+	if view_toggle_button and not view_toggle_button.pressed.is_connected(_on_view_toggle_pressed):
+		view_toggle_button.pressed.connect(_on_view_toggle_pressed)
 	_apply_styles()
 	_apply_strings()
 	if weather_icon:
 		weather_icon.texture = ArtRegistry.get_texture(DEFAULT_ICON_KEY)
 		weather_icon.tooltip_text = ""
+	_update_view_toggle_state()
 
 func set_strings(strings: StringsCatalog) -> void:
 	_strings = strings
@@ -113,6 +121,22 @@ func select_preset(preset: StringName) -> void:
 	preset_selector.select(index)
 	_suppress_preset_signal = false
 
+func set_view_mode(mode: StringName) -> void:
+	var normalized := _normalize_view_mode(mode)
+	if _view_mode == normalized:
+		return
+	_view_mode = normalized
+	_update_view_toggle_state()
+
+func set_view_toggle_enabled(enabled: bool) -> void:
+	_view_toggle_enabled = enabled
+	if view_toggle_button:
+		view_toggle_button.visible = enabled
+		view_toggle_button.disabled = not enabled
+
+func _normalize_view_mode(mode: StringName) -> StringName:
+	return StringName("map") if mode == StringName("map") else StringName("diorama")
+
 func _update_state_texts() -> void:
 	if _last_state.is_empty():
 		return
@@ -145,6 +169,8 @@ func _update_state_texts() -> void:
 	var era_label_text := String(_sandbox_metrics.get("era_label", ""))
 	if era_label_text != "":
 		summary_parts.append("Era: %s" % era_label_text)
+	if _view_mode == StringName("map"):
+		summary_parts.append(_strings_get("env_view_map_summary", "Map View"))
 	summary_label.text = "  |  ".join(summary_parts)
 
 	if weather_icon:
@@ -169,16 +195,52 @@ func _update_state_texts() -> void:
 	var bonus_percent: float = max(comfort_bonus * 100.0, 0.0)
 	comfort_bonus_value.text = "+%0.1f%%" % bonus_percent
 	if comfort_value:
-		var tooltip_parts: Array[String] = ["Comfort %.2f%%" % comfort_percent]
+		var tooltip_text := "Comfort +%0.2f%%" % bonus_percent
 		if era_label_text != "":
-			tooltip_parts.append("Era: %s" % era_label_text)
+			tooltip_text += " — Era: %s" % era_label_text
 		if bool(_sandbox_metrics.get("fallback_active", false)):
-			tooltip_parts.append("Renderer fallback")
-		comfort_value.tooltip_text = " — ".join(tooltip_parts)
+			tooltip_text += " — Renderer fallback"
+		comfort_value.tooltip_text = tooltip_text
 		if comfort_bonus_value:
-			comfort_bonus_value.tooltip_text = comfort_value.tooltip_text
+			comfort_bonus_value.tooltip_text = tooltip_text
 
 	_sync_selector_to_state()
+	_update_map_legend()
+	_update_view_toggle_state()
+
+func _update_map_legend() -> void:
+	if map_legend_label == null:
+		return
+	if _view_mode == StringName("map"):
+		map_legend_label.visible = true
+		map_legend_label.text = _strings_get("env_map_legend", "Map: Comfort hue (green calm ↔ red stressed), PPS glow, automation icons show coverage.")
+	else:
+		map_legend_label.visible = false
+
+func _update_view_toggle_state() -> void:
+	if view_toggle_button == null:
+		return
+	view_toggle_button.visible = _view_toggle_enabled
+	view_toggle_button.disabled = not _view_toggle_enabled
+	var showing_map := _view_mode == StringName("map")
+	if showing_map:
+		view_toggle_button.text = _strings_get("env_view_toggle_diorama", "Diorama View")
+		view_toggle_button.tooltip_text = _strings_get("env_view_toggle_diorama_tip", "Switch back to Diorama visualization.")
+	else:
+		view_toggle_button.text = _strings_get("env_view_toggle_map", "Map View")
+		view_toggle_button.tooltip_text = _strings_get("env_view_toggle_map_tip", "Switch to Top-Down Map visualization.")
+
+func _on_view_toggle_pressed() -> void:
+	if not _view_toggle_enabled:
+		return
+	var next_mode := StringName("map") if _view_mode == StringName("diorama") else StringName("diorama")
+	view_mode_requested.emit(next_mode)
+
+func _strings_get(key: String, fallback: String) -> String:
+	if _strings:
+		if _strings.has_method("get_text"):
+			return _strings.get_text(key, fallback)
+	return fallback
 
 func _apply_styles() -> void:
 	var panel_style := ArtRegistry.get_style("ui_panel", _high_contrast)

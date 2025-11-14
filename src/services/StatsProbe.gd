@@ -148,7 +148,7 @@ func _process_pending_writes() -> void:
 			var automation_panel_visible_value: float = float(row_dict.get("automation_panel_visible", 0.0))
 			var tier_value: int = int(row_dict.get("tier", 0))
 			var event_id_value: String = String(row_dict.get("event_id", ""))
-			var csv := "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % [
+			var csv_fields: Array = [
 				row_dict.get("service", SERVICE_SANDBOX),
 				row_dict.get("tick_ms", 0.0),
 				row_dict.get("pps", 0.0),
@@ -185,7 +185,7 @@ func _process_pending_writes() -> void:
 				tier_value,
 				event_id_value
 			]
-			file.store_line(csv)
+			file.store_line(_csv_join(csv_fields))
 		file.close()
 	_write_scheduled = false
 	if _event_log_write_scheduled:
@@ -433,3 +433,25 @@ func _format_rate_label(value: float) -> String:
 
 func _format_backlog_label(value: float) -> String:
 	return "Queue %d" % int(round(value))
+
+func _csv_join(fields: Array) -> String:
+	var segments := PackedStringArray()
+	for value in fields:
+		var text := _normalize_csv_field(value)
+		if text.find("\"") != -1:
+			text = text.replace("\"", "\"\"")
+		if text.find(",") != -1 or text.find("\n") != -1 or text.find("\r") != -1:
+			text = "\"%s\"" % text
+		segments.append(text)
+	return ",".join(segments)
+
+func _normalize_csv_field(value: Variant) -> String:
+	match typeof(value):
+		TYPE_NIL:
+			return ""
+		TYPE_STRING_NAME:
+			return String(value)
+		TYPE_DICTIONARY, TYPE_ARRAY:
+			return JSON.stringify(value)
+		_:
+			return str(value)

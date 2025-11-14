@@ -4,10 +4,12 @@ class_name SandboxRenderer
 signal fallback_state_changed(active: bool)
 
 const SandboxService := preload("res://src/services/SandboxService.gd")
+const SANDBOX_SERVICE_PATH := "/root/SandboxServiceSingleton"
 const SandboxGrid := preload("res://src/sandbox/SandboxGrid.gd")
 const StatsProbe := preload("res://src/services/StatsProbe.gd")
 const SandboxEraLibrary := preload("res://src/sandbox/SandboxEraLibrary.gd")
 const EnvironmentService := preload("res://src/services/EnvironmentService.gd")
+const TopDownRenderer := preload("res://src/sandbox/TopDownRenderer.gd")
 const PALETTE_KEYS := ["sky_top", "sky_bottom", "ground", "ground_horizon", "structure_body", "structure_roof", "detail", "haze_color"]
 
 @export var target_fps: float = 30.0
@@ -21,6 +23,7 @@ const PALETTE_KEYS := ["sky_top", "sky_bottom", "ground", "ground_horizon", "str
 @export var fallback_recover_seconds: float = 5.0
 @export var palette_transition_speed: float = 3.0
 @export var comfort_lerp_speed: float = 2.0
+@export var camera_transition_speed: float = 2.0
 @export var particle_reseed_interval: float = 12.0
 @export var view_mode: StringName = &"diorama"
 
@@ -34,9 +37,12 @@ var _fallback_interval: float = 1.0 / 15.0
 var _stable_sample_counter: int = 0
 var _texture_rect: TextureRect
 var _comfort_overlay_rect: ColorRect
+var _viewport_root: Control
 var _background_root: Control
 var _midground_root: Control
 var _particle_layer: Control
+var _topdown_renderer: TopDownRenderer
+var _prop_root: Control
 var _sky_rect: ColorRect
 var _sky_bottom_rect: ColorRect
 var _haze_rect: ColorRect
@@ -82,6 +88,10 @@ var _structure_base_position: Vector2 = Vector2.ZERO
 var _structure_roof_base_position: Vector2 = Vector2.ZERO
 var _structure_size: Vector2 = Vector2.ZERO
 var _detail_base_position: Vector2 = Vector2.ZERO
+var _camera_zoom: float = 1.0
+var _camera_target_zoom: float = 1.0
+var _camera_offset: Vector2 = Vector2.ZERO
+var _camera_target_offset: Vector2 = Vector2.ZERO
 var _current_era: StringName = SandboxEraLibrary.era_for_preset(StringName("early_farm"))
 var _target_era: StringName = SandboxEraLibrary.era_for_preset(StringName("early_farm"))
 var _current_era_label: String = SandboxEraLibrary.default_label()
@@ -90,6 +100,12 @@ var _era_config_target: Dictionary = {}
 var _current_metrics: Dictionary = {}
 var _random := RandomNumberGenerator.new()
 var _era_initialized: bool = false
+var _prop_nodes: Array[Dictionary] = []
+var _progress_context: Dictionary = {
+	"tier": 1,
+	"research_count": 0,
+	"research_nodes": PackedStringArray()
+}
 
 const MATERIAL_COLORS := {
 	SandboxGrid.MATERIAL_AIR: Color(0.0, 0.0, 0.0, 0.0),
@@ -102,26 +118,16 @@ const MATERIAL_COLORS := {
 	SandboxGrid.MATERIAL_STEAM: Color(0.847, 0.886, 0.929, 0.85)
 }
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED:
+		_update_layout()
+
 func _ready() -> void:
 	_set_frame_interval(target_fps, idle_fps)
 	_random.randomize()
 	_build_visual_layers()
-	_texture_rect = TextureRect.new()
-	_texture_rect.name = "ViewportTexture"
-	_texture_rect.expand = true
-	_texture_rect.stretch_mode = TextureRect.STRETCH_SCALE
-	_texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_texture_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_texture_rect.z_index = 5
-	add_child(_texture_rect)
-	_comfort_overlay_rect = ColorRect.new()
-	_comfort_overlay_rect.name = "ComfortOverlay"
-	_comfort_overlay_rect.color = Color(0, 0, 0, 0)
-	_comfort_overlay_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_comfort_overlay_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_comfort_overlay_rect.z_index = 8
-	add_child(_comfort_overlay_rect)
-	_sandbox_service = get_node_or_null("/root/SandboxService") as SandboxService
+	_build_viewport_layer()
+	_sandbox_service = get_node_or_null(SANDBOX_SERVICE_PATH) as SandboxService
 	_stats_probe = get_node_or_null("/root/StatsProbeSingleton") as StatsProbe
 	_environment_service = get_node_or_null("/root/EnvironmentServiceSingleton") as EnvironmentService
 	_initialize_era_state()
@@ -183,6 +189,12 @@ func _build_visual_layers() -> void:
 	_detail_rect = _make_color_rect("DetailStrip")
 	_detail_rect.z_index = 7
 	_midground_root.add_child(_detail_rect)
+	_prop_root = Control.new()
+	_prop_root.name = "PropLayer"
+	_prop_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_prop_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_prop_root.z_index = 8
+	_midground_root.add_child(_prop_root)
 
 	_particle_layer = Control.new()
 	_particle_layer.name = "ParticleLayer"
@@ -192,6 +204,44 @@ func _build_visual_layers() -> void:
 	_background_root.add_child(_particle_layer)
 
 	_update_layout()
+
+func _build_viewport_layer() -> void:
+	if _viewport_root and is_instance_valid(_viewport_root):
+		_viewport_root.queue_free()
+	_viewport_root = Control.new()
+	_viewport_root.name = "ViewportRoot"
+	_viewport_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_viewport_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_viewport_root.z_index = 10
+	add_child(_viewport_root)
+	_texture_rect = TextureRect.new()
+	_texture_rect.name = "ViewportTexture"
+	_texture_rect.expand = true
+	_texture_rect.stretch_mode = TextureRect.STRETCH_SCALE
+	_texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_texture_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_texture_rect.z_index = 11
+	_viewport_root.add_child(_texture_rect)
+	_comfort_overlay_rect = ColorRect.new()
+	_comfort_overlay_rect.name = "ComfortOverlay"
+	_comfort_overlay_rect.color = Color(0, 0, 0, 0)
+	_comfort_overlay_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_comfort_overlay_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_comfort_overlay_rect.z_index = 12
+	_viewport_root.add_child(_comfort_overlay_rect)
+	if _topdown_renderer and is_instance_valid(_topdown_renderer):
+		_topdown_renderer.queue_free()
+	_topdown_renderer = TopDownRenderer.new()
+	_topdown_renderer.name = "TopDownRenderer"
+	_topdown_renderer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_topdown_renderer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_topdown_renderer.z_index = 1000
+	_topdown_renderer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_topdown_renderer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_topdown_renderer.visible = false
+	add_child(_topdown_renderer)
+	_sync_topdown_renderer_bounds()
+	_update_view_mode_visibility(false)
 
 func _initialize_era_state() -> void:
 	var preset: StringName = StringName("early_farm")
@@ -212,6 +262,8 @@ func _connect_environment_signals() -> void:
 
 func _on_environment_state_changed(state: Dictionary) -> void:
 	_environment_state = state.duplicate(true)
+	if _topdown_renderer and is_instance_valid(_topdown_renderer):
+		_topdown_renderer.update_environment_state(_environment_state)
 	var preset_variant: Variant = state.get("preset", _current_era)
 	var preset: StringName
 	if preset_variant is StringName:
@@ -237,7 +289,9 @@ func _set_target_era(preset: StringName, immediate: bool = false) -> void:
 		_apply_material_palette(_era_config_current, true)
 		_apply_overlay_from_config(_era_config_current, true)
 		_apply_parallax_from_config(_era_config_current, true)
+		_apply_camera_from_config(_era_config_current, true)
 		_configure_particles(_era_config_current, true)
+		_configure_props(_era_config_current, true)
 		_current_era_label = String(_era_config_current.get("label", SandboxEraLibrary.default_label()))
 		_refresh_current_metrics()
 		_update_palette_nodes()
@@ -250,9 +304,46 @@ func _set_target_era(preset: StringName, immediate: bool = false) -> void:
 	_apply_material_palette(_era_config_target, false)
 	_apply_overlay_from_config(_era_config_target, false)
 	_apply_parallax_from_config(_era_config_target, false)
+	_apply_camera_from_config(_era_config_target, false)
 	_configure_particles(_era_config_target, false)
+	_configure_props(_era_config_target, false)
 	_current_era_label = String(_era_config_target.get("label", SandboxEraLibrary.default_label()))
 	_refresh_current_metrics()
+
+func set_view_mode(mode: StringName) -> void:
+	var normalized := _normalize_view_mode(mode)
+	var changed := view_mode != normalized
+	view_mode = normalized
+	_update_view_mode_visibility(changed)
+
+func _normalize_view_mode(mode: StringName) -> StringName:
+	return StringName("map") if mode == StringName("map") else StringName("diorama")
+
+func _update_view_mode_visibility(log_change: bool = true) -> void:
+	var show_diorama := view_mode != StringName("map")
+	if _background_root:
+		_background_root.visible = show_diorama
+	if _viewport_root:
+		_viewport_root.visible = show_diorama
+	if _texture_rect:
+		_texture_rect.visible = not show_diorama  # show only in map mode
+	if _comfort_overlay_rect:
+		_comfort_overlay_rect.visible = show_diorama
+	if _topdown_renderer and is_instance_valid(_topdown_renderer):
+		_topdown_renderer.set_active(not show_diorama)
+		_sync_topdown_renderer_bounds()
+	if log_change:
+		_print_view_mode_debug(show_diorama)
+
+func _print_view_mode_debug(show_diorama: bool) -> void:
+	var map_visible := false
+	if _topdown_renderer and is_instance_valid(_topdown_renderer):
+		map_visible = _topdown_renderer.visible
+	print("[SandboxView] view=%s diorama.visible=%s topdown.visible=%s" % [
+		String(view_mode),
+		str(show_diorama),
+		str(map_visible)
+	])
 
 func _refresh_current_metrics() -> void:
 	_current_metrics["era_label"] = _current_era_label
@@ -324,6 +415,18 @@ func _apply_parallax_from_config(config: Dictionary, immediate: bool) -> void:
 		_parallax_amplitude = amplitude
 		_parallax_speed = speed
 
+func _apply_camera_from_config(config: Dictionary, immediate: bool) -> void:
+	var camera_cfg: Dictionary = config.get("camera", {})
+	var zoom_value: float = float(camera_cfg.get("zoom", _camera_target_zoom))
+	var offset_variant: Variant = camera_cfg.get("offset", _camera_target_offset)
+	var offset: Vector2 = _vector2_from_variant(offset_variant, _camera_target_offset)
+	_camera_target_zoom = max(zoom_value, 0.5)
+	_camera_target_offset = offset
+	if immediate:
+		_camera_zoom = _camera_target_zoom
+		_camera_offset = _camera_target_offset
+		_apply_camera_transform()
+
 func _configure_particles(config: Dictionary, immediate: bool) -> void:
 	var particle_cfg: Dictionary = config.get("particle", {})
 	var amount: int = int(particle_cfg.get("amount", _particle_target_amount if _particle_target_amount > 0 else 20))
@@ -332,6 +435,150 @@ func _configure_particles(config: Dictionary, immediate: bool) -> void:
 	_particle_target_color = color_value
 	_particle_target_amount = amount
 	_rebuild_particles(amount, color_value)
+
+func _configure_props(config: Dictionary, _immediate: bool) -> void:
+	_clear_prop_nodes()
+	if _prop_root == null or not is_instance_valid(_prop_root):
+		return
+	var props_variant: Variant = config.get("props", [])
+	var props: Array = props_variant if props_variant is Array else []
+	for prop_variant in props:
+		if prop_variant is Dictionary:
+			var prop_config: Dictionary = (prop_variant as Dictionary).duplicate(true)
+			var node := _create_prop_node(prop_config)
+			if node:
+				_prop_root.add_child(node)
+				_prop_nodes.append({
+					"node": node,
+					"config": prop_config
+				})
+	_update_props_layout(get_size())
+	_refresh_prop_visibility()
+
+func _clear_prop_nodes() -> void:
+	if _prop_nodes.is_empty():
+		return
+	for entry in _prop_nodes:
+		var node := entry.get("node") as Control
+		if node and is_instance_valid(node):
+			node.queue_free()
+	_prop_nodes.clear()
+
+func _create_prop_node(config: Dictionary) -> Control:
+	var color: Color = _color_from_variant(config.get("color", Color(1, 1, 1, 1)))
+	var corner_radius: int = int(config.get("corner_radius", 8))
+	var panel := PanelContainer.new()
+	panel.name = String(config.get("id", "Prop"))
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.anchor_left = 0.0
+	panel.anchor_top = 0.0
+	panel.anchor_right = 0.0
+	panel.anchor_bottom = 0.0
+	panel.offset_left = 0.0
+	panel.offset_top = 0.0
+	panel.offset_right = 0.0
+	panel.offset_bottom = 0.0
+	panel.z_index = int(config.get("z", 9))
+	var style := StyleBoxFlat.new()
+	style.bg_color = color
+	style.set_corner_radius_all(corner_radius)
+	style.set_border_width_all(0)
+	panel.add_theme_stylebox_override("panel", style)
+	return panel
+
+func _update_props_layout(size: Vector2) -> void:
+	if _prop_nodes.is_empty() or size == Vector2.ZERO:
+		return
+	for entry in _prop_nodes:
+		var node := entry.get("node") as Control
+		if node == null:
+			continue
+		var config: Dictionary = entry.get("config", {})
+		var norm_size: Vector2 = _vector2_from_variant(config.get("size", Vector2(0.15, 0.2)), Vector2(0.15, 0.2))
+		var norm_position: Vector2 = _vector2_from_variant(config.get("position", Vector2(0.5, 0.5)), Vector2(0.5, 0.5))
+		var pixel_size := Vector2(norm_size.x * size.x, norm_size.y * size.y)
+		node.size = pixel_size
+		node.position = Vector2(norm_position.x * size.x - pixel_size.x * 0.5, norm_position.y * size.y - pixel_size.y * 0.5)
+
+func _refresh_prop_visibility() -> void:
+	if _prop_nodes.is_empty():
+		return
+	var tier := int(_progress_context.get("tier", 1))
+	var research_count := int(_progress_context.get("research_count", 0))
+	var research_nodes: Variant = _progress_context.get("research_nodes", PackedStringArray())
+	for entry in _prop_nodes:
+		var node := entry.get("node") as Control
+		if node == null:
+			continue
+		var config: Dictionary = entry.get("config", {})
+		var requires_tier: int = int(config.get("requires_tier", 0))
+		var requires_research_count: int = int(config.get("requires_research_count", 0))
+		var requires_id: String = String(config.get("requires_research_id", ""))
+		var visible := true
+		if requires_tier > 0 and tier < requires_tier:
+			visible = false
+		if requires_research_count > 0 and research_count < requires_research_count:
+			visible = false
+		if requires_id != "" and not _progress_nodeset_contains(research_nodes, requires_id):
+			visible = false
+		if node.visible != visible:
+			node.visible = visible
+
+func set_progress_context(context: Dictionary) -> void:
+	var tier_value: int = int(context.get("tier", _progress_context.get("tier", 1)))
+	var research_count_value: int = int(context.get("research_count", _progress_context.get("research_count", 0)))
+	var nodes_variant: Variant = context.get("research_nodes", _progress_context.get("research_nodes", PackedStringArray()))
+	var packed_nodes := _ensure_packed_string_array(nodes_variant)
+	_progress_context = {
+		"tier": tier_value,
+		"research_count": research_count_value,
+		"research_nodes": packed_nodes
+	}
+	_refresh_prop_visibility()
+
+func _ensure_packed_string_array(value: Variant) -> PackedStringArray:
+	if value is PackedStringArray:
+		return value
+	var result := PackedStringArray()
+	if value is Array:
+		var array_value: Array = value
+		for entry in array_value:
+			result.push_back(String(entry))
+	elif value is StringName or value is String:
+		result.push_back(String(value))
+	return result
+
+func _progress_nodeset_contains(source: Variant, id: String) -> bool:
+	if id == "":
+		return true
+	if source is PackedStringArray:
+		return (source as PackedStringArray).has(id)
+	if source is Array:
+		return (source as Array).has(id)
+	return false
+
+func _vector2_from_variant(value: Variant, fallback: Vector2) -> Vector2:
+	if value is Vector2:
+		return value
+	if value is Array:
+		var arr: Array = value
+		if arr.size() >= 2:
+			return Vector2(float(arr[0]), float(arr[1]))
+	if value is Dictionary:
+		var dict_value: Dictionary = value
+		if dict_value.has("x") and dict_value.has("y"):
+			return Vector2(float(dict_value.get("x", fallback.x)), float(dict_value.get("y", fallback.y)))
+	if value is float or value is int:
+		var scalar: float = float(value)
+		return Vector2(scalar, scalar)
+	return fallback
+
+func _color_from_variant(value: Variant, fallback: Color = Color(1, 1, 1, 1)) -> Color:
+	if value is Color:
+		return value
+	if value is String or value is StringName:
+		return Color(value)
+	return fallback if value == null else Color(value)
 
 func _rebuild_particles(target_amount: int, color: Color) -> void:
 	if _particle_layer == null or not is_instance_valid(_particle_layer):
@@ -388,6 +635,7 @@ func _update_visual_state(delta: float, comfort: Dictionary) -> void:
 	_update_parallax_nodes(delta)
 	_update_particles(delta)
 	_update_haze_color_from_palette()
+	_update_camera_transform(delta)
 
 func _update_palette_transition(delta: float) -> void:
 	if _palette_target.is_empty():
@@ -467,6 +715,28 @@ func _update_particles(delta: float) -> void:
 		_particle_timer = 0.0
 		_reset_particle_positions(size)
 
+func _update_camera_transform(delta: float) -> void:
+	if _viewport_root == null or not is_instance_valid(_viewport_root):
+		return
+	var blend: float = clamp(delta * camera_transition_speed, 0.0, 1.0)
+	_camera_zoom = lerp(_camera_zoom, _camera_target_zoom, blend)
+	_camera_offset = _camera_offset.lerp(_camera_target_offset, blend)
+	_apply_camera_transform()
+
+func _apply_camera_transform() -> void:
+	if _viewport_root == null or not is_instance_valid(_viewport_root):
+		return
+	var zoom_value: float = max(_camera_zoom, 0.1)
+	_viewport_root.scale = Vector2(zoom_value, zoom_value)
+	var size: Vector2 = get_size()
+	if size == Vector2.ZERO:
+		_viewport_root.position = Vector2.ZERO
+		return
+	var center := size * 0.5
+	var scaled_center := center * zoom_value
+	var offset_pixels := _camera_offset
+	_viewport_root.position = center - scaled_center + offset_pixels
+
 func _update_palette_nodes() -> void:
 	if _palette_current.is_empty():
 		return
@@ -508,6 +778,9 @@ func get_renderer_metrics() -> Dictionary:
 	metrics["fallback_active"] = _fallback_active
 	metrics["pollution_pct"] = _pollution_pct
 	metrics["comfort"] = _comfort_smoothed
+	metrics["camera_zoom"] = _camera_zoom
+	metrics["progress_tier"] = int(_progress_context.get("tier", 1))
+	metrics["view_mode"] = String(view_mode)
 	return metrics
 
 func is_fallback_active() -> bool:
@@ -591,6 +864,15 @@ func _update_layout() -> void:
 		_detail_rect.position = Vector2(width * 0.08, height * 0.64)
 		_detail_rect.size = Vector2(width * 0.64, height * 0.05)
 		_detail_base_position = _detail_rect.position
+	if _prop_root:
+		_prop_root.anchor_left = 0.0
+		_prop_root.anchor_top = 0.0
+		_prop_root.anchor_right = 1.0
+		_prop_root.anchor_bottom = 1.0
+		_prop_root.offset_left = 0.0
+		_prop_root.offset_top = 0.0
+		_prop_root.offset_right = 0.0
+		_prop_root.offset_bottom = 0.0
 	if _particle_layer:
 		_particle_layer.anchor_left = 0.0
 		_particle_layer.anchor_right = 1.0
@@ -600,7 +882,20 @@ func _update_layout() -> void:
 		_particle_layer.offset_top = 0.0
 		_particle_layer.offset_right = 0.0
 		_particle_layer.offset_bottom = 0.0
+	if _viewport_root:
+		_viewport_root.anchor_left = 0.0
+		_viewport_root.anchor_top = 0.0
+		_viewport_root.anchor_right = 1.0
+		_viewport_root.anchor_bottom = 1.0
+		_viewport_root.offset_left = 0.0
+		_viewport_root.offset_top = 0.0
+		_viewport_root.offset_right = 0.0
+		_viewport_root.offset_bottom = 0.0
+	if _topdown_renderer:
+		_sync_topdown_renderer_bounds()
 	_reset_particle_positions(size)
+	_update_props_layout(size)
+	_apply_camera_transform()
 
 func _reset_particle_positions(size: Vector2) -> void:
 	if _particle_nodes.is_empty():
@@ -627,16 +922,31 @@ func _make_color_rect(name: String) -> ColorRect:
 	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	rect.set_anchors_preset(Control.PRESET_FULL_RECT)
 	rect.position = Vector2.ZERO
-	rect.size = Vector2.ZERO
 	rect.z_index = 0
 	return rect
+
+func _sync_topdown_renderer_bounds() -> void:
+	if _topdown_renderer == null or not is_instance_valid(_topdown_renderer):
+		return
+	_topdown_renderer.anchor_left = 0.0
+	_topdown_renderer.anchor_top = 0.0
+	_topdown_renderer.anchor_right = 1.0
+	_topdown_renderer.anchor_bottom = 1.0
+	_topdown_renderer.offset_left = 0.0
+	_topdown_renderer.offset_top = 0.0
+	_topdown_renderer.offset_right = 0.0
+	_topdown_renderer.offset_bottom = 0.0
+	var bounds := get_size()
+	if bounds != Vector2.ZERO:
+		_topdown_renderer.custom_minimum_size = bounds
+		_topdown_renderer.set_deferred("size", bounds)
 
 
 func _process(delta: float) -> void:
 	if not is_equal_approx(_cached_target_fps, target_fps) or not is_equal_approx(_cached_idle_fps, idle_fps) or not is_equal_approx(_cached_fallback_fps, fallback_fps):
 		_set_frame_interval(target_fps, idle_fps)
 	if _sandbox_service == null or not is_instance_valid(_sandbox_service):
-		_sandbox_service = get_node_or_null("/root/SandboxService") as SandboxService
+		_sandbox_service = get_node_or_null(SANDBOX_SERVICE_PATH) as SandboxService
 	var comfort: Dictionary = {}
 	if _sandbox_service and is_instance_valid(_sandbox_service):
 		comfort = _sandbox_service.last_comfort_components()
@@ -680,17 +990,20 @@ func _render_grid(comfort: Dictionary) -> void:
 	if hash_value == _last_hash:
 		return
 	_last_hash = hash_value
-	_image.lock()
 	for y in range(height):
 		var row: Array = snapshot[y]
 		for x in range(width):
 			var material := int(row[x])
 			var color: Color = _material_color_for(material)
 			_image.set_pixel(x, y, color)
-	_image.unlock()
 	_texture.update(_image)
 	var render_ms: float = float(Time.get_ticks_usec() - start) / 1000.0
-	_record_stats(render_ms, comfort)
+	var map_active := view_mode == StringName("map")
+	if _topdown_renderer and is_instance_valid(_topdown_renderer):
+		_topdown_renderer.update_environment_state(_environment_state)
+		_topdown_renderer.render_snapshot(snapshot, comfort, _environment_state, map_active)
+	if not map_active:
+		_record_stats(render_ms, comfort)
 	_update_fallback_state(render_ms, _last_interval)
 	_stable_sample_counter = 0
 

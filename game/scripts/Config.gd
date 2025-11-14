@@ -4,6 +4,7 @@ extends Node
 @export var logging_force_disable: bool = false
 @export var seed: int = 0
 @export_enum("legacy", "sandbox") var env_renderer: String = "sandbox"
+@export_enum("diorama", "map") var sandbox_view: String = "diorama"
 @export var economy_amortize_shipment: bool = false
 @export var pseudo_localization_enabled: bool = false
 

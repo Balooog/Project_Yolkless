@@ -10,6 +10,7 @@ const EnvironmentService := preload("res://src/services/EnvironmentService.gd")
 const FactoryConveyor := preload("res://game/scripts/conveyor/FactoryConveyor.gd")
 const UIArchitecturePrototype := preload("res://ui/prototype/UIArchitecturePrototype.gd")
 const SandboxCanvasScene := preload("res://scenes/sandbox/SandboxCanvas.tscn")
+const BootPreflight := preload("res://game/scripts/BootPreflight.gd")
 
 const FEED_FLASH_COLOR := Color(1, 0.7, 0.7, 1)
 const DEFAULT_ENV_STAGE_SIZE := Vector2(640, 360)
@@ -26,14 +27,6 @@ const AUTOMATION_BUTTON_TARGETS := {
 }
 const StatBus := preload("res://src/services/StatBus.gd")
 const TOOLTIP_SCENE := preload("res://ui/components/Tooltip.tscn")
-const USER_DATA_DIRS := [
-	"user://",
-	"user://logs",
-	"user://logs/perf",
-	"user://logs/telemetry",
-	"user://screenshots/ui_baseline",
-	"user://screenshots/ui_current"
-]
 const TIER1_POWER_SECONDS := 90.0
 const TIER1_RATE_THRESHOLD := 1.2
 const TIER1_CONVEYOR_BONUS := 0.10
@@ -147,6 +140,10 @@ var _comfort_index: float = 0.0
 var _comfort_bonus: float = 0.0
 var factory_viewport: SubViewport
 var env_renderer_mode: String = "legacy"
+var sandbox_view_mode: StringName = StringName("diorama")
+var _sandbox_view_idle_timer: float = 0.0
+var _sandbox_view_auto_active: bool = false
+const SANDBOX_VIEW_IDLE_THRESHOLD := 300.0
 var _power_warning_level: StringName = PowerService.WARNING_NORMAL
 var _power_warning_sound_warned := false
 var _statbus: StatBus
@@ -166,7 +163,8 @@ var _micro_event_primary_action: String = ""
 var _micro_event_secondary_action: String = ""
 
 func _ready() -> void:
-	_ensure_user_dirs()
+	BootPreflight.ensure_user_dirs()
+	BootPreflight.configure_runtime_overrides()
 	_configure_input_actions()
 
 	res.setup(bal)
@@ -183,10 +181,10 @@ func _ready() -> void:
 	shop_debug.setup(shop_service, eco)
 
 	bal.reloaded.connect(_on_balance_reload)
-	res.changed.connect(_update_research_view)
+	res.changed.connect(_on_research_changed)
 	eco.soft_changed.connect(_on_soft_changed)
 	eco.storage_changed.connect(_on_storage_changed)
-	eco.tier_changed.connect(func(_tier: int) -> void: _update_factory_view())
+	eco.tier_changed.connect(_on_factory_tier_changed)
 	eco.burst_state.connect(_on_feed_state_changed)
 	eco.dump_triggered.connect(_on_dump_triggered)
 	if not eco.economy_rate_changed.is_connected(_on_economy_rate_changed):
@@ -229,9 +227,19 @@ func _ready() -> void:
 		seed = int(config_node.seed)
 		var env_value: Variant = config_node.get("env_renderer")
 		if env_value != null:
-			var mode := String(env_value).to_lower()
-			if mode == "sandbox" or mode == "legacy":
-				env_renderer_mode = mode
+				var mode := String(env_value).to_lower()
+				if mode == "sandbox" or mode == "legacy":
+					env_renderer_mode = mode
+	var view_value: Variant = config_node.get("sandbox_view")
+	if view_value != null:
+		sandbox_view_mode = _normalize_sandbox_view(String(view_value))
+	var force_view_env := ""
+	if OS.has_environment("YOLKLESS_FORCE_SANDBOX_VIEW"):
+		force_view_env = OS.get_environment("YOLKLESS_FORCE_SANDBOX_VIEW").strip_edges().to_lower()
+		if force_view_env != "":
+			env_renderer_mode = "sandbox"
+			sandbox_view_mode = _normalize_sandbox_view(force_view_env)
+	_set_sandbox_view_mode(sandbox_view_mode, StringName("startup"))
 
 	if ui_prototype:
 		if not ui_prototype.feed_requested.is_connected(_on_prototype_feed_requested):
@@ -265,37 +273,41 @@ func _ready() -> void:
 		var proto_env := ui_prototype.get_environment_panel()
 		if proto_env is EnvPanel:
 			environment_panel = proto_env
+			environment_panel.set_view_mode(sandbox_view_mode)
+			environment_panel.set_view_toggle_enabled(true)
 		factory_viewport = ui_prototype.get_factory_viewport()
 		if factory_viewport:
-			if env_renderer_mode == "sandbox":
-				_setup_sandbox_canvas(factory_viewport)
-				if environment_root_node:
-					environment_root_node.visible = false
-			else:
-				_move_environment_into_viewport(factory_viewport)
-				if environment_root_node:
-					environment_root_node.visible = true
+			_setup_sandbox_canvas(factory_viewport)
+			if sandbox_canvas and is_instance_valid(sandbox_canvas):
+				sandbox_canvas.visible = env_renderer_mode == "sandbox"
+			if environment_root_node:
+				if env_renderer_mode != "sandbox":
+					_move_environment_into_viewport(factory_viewport)
+				environment_root_node.visible = env_renderer_mode != "sandbox"
 			_update_factory_viewport_bounds()
 		_set_prototype_visible(true)
 	else:
 		if legacy_ui_root:
 			legacy_ui_root.visible = true
 		environment_panel = get_node_or_null("%EnvironmentPanel") as EnvPanel
-	if env_renderer_mode == "sandbox":
-		if not sandbox_canvas or not is_instance_valid(sandbox_canvas):
-			sandbox_canvas = SandboxCanvasScene.instantiate()
-			add_child(sandbox_canvas)
-			sandbox_canvas.set_anchors_preset(Control.PRESET_FULL_RECT)
-			sandbox_canvas.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			sandbox_renderer = sandbox_canvas as SandboxRenderer
-			if sandbox_renderer and not sandbox_renderer.fallback_state_changed.is_connected(_on_sandbox_fallback_changed):
-				sandbox_renderer.fallback_state_changed.connect(_on_sandbox_fallback_changed)
-		if environment_root_node:
-			environment_root_node.visible = false
-	else:
-		if environment_root_node:
-			environment_root_node.visible = true
-		sandbox_renderer = null
+		if environment_panel:
+			environment_panel.set_view_mode(sandbox_view_mode)
+			environment_panel.set_view_toggle_enabled(true)
+	if not sandbox_canvas or not is_instance_valid(sandbox_canvas):
+		sandbox_canvas = SandboxCanvasScene.instantiate()
+		add_child(sandbox_canvas)
+		sandbox_canvas.set_anchors_preset(Control.PRESET_FULL_RECT)
+		sandbox_canvas.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		sandbox_renderer = sandbox_canvas as SandboxRenderer
+		if sandbox_renderer and not sandbox_renderer.fallback_state_changed.is_connected(_on_sandbox_fallback_changed):
+			sandbox_renderer.fallback_state_changed.connect(_on_sandbox_fallback_changed)
+	if sandbox_canvas and is_instance_valid(sandbox_canvas):
+		sandbox_canvas.visible = env_renderer_mode == "sandbox"
+	if sandbox_renderer and is_instance_valid(sandbox_renderer):
+		_apply_sandbox_view_mode()
+		_sync_sandbox_progress()
+	if environment_root_node:
+		environment_root_node.visible = env_renderer_mode != "sandbox"
 
 	if conveyor_manager:
 		eco.register_conveyor_manager(conveyor_manager)
@@ -329,6 +341,8 @@ func _ready() -> void:
 
 	if environment_panel and not environment_panel.preset_selected.is_connected(_on_environment_preset_selected):
 		environment_panel.preset_selected.connect(_on_environment_preset_selected)
+	if environment_panel and not environment_panel.view_mode_requested.is_connected(_on_env_panel_view_mode_requested):
+		environment_panel.view_mode_requested.connect(_on_env_panel_view_mode_requested)
 
 	debug_overlay = DEBUG_OVERLAY_SCENE.instantiate()
 	add_child(debug_overlay)
@@ -347,11 +361,7 @@ func _ready() -> void:
 	if environment_panel:
 		environment_panel.set_strings(strings)
 
-	var director := _get_visual_director()
-	if director:
-		director.set_sources(eco, strings)
-		director.set_high_contrast(high_contrast_enabled)
-		director.activate("feed_particles", visuals_enabled)
+	_set_ui_visuals_enabled(visuals_enabled)
 
 	environment_service = _get_environment_service()
 	power_service = _get_power_service()
@@ -389,6 +399,8 @@ func _ready() -> void:
 		var env_state: Dictionary = environment_service.get_state()
 		if not env_state.is_empty():
 			_on_environment_state_changed(env_state)
+		if eco:
+			environment_service.apply_preset_for_tier(eco.factory_tier)
 	if power_service:
 		if not power_service.power_state_changed.is_connected(_on_power_state_changed):
 			power_service.power_state_changed.connect(_on_power_state_changed)
@@ -407,6 +419,9 @@ func _ready() -> void:
 	sav.load_state()
 	_tier_one_unlocked = sav.tier_progress >= 1
 	_apply_tier_progression()
+	_sync_sandbox_progress()
+	if environment_service:
+		environment_service.apply_preset_for_tier(eco.factory_tier)
 	_sync_automation_panel_from_economy()
 	_update_telemetry_context()
 	var offline_summary: Dictionary = sav.apply_offline_rewards()
@@ -436,6 +451,10 @@ func _ready() -> void:
 	sav.save("startup")
 
 func _process(delta: float) -> void:
+	if env_renderer_mode == "sandbox" and sandbox_renderer and is_instance_valid(sandbox_renderer):
+		_sandbox_view_idle_timer += delta
+		if _sandbox_view_idle_timer >= SANDBOX_VIEW_IDLE_THRESHOLD and not _sandbox_view_auto_active and sandbox_view_mode == StringName("diorama"):
+			_set_sandbox_view_mode(StringName("map"), StringName("auto"))
 	_update_feed_ui()
 	_update_conveyor_spawn(delta)
 	_update_tier_progress(delta)
@@ -446,6 +465,15 @@ func _process(delta: float) -> void:
 		_refresh_prototype_automation_sheet()
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey:
+		if event.pressed and not event.echo:
+			_mark_player_activity()
+	elif event is InputEventMouseButton:
+		if event.pressed:
+			_mark_player_activity()
+	elif event is InputEventScreenTouch:
+		if event.pressed:
+			_mark_player_activity()
 	if event.is_action_pressed("ui_cancel"):
 		if settings_panel and settings_panel.visible:
 			settings_panel.hide()
@@ -500,6 +528,7 @@ func _on_dump_triggered(amount: float, _new_balance: float) -> void:
 		capacity_bar.call("play_dump_pulse", eco.dump_animation_ms(), message)
 
 func _on_ship_now_pressed() -> void:
+	_mark_player_activity()
 	if eco == null:
 		return
 	var _payout := eco.manual_ship_now()
@@ -602,6 +631,12 @@ func _update_factory_view() -> void:
 	var population_estimate := int(round(eco.feed_capacity))
 	_update_prototype_status("population", "%s hens" % _format_num(float(population_estimate), 0))
 	_refresh_prototype_home_sheet()
+
+func _on_factory_tier_changed(tier: int) -> void:
+	_update_factory_view()
+	if environment_service:
+		environment_service.apply_preset_for_tier(tier)
+	_sync_sandbox_progress()
 
 func _update_conveyor_view(rate: float, queue_len: int, jam_active: bool = false) -> void:
 	_conveyor_rate = rate
@@ -818,6 +853,10 @@ func _update_research_view() -> void:
 	_commit_prototype_metrics()
 	_refresh_prototype_research_sheet()
 
+func _on_research_changed() -> void:
+	_update_research_view()
+	_sync_sandbox_progress()
+
 func _update_storage_view(storage_value: float = -1.0, capacity: float = -1.0) -> void:
 	if eco == null:
 		return
@@ -923,14 +962,6 @@ func _commit_prototype_status() -> void:
 	if not _prototype_available():
 		return
 	ui_prototype.call("set_status", _prototype_status)
-
-func _ensure_user_dirs() -> void:
-	for dir_path in USER_DATA_DIRS:
-		var absolute_path := ProjectSettings.globalize_path(dir_path)
-		var err := DirAccess.make_dir_recursive_absolute(absolute_path)
-		if err != OK:
-			push_error("Failed to prepare %s (err=%d)" % [absolute_path, err])
-
 
 func _update_prototype_status(key: String, value: String, tone: String = "normal", tooltip: String = "") -> void:
 	_prototype_status[key] = {
@@ -1092,41 +1123,53 @@ func _automation_mode_label(mode: int) -> String:
 			return str(mode)
 
 func _on_prototype_feed_requested() -> void:
+	_mark_player_activity()
 	_attempt_feed_start("prototype")
 
 func _on_prototype_feed_hold_started() -> void:
+	_mark_player_activity()
 	_on_feed_button_down()
 
 func _on_prototype_feed_hold_ended() -> void:
+	_mark_player_activity()
 	_on_feed_button_up()
 
 func _on_prototype_promote_requested() -> void:
+	_mark_player_activity()
 	_attempt_promote()
 
 func _on_prototype_upgrade_requested(upgrade_id: String) -> void:
+	_mark_player_activity()
 	_attempt_upgrade(upgrade_id)
 
 func _on_prototype_research_requested(research_id: String) -> void:
+	_mark_player_activity()
 	_attempt_research(research_id)
 
 func _on_prototype_prestige_requested() -> void:
+	_mark_player_activity()
 	_attempt_prestige()
 
 func _on_prototype_export_requested() -> void:
+	_mark_player_activity()
 	sav.export_to_clipboard()
 
 func _on_prototype_import_requested() -> void:
+	_mark_player_activity()
 	sav.import_from_clipboard()
 
 func _on_prototype_layout_changed() -> void:
+	_mark_player_activity()
 	_update_factory_viewport_bounds()
 	_center_environment_root()
 
 func _on_automation_panel_button_pressed() -> void:
+	_mark_player_activity()
 	if automation_panel_ui:
 		automation_panel_ui.show_panel()
 
 func _on_prototype_automation_panel_opened() -> void:
+	_mark_player_activity()
 	var service := _get_automation_service()
 	if service:
 		service.set_panel_visible(true)
@@ -1135,11 +1178,13 @@ func _on_prototype_automation_panel_opened() -> void:
 	_sync_automation_panel_from_economy()
 
 func _on_prototype_automation_panel_closed() -> void:
+	_mark_player_activity()
 	var service := _get_automation_service()
 	if service:
 		service.set_panel_visible(false)
 
 func _on_prototype_automation_target_changed(button_id: StringName) -> void:
+	_mark_player_activity()
 	var target_variant: Variant = AUTOMATION_BUTTON_TARGETS.get(button_id, button_id)
 	var target: StringName = StringName(target_variant)
 	var service := _get_automation_service()
@@ -1149,9 +1194,6 @@ func _on_prototype_automation_target_changed(button_id: StringName) -> void:
 func _on_high_contrast_toggled(enabled: bool) -> void:
 	high_contrast_enabled = enabled
 	_apply_contrast_theme()
-	var director := _get_visual_director()
-	if director:
-		director.set_high_contrast(enabled)
 	if environment_panel:
 		environment_panel.set_high_contrast(enabled)
 	if settings_panel:
@@ -1257,9 +1299,7 @@ func _on_power_warning(level: StringName) -> void:
 
 func _on_visuals_toggled(enabled: bool) -> void:
 	visuals_enabled = enabled
-	var director := _get_visual_director()
-	if director:
-		director.activate("feed_particles", enabled)
+	_set_ui_visuals_enabled(enabled)
 	if conveyor_layer:
 		conveyor_layer.visible = enabled
 		if not enabled and conveyor_layer is FactoryConveyor:
@@ -1324,12 +1364,17 @@ func _on_environment_preset_selected(preset_value: Variant) -> void:
 	var preset := StringName(preset_value)
 	if preset == StringName():
 		return
+	_mark_player_activity()
 	environment_service.select_preset(preset)
 
 func _on_environment_preset_changed(preset: StringName) -> void:
 	if environment_panel:
 		environment_panel.select_preset(preset)
 	_center_environment_root()
+
+func _on_env_panel_view_mode_requested(mode: StringName) -> void:
+	_mark_player_activity()
+	_set_sandbox_view_mode(mode)
 
 func _apply_palette_change(palette: StringName) -> void:
 	var resolved := ProceduralFactory.ensure_palette(palette)
@@ -1412,13 +1457,16 @@ func _apply_button_styles() -> void:
 			proto_button.add_theme_color_override("font_color", font_color)
 
 func _on_feed_button_down() -> void:
+	_mark_player_activity()
 	_attempt_feed_start("button")
 
 func _on_feed_button_up() -> void:
+	_mark_player_activity()
 	eco.stop_burst("button")
 	_update_feed_ui()
 
 func _attempt_feed_start(source: String) -> void:
+	_mark_player_activity()
 	if eco.feed_current <= 0.0:
 		_handle_feed_denied()
 		return
@@ -1453,11 +1501,13 @@ func _play_feed_denied_sound() -> void:
 	deny_sound.play()
 
 func _attempt_upgrade(id: String) -> void:
+	_mark_player_activity()
 	if eco.buy_upgrade(id):
 		_update_upgrade_buttons()
 		_show_upgrade_toast(id)
 
 func _attempt_research(id: String) -> void:
+	_mark_player_activity()
 	if res.buy(id):
 		eco.refresh_after_load()
 		_update_research_view()
@@ -1465,10 +1515,12 @@ func _attempt_research(id: String) -> void:
 		_update_upgrade_buttons()
 
 func _attempt_promote() -> void:
+	_mark_player_activity()
 	if eco.promote_factory():
 		_update_factory_view()
 
 func _attempt_prestige() -> void:
+	_mark_player_activity()
 	var gained: int = eco.do_prestige()
 	_log("INFO", "ECONOMY", "Prestige accepted", {"gained": gained})
 	_update_all_views()
@@ -1602,6 +1654,7 @@ func _research_cost(id: String) -> int:
 	return int(node.get("cost", 0))
 
 func _on_settings_pressed() -> void:
+	_mark_player_activity()
 	settings_panel.populate_strings()
 	settings_panel.set_high_contrast(high_contrast_enabled)
 	settings_panel.set_visuals_enabled(visuals_enabled)
@@ -1756,17 +1809,24 @@ func _get_logger() -> YolkLogger:
 		return node as YolkLogger
 	return null
 
-func _get_visual_director() -> VisualDirector:
-	var node := get_node_or_null("/root/VisualDirectorSingleton")
-	if node is VisualDirector:
-		return node as VisualDirector
-	return null
+func _set_ui_visuals_enabled(enabled: bool) -> void:
+	if ui_prototype:
+		ui_prototype.set_feed_effect_enabled(enabled)
 
 func _get_environment_service() -> EnvironmentService:
 	var node := get_node_or_null("/root/EnvironmentServiceSingleton")
 	if node is EnvironmentService:
 		return node as EnvironmentService
 	return null
+
+func _mark_player_activity() -> void:
+	if env_renderer_mode != "sandbox":
+		return
+	var should_return: bool = _sandbox_view_auto_active and sandbox_view_mode == StringName("map")
+	_sandbox_view_idle_timer = 0.0
+	if should_return:
+		_sandbox_view_auto_active = false
+		_set_sandbox_view_mode(StringName("diorama"), StringName("auto_return"))
 
 func _get_power_service() -> PowerService:
 	var node := get_node_or_null("/root/PowerServiceSingleton")
@@ -1846,9 +1906,12 @@ func _setup_sandbox_canvas(viewport: SubViewport) -> void:
 	viewport.add_child(sandbox_canvas)
 	sandbox_canvas.set_anchors_preset(Control.PRESET_FULL_RECT)
 	sandbox_canvas.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if _prototype_available():
+		ui_prototype.mark_canvas_ready()
 	sandbox_renderer = sandbox_canvas as SandboxRenderer
 	if sandbox_renderer and not sandbox_renderer.fallback_state_changed.is_connected(_on_sandbox_fallback_changed):
 		sandbox_renderer.fallback_state_changed.connect(_on_sandbox_fallback_changed)
+		_sync_sandbox_progress()
 
 func _update_factory_viewport_bounds() -> void:
 	if factory_viewport == null:
@@ -1885,6 +1948,57 @@ func _apply_tier_progression() -> void:
 		multiplier += TIER1_CONVEYOR_BONUS
 	if conveyor_manager:
 		conveyor_manager.set_speed_multiplier(multiplier)
+
+func _sync_sandbox_progress() -> void:
+	if sandbox_renderer == null or not is_instance_valid(sandbox_renderer):
+		return
+	sandbox_renderer.set_progress_context(_build_sandbox_progress_context())
+	sandbox_renderer.set_view_mode(sandbox_view_mode)
+
+func _build_sandbox_progress_context() -> Dictionary:
+	var tier_value: int = eco.factory_tier if eco else 1
+	var research_nodes := PackedStringArray()
+	if res:
+		for key in res.owned.keys():
+			research_nodes.push_back(String(key))
+	return {
+		"tier": tier_value,
+		"research_count": research_nodes.size(),
+		"research_nodes": research_nodes
+	}
+
+func _set_sandbox_view_mode(mode: StringName, reason: StringName = StringName("user")) -> void:
+	var normalized := _normalize_sandbox_view(mode)
+	if sandbox_view_mode == normalized and reason != StringName("force"):
+		return
+	sandbox_view_mode = normalized
+	var persist := reason == StringName("user") or reason == StringName("startup")
+	_apply_sandbox_view_mode(persist)
+	if reason == StringName("auto"):
+		_sandbox_view_auto_active = true
+	else:
+		_sandbox_view_auto_active = false
+	_sandbox_view_idle_timer = 0.0
+
+func _apply_sandbox_view_mode(persist: bool = false) -> void:
+	var show_sandbox := (env_renderer_mode == "sandbox") or sandbox_view_mode == StringName("map")
+	if sandbox_canvas and is_instance_valid(sandbox_canvas):
+		sandbox_canvas.visible = show_sandbox
+	if environment_root_node:
+		environment_root_node.visible = not show_sandbox
+	if sandbox_renderer and is_instance_valid(sandbox_renderer):
+		var effective_view := sandbox_view_mode if show_sandbox else StringName("diorama")
+		sandbox_renderer.set_view_mode(effective_view)
+	if environment_panel:
+		environment_panel.set_view_mode(sandbox_view_mode)
+	if persist:
+		var config_node := get_node_or_null("/root/Config")
+		if config_node:
+			config_node.set("sandbox_view", String(sandbox_view_mode))
+
+func _normalize_sandbox_view(mode: Variant) -> StringName:
+	var raw := String(mode).to_lower()
+	return StringName("map") if raw == "map" else StringName("diorama")
 
 func _sync_automation_panel_from_economy() -> void:
 	if automation_panel_ui and eco:

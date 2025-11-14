@@ -4,10 +4,10 @@
 
 | Emitter | Signal | Payload | Primary Listeners | Frequency |
 | ------- | ------ | ------- | ----------------- | -------- |
-| `Economy` | `soft_changed(value: float)` | `{ value: credits }` | UI prototype, telemetry, VisualDirector | on every balance change (~10 Hz) |
+| `Economy` | `soft_changed(value: float)` | `{ value: credits }` | UI prototype, telemetry | on every balance change (~10 Hz) |
 | `Economy` | `storage_changed(value: float, capacity: float)` | `{ storage, capacity }` | HUD storage bar, StatBus | on storage delta |
 | `Economy` | `dump_triggered(amount: float, new_balance: float)` | `{ amount, balance }` | HUD pulse, telemetry, analytics | when auto shipment fires |
-| `Economy` | `burst_state(active: bool)` | `{ active }` | VisualDirector, AutomationService | on feed start/stop |
+| `Economy` | `burst_state(active: bool)` | `{ active }` | AutomationService, UI feed effect | on feed start/stop |
 | `Economy` | `economy_rate_changed(rate: float, label: String)` | `{ rate, label }` | HUD Slot D, telemetry probes | on PPS delta (≤10 Hz) |
 | `Economy` | `conveyor_backlog_changed(queue_len: int, label: String, tone: StringName)` | `{ queue, label, tone }` | HUD Slot F, StatBus dashboards, Alerts | on conveyor queue delta |
 | `EnvironmentService` | `environment_updated(state: Dictionary)` | `{ temperature, light, humidity, modifiers, ci }` | SandboxService, UI EnvPanel, StatBus | 5 Hz |

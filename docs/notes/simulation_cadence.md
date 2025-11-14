@@ -10,7 +10,6 @@ Understanding when systems tick helps avoid double-counting updates or introduci
    - `Economy._process(delta)` → `_tick(delta)` applies PPS, feed drain/refill, storage auto-dump, and reevaluates automation against environment modifiers.
    - `Main._process(delta)` updates HUD feed meter; environment visuals now rely on the autoloaded `EnvironmentService`.
    - `EnvironmentService` advances seasonal curves, emits modifiers, and feeds the active stage/background.
-   - Visual effects (e.g., `VisualDirector`) respond here while consuming the latest environment state.
 4. **Timers** — Godot timers hooked to `Economy` drive auto-burst cadence and autosave intervals.
 
 ## Headless Simulation
@@ -29,7 +28,7 @@ Understanding when systems tick helps avoid double-counting updates or introduci
   - Emits `power_state_changed` for UI overlays and EnvironmentService adjustments.
 
 - **EnvironmentService (RM-021)**  
-  - Advances seasonal curves each frame, manages stage swaps, and raises `environment_updated` for UI, `Economy`, and `VisualDirector`.
+  - Advances seasonal curves each frame, manages stage swaps, and raises `environment_updated` for UI and the core services.
 
 - **Telemetry (RM-014)**  
   - Subscribes to per-tick signals and flushes aggregated metrics on a slower cadence (e.g., every second).

@@ -48,4 +48,9 @@ Quick reference for the recurring issues we've tripped over while bringing Yolkl
   `source .env && $(bash tools/godot_resolver.sh) --headless --script res://tools/uilint_scene.gd -- res://scenes/ui_smoke/MainHUD.tscn`
 - Godot 4 deprecates `Label.ellipsis`/`Label.autowrap`—use `text_overrun_behavior` and `autowrap_mode` instead.
 
+## Writable user data (CI / Codex sandboxes)
+- Headless runs often execute in environments where `$HOME` is read-only, so Godot fails when saving `user://logs/godot*.log` or shader caches.
+- `tools/run_dev.sh` now points `user://` (and XDG dirs) at `./.gduser/` inside the repo and pre-creates the common folders (`logs`, `telemetry`, `perf`, `screenshots`, `shader_cache`). Keep that behavior if you script custom launches (export the same `XDG_*`/`GODOT_USER_DATA_DIR` vars) to avoid `_save_to_cache` and `DirAccess.copy` errors.
+- Shader caching is **disabled by default** (`YOLKLESS_DISABLE_SHADER_CACHE=1`) so Codex/CI never spam `_save_to_cache` on read-only home dirs. Set `YOLKLESS_DISABLE_SHADER_CACHE=0` locally if you need the cache; the launch scripts propagate the flag and both `EarlyBoot` (autoload) and `BootPreflight` honor it before any materials compile, so local opt-ins stay in lockstep with CLI/Codex defaults.
+
 Keep this list updated whenever a CI failure exposes another “gotcha”. A short note now saves everyone a debugging session later.

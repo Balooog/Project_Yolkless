@@ -42,6 +42,11 @@ unique_name_in_owner = true
 size_flags_horizontal = 0
 text = "Details"
 
+[node name="ViewToggleButton" type="Button" parent="HeaderPanel/HeaderBox/TitleRow"]
+unique_name_in_owner = true
+size_flags_horizontal = 0
+text = "Map View"
+
 [node name="SummaryRow" type="HBoxContainer" parent="HeaderPanel/HeaderBox"]
 size_flags_horizontal = 3
 
@@ -166,3 +171,9 @@ text = "Comfort Bonus"
 [node name="ComfortBonusValue" type="Label" parent="DetailPanel/DetailMargin/DetailGrid"]
 unique_name_in_owner = true
 text = "+0.0%"
+
+[node name="MapLegendLabel" type="Label" parent="DetailPanel/DetailMargin"]
+unique_name_in_owner = true
+visible = false
+text = "Map shows Comfort hue + PPS glow."
+custom_minimum_size = Vector2(0, 8)

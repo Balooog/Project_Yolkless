@@ -27,6 +27,7 @@ var _strategy: String = DEFAULT_STRATEGY
 var _seed: int = 42
 var _env_renderer_mode: String = ""
 var _economy_amortize_shipment: bool = false
+var _sandbox_view_mode: String = ""
 
 var _logger: YolkLogger
 var _environment: EnvironmentService
@@ -99,6 +100,8 @@ func _parse_args() -> void:
 			_strategy = String(arg.split("=")[1]).to_lower()
 		elif arg.begins_with("--env_renderer="):
 			_env_renderer_mode = String(arg.split("=")[1]).to_lower()
+		elif arg.begins_with("--sandbox_view="):
+			_sandbox_view_mode = String(arg.split("=")[1]).to_lower()
 		elif arg.begins_with("--economy_amortize_shipment="):
 			_economy_amortize_shipment = _parse_bool(arg.split("=")[1])
 
@@ -113,6 +116,8 @@ func _setup_singletons() -> void:
 		config_node.set("seed", _seed)
 		if _env_renderer_mode != "":
 			config_node.set("env_renderer", _env_renderer_mode)
+		if _sandbox_view_mode != "":
+			config_node.set("sandbox_view", _sandbox_view_mode)
 		config_node.set("economy_amortize_shipment", _economy_amortize_shipment)
 	_logger = _ensure_node(root, "Logger", LOGGER_SCRIPT) as YolkLogger
 	_ensure_node(root, "StatBusSingleton", STATBUS_SCRIPT)

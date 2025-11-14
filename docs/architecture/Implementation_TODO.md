@@ -14,8 +14,8 @@ Track items required to bring the current codebase in line with the high-level d
   - [x] Author `data/environment_profiles.tsv` plus loader/preset wiring to unlock seasonal tuning (see `docs/data/Schemas.md`).
   - [x] Add sandbox double-buffering/perf smoothing to prep GPU paths while keeping within `docs/quality/Performance_Budgets.md`. *(SandboxService now buffers metrics with configurable release cadence.)*
   - [x] PX-021.2 follow-up: add adaptive sandbox tick skipping when `ci_delta` remains within ±0.0002 for ≥8 samples to cut p95 below 1 ms; throttle plant growth when `active_cells` stays maxed for multiple ticks. *(Skip logic + plant clamp in `SandboxService`/`SandboxGrid` bring sandbox p95 to ≈0.74 ms.)*
-  - [ ] PX-021.4 — Diorama era evolution (assets, camera, tint modulation) without resetting the sim.
-  - [ ] PX-021.5 — Top-down map renderer + toggle (shared CA buffer, instant switch).
+  - [x] PX-021.4 — Diorama era evolution (assets, camera, tint modulation) without resetting the sim. *(SandboxRenderer now applies era-specific camera/props; EnvPanel tooltip updated.)*
+  - [x] PX-021.5 — Top-down map renderer + toggle (shared CA buffer, instant switch). *(View toggle + idle drift wired; map renderer feeds StatsProbe + CLI flag).*
   - [ ] PX-014.3 — Sandbox timelapse capture + nightly dashboard hook.
 - [ ] **Phase 2 — Telemetry & Validation Foundation** *(docs/quality/Telemetry_Replay.md, docs/dev/Build_Cookbook.md)*
   - [x] Implement `tools/replay_headless.gd`, replace ad-hoc `ci/econ_probe.gd` usage, and document the workflow.
